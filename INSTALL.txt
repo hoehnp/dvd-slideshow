@@ -1,0 +1,53 @@
+First, you'll need all of the required packages in order to create
+and burn a dvd:
+
+ImageMagick > 5.5.4
+Sox
+dvdauthor > 0.6.11
+lame [required for mp3 decoding]
+oggdec [required for ogg decoding]
+mkisofs
+dvdrtools [to actually burn dvds]
+ffmpeg > 0.4.8 [ for ac3 audio ]
+
+In order to install the dvd-slideshow package, you can copy the executables
+into a bin directory in your path.  Man pages are provided in man/ and there
+are also some documents in the doc/ directory.
+
+OR
+
+You can execute (as root):
+sh install.sh
+
+This will simply do the following:
+
+
+## install some files and such:
+# copy documentation:
+cp man/dvd-slideshow.1 /usr/local/man/man1/.
+cp man/dvd-menu.1 /usr/local/man/man1/.
+cp man/dir2slideshow.1 /usr/local/man/man1/.
+cp man/gallery1-to-slideshow.1 /usr/local/man/man1/.
+cp man/jigl2slideshow.1 /usr/local/man/man1/.
+
+# copy executables:
+cp dvd-slideshow /usr/bin/.
+cp dvd-menu /usr/bin/.
+cp gallery1-to-slideshow /usr/bin/.
+cp jigl2slideshow /usr/bin/.
+cp dir2slideshow /usr/bin/.
+
+remove old versions:
+if [ -r "/usr/bin/gallery2slideshow" ] ; then
+	echo "Removing old gallery2slideshow and installing gallery1-to-slideshow instead"
+	echo "See changelog for details."
+	rm "/usr/bin/gallery2slideshow"
+	rm "/usr/local/man/man1/gallery2slideshow.1"
+fi
+
+
+Please let me know if you have any recommendations or if you are having
+problems.
+
+-scott
+scott at dylewski dot com

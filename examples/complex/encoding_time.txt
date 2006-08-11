@@ -1,0 +1,3 @@
+1/3/06 FC3 (x86) on new system with Athlon 64 X2 3800+  real: 4m54s user: 3m58s  using old x86_32 binaries and old 32bit SMP kernel
+1/3/06 Ubuntu (64bit) on new system with Athlon 64 X2 3800+  real: 3m38s user: 2m32s  using new 64bit binaries? and new 64bit kernel (non-smp)
+1/3/06 FC4 (x86) on new system with Athlon 64 X2 3800+  real: 4m29s user: 4m2s  using old x86_32 binaries and old 32bit SMP kernel

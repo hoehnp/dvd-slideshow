@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Linux)">
+	<META NAME="CREATED" CONTENT="20040229;21114100">
+	<META NAME="CHANGED" CONTENT="20060121;15401800">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<P STYLE="margin-bottom: 0in"># complex example with effects</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># set some variables:</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">debug=0 </FONT>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># define background but don't display
+it:</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">background:0::background.jpg</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># note that tenths or hundredths or
+thousandths of seconds can be specified:</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">fadein:2.582</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># title slides have an upper and lower
+title:</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">title:5.5:Top
+Title:Lower Title</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">fadeout:2.42</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># display a picture</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">picture2.jpg:3.1</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># there are also effects which you can
+use:</P>
+<P STYLE="margin-bottom: 0in"># scroll right/left, crop, and
+kenburns. 
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># let's go through a &quot;crop&quot;
+first, because the syntax is simpler:</P>
+<P STYLE="margin-bottom: 0in"># <FONT COLOR="#800000">image.jpg:dur:sub:crop:x0,y0;x1,y1</FONT></P>
+<P STYLE="margin-bottom: 0in"># Crops the image about the coordinates
+specified.</P>
+<P STYLE="margin-bottom: 0in"># Full box description:</P>
+<P STYLE="margin-bottom: 0in"># x0,y0;x1,y1</P>
+<P STYLE="margin-bottom: 0in"># Specifies the top-left(0) and
+bottom-right(1) points.</P>
+<P STYLE="margin-bottom: 0in"># Keyword description:</P>
+<P STYLE="margin-bottom: 0in"># frame 0%-100%;frame_location</P>
+<P STYLE="margin-bottom: 0in"># where 0%-100% indicates the fraction
+of the final 
+</P>
+<P STYLE="margin-bottom: 0in"># dvd window width/height, and
+frame_location refers</P>
+<P STYLE="margin-bottom: 0in"># to the CENTER POINT of the picture,</P>
+<P STYLE="margin-bottom: 0in"># and can be any of the following
+keywords:</P>
+<P STYLE="margin-bottom: 0in"># topleft top topright</P>
+<P STYLE="margin-bottom: 0in"># left middle right</P>
+<P STYLE="margin-bottom: 0in"># bottomleft bottom bottomright</P>
+<P STYLE="margin-bottom: 0in"># or</P>
+<P STYLE="margin-bottom: 0in"># x%,y%</P>
+<P STYLE="margin-bottom: 0in"># where % is a percentage of the window
+width,height</P>
+<P STYLE="margin-bottom: 0in"># starting from the top left corner of
+the dvd window.</P>
+<P STYLE="margin-bottom: 0in"># or</P>
+<P STYLE="margin-bottom: 0in"># imagewidth | imageheight</P>
+<P STYLE="margin-bottom: 0in"># where the image width or height will
+be scaled to 
+</P>
+<P STYLE="margin-bottom: 0in"># fill the full width or height of the
+dvd screen.</P>
+<P STYLE="margin-bottom: 0in"># Crop examples:</P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:dur:sub:crop:651,390;1134,759</FONT></P>
+<P STYLE="margin-bottom: 0in"># <FONT COLOR="#800000">image.jpg:dur:sub:crop:30%;60%,60%</FONT></P>
+<P STYLE="margin-bottom: 0in"># <FONT COLOR="#800000">image.jpg:dur:sub:crop:50%;topleft</FONT></P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:dur:sub:crop:imageheight;left</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">crossfade:2</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">picture1.jpg:2:Picture
+1 cropped:crop:50%;topleft</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># now let's start playing the audio on
+track 1:</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">strojovna_07-TEXEMPO-30s.ogg:1</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># kenburns is the most flexible effect:</P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:dur:sub:kenburns:start_box;end_box</FONT></P>
+<P STYLE="margin-bottom: 0in"># Where now we have start and end
+boxes, defined in</P>
+<P STYLE="margin-bottom: 0in"># the same way as in the &quot;crop&quot;
+function, but now</P>
+<P STYLE="margin-bottom: 0in"># we have two boxes defined.</P>
+<P STYLE="margin-bottom: 0in"># The video will then slowly morph from
+the start to the end, doing 
+</P>
+<P STYLE="margin-bottom: 0in"># whatever cropping/zooming is
+necessary. This takes a long time to</P>
+<P STYLE="margin-bottom: 0in"># process each frame! 
+</P>
+<P STYLE="margin-bottom: 0in"># You can add a subtitle during the
+transition, but it's optional</P>
+<P STYLE="margin-bottom: 0in"># Note that to pass no subtitle, you
+need to use '::'</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># Full box description:</P>
+<P STYLE="margin-bottom: 0in"># xs0,ys0;xs1,ys1;xe0,ye0;xe1,ye1</P>
+<P STYLE="margin-bottom: 0in"># Specifies the top-left(0) and
+bottom-right(1) points.</P>
+<P STYLE="margin-bottom: 0in"># Keyword description:</P>
+<P STYLE="margin-bottom: 0in"># start 0%-100%;start_location;end
+0%-100%;end_location</P>
+<P STYLE="margin-bottom: 0in"># Kenburns examples:</P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:dur:sub:kenburns:651,390;1134,759;372,330;1365,1089</FONT></P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:dur:sub:kenburns:30%;60%,60%;75%;40%,50%</FONT></P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:dur:sub:kenburns:50%;topleft;50%;bottomright</FONT></P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:dur:sub:kenburns:100%;left;0,0;720,480</FONT></P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:dur:sub:kenburns:100%;left;imageheight;left</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#800000"><FONT COLOR="#0000ff">picture1.jpg:4:zoom
+out:kenburns:25%;middle;100%;middle</FONT> </FONT>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">picture1.jpg:4:Wow,
+it's moving!:kenburns:50%;topleft;50%;bottomright</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># pause at the end with another crop:</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">picture1.jpg:2:Picture
+1 cropped:crop:50%;bottomright</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">fadeout:2</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">background:1</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># now let's start playing the audio on
+track 2:</P>
+<P STYLE="margin-bottom: 0in"># this is independent of audio track 1</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">strojovna_07-TEXEMPO-30s.ogg:2</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">fadein:2</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">pano.jpg:2:cool
+panorama picture</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># zoom in to left side of panorama:</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">pano.jpg:4::kenburns:100%;left;imageheight;left</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># pause</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">pano.jpg:2:pausing...:crop:imageheight;left</FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># You can scroll across a panorama
+picture by using the &quot;scroll right&quot;</P>
+<P STYLE="margin-bottom: 0in"># or &quot;scroll left&quot; effects
+(up/down works also).</P>
+<P STYLE="margin-bottom: 0in"># This will automatically pan across
+the image:</P>
+<P STYLE="margin-bottom: 0in">#
+<FONT COLOR="#800000">image.jpg:duration:subtitle:scroll:left</FONT></P>
+<P STYLE="margin-bottom: 0in"># a duration of 10 is way too fast for
+the image below. Change</P>
+<P STYLE="margin-bottom: 0in"># it to 30 to make it look better, but
+it take longer to render.</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">pano.jpg:10:Scrolling
+way to fast:scroll:rig</FONT>ht</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># pause</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">pano.jpg:2:pausing...:crop:imageheight;right</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#000000"># note that this
+is the same as the following syntax, but it's much</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#000000"># easier to deal
+with instead of the older method:</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#000000">#
+<FONT COLOR="#800000">pano.jpg:2::crop:4610,0;5334,480</FONT></FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"># we could do the kenburn effect
+backwards to zoom out, but 
+</P>
+<P STYLE="margin-bottom: 0in"># I hope you get the idea...</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">crossfade:3</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">picture2.jpg:3</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">fadeout:2</FONT></P>
+<P STYLE="margin-bottom: 0in"><FONT COLOR="#0000ff">background:2:This
+is the background</FONT></P>
+</BODY>
+</HTML>

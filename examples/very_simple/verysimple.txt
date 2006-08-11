@@ -1,0 +1,27 @@
+# very simple example with no special effects
+# blank lines and lines starting with '#' are ignored
+
+# use "title" in the image field to create a title slide.
+# title:duration:description 
+# The "description" string gets put on the title slide.
+title:5:This is my title
+
+# each picture gets put on a separate line.  The format is:
+# full_path_to_file.jpg:Duration:Subtitle
+# duration is how long the picture will be visible in seconds.
+# The Subtitle field is optional and can be left blank.
+picture 1.jpg:5:Picture 1
+pano.jpg:5:What a cool picture
+picture2.jpg:5
+
+# At any time in the slideshow, you can use special keywords:
+# "background:2:subtitle:black" will insert a black background frame
+# for 2 seconds
+background:2:This is a black frame:black
+
+# so this would work fine as well:
+#background:2:This is a background image:background.jpg
+
+# You can also use the "background" keyword to display the current
+# background image (black or some passed image) for a given time:
+background:2:This is the background

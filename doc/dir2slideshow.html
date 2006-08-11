@@ -1,0 +1,104 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of dir2slideshow</TITLE>
+</HEAD><BODY>
+<H1>dir2slideshow</H1>
+Section: dvd-slideshow (1)<BR>Updated: 0.7.5<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+<P>
+
+dir2slideshow - Creates an input file for dvd-slideshow from pictures in a directory.
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+
+dir2slideshow [<I>-o</I> &lt;<I>output directory</I>&gt;]
+[<I>-t</I> &lt;<I>Seconds per picture</I>&gt;]
+[<I>-c</I> &lt;<I>Crossfade seconds</I>&gt;]
+<I>-n</I> &lt;<I>Slideshow name</I>&gt;
+[<I>-T</I>] [<I>-M</I>] [<I>-s subtitle_text</I>] [<I>-notitle</I>] &lt;<I>Images directory</I>&gt;
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<P>
+
+Creates a input file for dvd-slideshow from all the JPEG images in a given directory.  Now it reads all .jpg .JPG .jpeg .png and .PNG files in the specified directory.
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<P>
+
+<DL COMPACT>
+<DT>[<B>-o</B> &lt;<I>Output directory</I>&gt;]<DD>
+Directory where the output file will be written.  If not specified, the current directory is used.
+<P>
+<DT>[<B>-t</B> &lt;<I>Seconds per picture</I>&gt;]<DD>
+Number of seconds to display each picture in the movie.  Defaults to 5 seconds if not specified.
+<P>
+<DT>[<B>-c</B> &lt;<I>Crossfade seconds</I>&gt;]<DD>
+Number of seconds to crossfade between images. One second is usually fine.  Note that this will increase the processing time considerably, but it looks nice.
+<P>
+<DT><B>-n</B> &lt;<I>Slideshow name</I>&gt;<DD>
+The name of this slideshow.  This name is used as the default title text for the first title slide in the slideshow. This name will be used (converting spaces to underscores) for the output file name.
+<P>
+<DT>[<B>-T</B>]<DD>
+Sort images by the JPEG header picture taken time, then by the file modification date, and finally by the filename. Default sort is by name only. Requires the jhead program.
+<P>
+<DT>[<B>-M</B>]<DD>
+Sort images by the file modification date, and then by the filename. Default sort if by name only.
+<P>
+<DT>[<B>-s subtitle_text</B>]<DD>
+Add default subtitle &quot;subtitle_text&quot; to every slide.
+<P>
+<DT>[<B>-notitle</B>]<DD>
+Do not create a title slide.
+<P>
+<DT>&lt;<I>Images directory</I>&gt;<DD>
+The path to the directory containing the images you want to use.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+<P>
+
+<A HREF="http://dvd-slideshow.sourceforge.net/examples">http://dvd-slideshow.sourceforge.net/examples</A>
+<A NAME="lbAG">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+<P>
+
+Scott Dylewski &lt;scott at dylewski dot com&gt;
+<BR>
+
+<A HREF="http://dvd-slideshow.sourceforge.net/">http://dvd-slideshow.sourceforge.net/</A>
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<P>
+
+<A HREF="http://localhost/cgi-bin/man/man2html?1+dvd-menu">dvd-menu</A>(1), <A HREF="http://localhost/cgi-bin/man/man2html?1+dvd-slideshow">dvd-slideshow</A>(1)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">EXAMPLES</A><DD>
+<DT><A HREF="#lbAG">AUTHORS</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 06:09:55 GMT, March 10, 2006
+</BODY>
+</HTML>

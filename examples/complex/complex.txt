@@ -1,0 +1,107 @@
+# complex example with effects
+# set some variables:
+debug=0
+# define background but don't display it:
+background:0::background.jpg
+# note that tenths or hundredths or thousandths of seconds can be specified:
+fadein:1.582
+# titlebar slides have an upper and lower title:
+titlebar:5.5:Top Title:Lower Title
+crossfade:1
+# title slides have only one centered title:
+title:5.5:My Title
+fadeout:1.42
+# display a picture
+picture2.jpg:3.1
+# there are also effects which you can use:
+# scroll right/left, crop, and kenburns.
+# let's go through a "crop" first, because the syntax is simpler:
+# image.jpg:dur:sub:crop:x0,y0;x1,y1
+# Crops the image about the coordinates specified.
+# Full box description:
+#   x0,y0;x1,y1
+#   Specifies the top-left(0) and bottom-right(1) points.
+# Keyword description:
+#   frame 0%-100%;frame_location
+#   where 0%-100% indicates the fraction of the final
+#   dvd window width/height, and frame_location refers
+#   to the CENTER POINT of the picture,
+#   and can be any of the following keywords:
+#  	topleft		top		topright
+# 	left		middle		right
+# 	bottomleft	bottom		bottomright
+#    or
+#  	x%,y%
+# 	where % is a percentage of the window width,height
+# 	starting from the top left corner of the dvd window.
+#    or
+#  	imagewidth | imageheight
+# 	where the image width or height will be scaled to
+# 	fill the full width or height of the dvd screen.
+# Crop examples:
+# image.jpg:dur:sub:crop:651,390;1134,759
+# image.jpg:dur:sub:crop:30%;60%,60%
+# image.jpg:dur:sub:crop:50%;topleft
+# image.jpg:dur:sub:crop:imageheight;left
+crossfade:1
+picture1.jpg:2:Picture 1 cropped:crop:50%;topleft
+
+# now let's start playing the audio on track 1:
+strojovna_07-TEXEMPO-30s.ogg:1:
+
+# kenburns is the most flexible effect:
+# image.jpg:dur:sub:kenburns:start_box;end_box
+# Where now we have start and end boxes, defined in
+# the same way as in the "crop" function, but now
+# we have two boxes defined.
+# The video will then slowly morph from the start to the end, doing
+# whatever cropping/zooming is necessary.  This takes a long time to
+# process each frame!
+# You can add a subtitle during the transition, but it's optional
+# Note that to pass no subtitle, you need to use '::
+# Full box description:
+#  xs0,ys0;xs1,ys1;xe0,ye0;xe1,ye1
+#  Specifies the top-left(0) and bottom-right(1) points.
+# Keyword description:
+#  start 0%-100%;start_location;end 0%-100%;end_location
+# Kenburns examples:
+# image.jpg:dur:sub:kenburns:651,390;1134,759;372,330;1365,1089
+# image.jpg:dur:sub:kenburns:30%;60%,60%;75%;40%,50%
+# image.jpg:dur:sub:kenburns:50%;topleft;50%;bottomright
+# image.jpg:dur:sub:kenburns:100%;left;0,0;720,480
+# image.jpg:dur:sub:kenburns:100%;left;imageheight;left
+picture1.jpg:5:Wow, it's moving!:kenburns:50%;topleft;50%;middle;
+# note that a fadeout gets applied to the previous picture
+# while the previous picture duration stays at 5 seconds here.
+
+exit
+
+fadeout:1
+background:1
+# now let's start playing the audio on track 2:
+# this is independent of audio track 1
+strojovna_07-TEXEMPO-30s.ogg:2
+fadein:1
+# zoom in to left side of panorama:
+pano.jpg:4::kenburns:100%;left;imageheight;left
+# pano.jpg:2:pausing...:crop:imageheight;left # pause
+# You can scroll across a panorama picture by using the "scroll right"
+# or "scroll left" effects (up/down works also).
+# This will automatically pan across the image:
+# image.jpg:duration:subtitle:scroll:left
+# a duration of 10 is way too fast for the image below.  Change
+# it to 30 to make it look better, but it take longer to render.
+pano.jpg:10:Scrolling way too fast:scroll:right
+# note that crossfadfes between scroll or kenburns effects get applied
+# so that it looks like they're laid on top of each other.
+crossfade:1
+pano.jpg:4::kenburns:imageheight;right;100%;left
+# note that this is the same as the following syntax, but it's much
+# easier to deal with instead of the older method:
+# pano.jpg:2::crop:4610,0;5334,480
+# we could do the kenburn effect backwards to zoom out, but
+# I hope you get the idea...
+crossfade:1
+picture2.jpg:3
+fadeout:1
+background:2:This is the background

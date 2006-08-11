@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Linux)">
+	<META NAME="CREATED" CONTENT="20040229;21080700">
+	<META NAME="CHANGED" CONTENT="20060308;20303600">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<DL>
+	<DT># simple example with fades</DT><DD>
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# instead of specifying the background image on the command-line</DD><DD STYLE="margin-left: 0in">
+	# it's often easier to do it in this text file:</DD><DD STYLE="margin-left: 0in">
+	# <FONT COLOR="#dc2300">background:duration:subtitle:image</FONT></DD><DD STYLE="margin-left: 0in">
+	# a duration of 0 means to set the image, but don't display it.</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">background:0::background.jpg</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# Titles are put in the center of the screen:</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">title:5:My title</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">background:1</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# The titlebar keyword can have two separate lines:</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">title:5:My top title:My lower title</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">background:1</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# there are simple transitions that you can use:</DD><DD STYLE="margin-left: 0in">
+	# fadein, fadeout, and crossfade. They all fade to/from whatever</DD><DD STYLE="margin-left: 0in">
+	# background you're using. Syntax is:</DD><DD STYLE="margin-left: 0in">
+	# <FONT COLOR="#dc2300">fadein:duration:subtitle</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">fadein:2</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# you can add a subtitle during the transition, but it's optional</DD><DD STYLE="margin-left: 0in">
+	# use a backslash to escape a colon ':' in the subtitles.</DD><DD STYLE="margin-left: 0in">
+	# use \n to force a newline (only two subtitle lines are supported).</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">picture1.jpg:4:Picture 1 is so cool\: \n I
+	can't believe how cool it really is.</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# fadeout is similar:</DD><DD STYLE="margin-left: 0in">
+	# <FONT COLOR="#dc2300">fadeout:duration:subtitle</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">fadeout:2:Fading out</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#000000"># it's possible to specify a new title slide
+	in the middle of the slideshow:</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">fadein:1</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">titlebar:4::Panoramas  <FONT COLOR="#000000">#
+	note this just has the bottom title specified.</FONT></FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#000000"># crossfade works similar to fadein/fadeout</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#000000"># <FONT COLOR="#dc2300">crossfade:duration:subtitle</FONT></FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">crossfade:1</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">pano.jpg:4:Cool panorama picture</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# now let's change the background color.</DD><DD STYLE="margin-left: 0in">
+	# syntax is background:duration:subtitle:image</DD><DD STYLE="margin-left: 0in">
+	# where you can use &quot;black&quot; or &quot;white&quot; or
+	&quot;#RRGGBB</DD><DD STYLE="margin-left: 0in">
+	# as the image name also.</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">background:1::#11a004</FONT></DD><DD STYLE="margin-left: 0in">
+	#  or something more pleasant:</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">background:1::black</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# notice that long subtitles will automatically line-wrap</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">picture1.jpg:4:Picture 1 is so cool. I can't
+	believe how cool it really is.</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# crossfade works in the same manner as fadein/fadout:</DD><DD STYLE="margin-left: 0in">
+	# <FONT COLOR="#dc2300">crossfade:duration:subtitle</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">crossfade:3</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">picture2.jpg:3</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	# it often looks nice to end the slideshow with a fadeout to the</DD><DD STYLE="margin-left: 0in">
+	# background instead of just stopping the video quickly:</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">fadeout:2</FONT></DD><DD STYLE="margin-left: 0in; margin-bottom: 0.2in">
+	<FONT COLOR="#0000ff">background:2:This is the background</FONT></DD></DL>
+</BODY>
+</HTML>

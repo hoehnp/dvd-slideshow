@@ -1,0 +1,14 @@
+background:0::black
+title:5:test
+fadeout:1
+background:1
+fadein:1
+my_pictures/640x480_grid.jpg:5::kenburns:85%;55%,56%;85%;44%,51%
+crossfade:1
+my_pictures/pano.jpg:5
+crossfade:1
+my_pictures/picture1.jpg:5::kenburns:86%;51%,52%;86%;54%,44%
+crossfade:1
+my_pictures/picture2.jpg:5
+fadeout:1
+background:1

@@ -1,0 +1,126 @@
+## .dvd-slideshowrc default config file.
+## save this file in your home directory as .dvd-slideshowrc
+## in order for dvd-slideshow to read it all the time.
+## uncomment the lines you want.
+
+## This file will get read as "global settings" for dvd-slideshow
+## these settings will over-ride the default settings for dvd-slideshow,
+## but the arguments passed on the command-line or within the text files
+## will superscede this file:
+## program defaults --> ~/.dvd-slideshowrc --> theme_file --> command-line --> input file variables
+
+#######################################################################
+# system-wide settings:
+debug=0
+#debug=1	# 0 (low) to 3 (lots of info)
+
+pal=0		# use this for ntsc format
+#pal=1  	# use this for pal format
+
+ac3=1		# use ac3 audio by default
+#ac3=0		# use mpeg2 audio by default
+
+#theme=wedding  # enable the "wedding" theme
+#theme=burningman
+#theme=travel
+
+#######################################################################
+# dir2slideshow or variables used to create input .txt file:
+slideshow_background=black
+#slideshow_background="#882211"	# use a hex RGB color if you wish
+#slideshow_background="mybackground.jpg"	# specify a real image if you want
+
+crossfade=0		# crossfade duration (use 0 for no crossfade)
+#crossfade=1		# crossfade duration [seconds]
+
+kenburns=0		
+#kenburns=1		# do random kenburns effect
+
+slide_duration=5	# seconds to display each slide
+
+title_type=titlebar	# use two-line titles, one on top, one on bottom
+#title_type=title	# use single line centered titles
+
+title_background=steelblue
+#title_background="#882211"	# use a hex RGB color if you wish
+#title_background="mybackground.jpg"	# specify a real image if you want
+
+#slideshow_audio=myaudio1.mp3,myaudio2.mp3,myaudio3.ogg # use these audio files
+
+#######################################################################
+# dvd-slideshow settings:
+widescreen=0		# use default 4:3 aspect ratio
+# widescreen=1		# use 16:9 aspect ratio
+
+copy=0		
+# copy=1	# add copies of original images to the output directory
+
+autocrop=0
+#autocrop=1	# autocrop images to fill full screen
+
+high_quality=0  # high quality enabled by default (not a good idea now)
+
+subtitle_type=render
+#subtitle_type=srt   # use srt subtitles instead of adding the text mask
+
+subtitle_font_size=24
+#subtitle_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+
+## Title:
+title_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+title_font_size=48
+title_font_color='black'  # or use hex "#RRGGBB"
+
+## top title:
+toptitle_font_size=48
+toptitle_font_color='black' # or use hex "#RRGGBB"
+toptitle_bar_height=125  # 0 for no 50% white behind text
+toptitle_text_location_x=80
+toptitle_text_location_y=50
+
+# bottom title:
+bottomtitle_font_size=36
+bottomtitle_font_color="black"  # or use hex "#RRGGBB"
+bottomtitle_bar_location_y=156 # relative to bottom of image
+bottomtitle_bar_height=55  # 0 for no 50% white behind text
+bottomtitle_text_location_x=0
+bottomtitle_text_location_y=155
+
+
+#######################################################################
+# dvd-menu config variables:
+menu_continuous_play=0
+menu_continuous_play=1	# play one file after another without going back up to menu.
+
+menu_fadein=0
+#menu_fadein=1	# fade in to menu
+menu_fadeout=0
+#menu_fadeout=1	# fade out from menu after a button is pressed.
+
+menu_fade_to_black=0	# if fadeout=1, fades out to background
+menu_fade_to_black=1	# if fadeout=1, fades out to black frame
+
+menu_background=steelblue  # or, use hex #RRGGBB
+#menu_background="#882211"	# use a hex RGB color if you wish
+#menu_background="mybackground.jpg"	# specify a real image if you want
+## pick other colors here: http://www.imagemagick.org/script/color.php
+
+menu_title_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+menu_title_font_size=40
+menu_title_font_color=black
+menu_title_white_height=125
+menu_title_location_x=80
+menu_title_location_y=50
+
+menu_panel_height=28
+menu_panel_width=288
+menu_panel_location_x=360
+menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
+
+menu_button_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+menu_button_font_size=21
+menu_button_font_color=black
+menu_button_hilight_color=red
+
+#menu_audio=myaudio1.mp3
+

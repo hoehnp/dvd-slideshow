@@ -1,0 +1,1 @@
+/usr/local/bin/ffmpeg -i simple.vob -f mp4 -vcodec mpeg4 -b 800 -g 300 -bf 2 -acodec mp3 -ab 128 out.mp4

@@ -1,0 +1,772 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Linux)">
+	<META NAME="CREATED" CONTENT="20031218;23173200">
+	<META NAME="CHANGED" CONTENT="20060309;22011800">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in }
+		P { margin-left: 0.5in; margin-bottom: 0in; font-weight: medium }
+		DT { margin-left: 0.39in; font-weight: bold }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>DVD Slideshow package
+changelog:</FONT></FONT></P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.5</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>New Features:</B></I></P>
+<P STYLE="margin-bottom: 0.2in"><SPAN STYLE="font-weight: medium"><SPAN STYLE="font-style: normal">Use
+&quot;\n&quot; to force line breaks up to two lines in title text
+(not titlebar yet).</SPAN></SPAN></P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed code to rotate images.  (not that public yet)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+ Use
+image.jpg:duration:subtitle:[effect1:effect1_params:]rotate:angle</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        	Configuration variables will be read in sequence now.  So
+you can configure fontcolors and sizes 	throughout the input file.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Allow comments in all lines.  Everything after &lt;space&gt;# will be
+ignored.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Scroll effect is MUCH smoother for slow scrolls in high-quality mode!
+(takes 3x longer)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Slideshow name -n is optional now.  Defaults to the base name of the
+input file.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+* Changed old &quot;title&quot; keyword to
+&quot;titlebar:duration:toptitle:bottomtitle&quot;</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+* Added &quot;title:duration:title_text&quot; function where a single
+title is rendered in the middle of the screen.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Add check for missing subtitle syntax in crop/scroll/kenburns.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Longer progress bar.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Reads ~/.dvd-slideshowrc in a loop for better debugging and security.</P>
+<P STYLE="margin-bottom: 0.2in"><I><B>Bug fixes:</B></I></P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Added &quot;+repage&quot; in convert lines after cropping when using
+internal .mpc image format.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+	( Fixes Kenburns and crop errors with ImageMagick &gt; 6.2.2 )</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed kenburns problems with black backgrounds.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed &quot;geometry does not contain image&quot; problem with
+kenburns effect.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Works for slide or transition duration &gt; 35 seconds now.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Add quotes around yuv fifo to allow for spaces in output directory.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed &quot;squishing&quot; when fading out or crossfading to a
+scroll effect.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed problem where audio &quot;fadein&quot; was being rendered as a
+subtitle.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Traps bad duration=0 for images and effects.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Allow embedded .png to keep transparency</P>
+<P STYLE="margin-bottom: 0.2in">Fix error message quotes when looking
+for XML file existing.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in; font-weight: medium">
+<SPAN STYLE="font-style: normal">Allow spaces in filenames</SPAN></P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.4</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>Bug fixes:</B></I></P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Changed mpeg2enc process file descriptor from 55 to 3 for
+compatibility with bash &gt;= 3.1 (fixes hang at wait for mpeg2enc to
+finish)</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Echos details to logfile about mpeg2enc process for future debugging.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Output directory gets created if it does not exist.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed bug in kenburns positioning with black background.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Better error messages when no oggdec or lame found.</P>
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed error where kenburns intermediate files were not being deleted.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">gallery1-to-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed bug where no pictures were found with new version of gallery
+1.5</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed bug near line 279 with a missing &quot;fi&quot; statement.</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.3</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>New features:</B></I></P>
+<P STYLE="margin-bottom: 0.2in">Fixed Kenburns zoom in adjusted to a
+&quot;constant&quot; velocity!</P>
+<P STYLE="margin-bottom: 0.2in">You can include other .txt files by
+using a line include:filename.txt in 
+</P>
+<P STYLE="margin-bottom: 0.2in">your input .txt file. Thanks Thomas
+Weber!</P>
+<P STYLE="margin-bottom: 0.2in">User can manually add chapter markers
+by using the &quot;chapter&quot; keyword 
+</P>
+<P STYLE="margin-bottom: 0.2in">alone on one line of the input .txt
+file.</P>
+<P STYLE="margin-bottom: 0.2in">Added variable &quot;mpeg2enc_params&quot;
+so advanced users can easily change the parameters.</P>
+<P STYLE="margin-bottom: 0.2in">All timing accurate to 0.001 (1 ms)
+now.</P>
+<P STYLE="margin-bottom: 0.2in">Added -smp option to process faster
+on high-end machines.</P>
+<P STYLE="margin-bottom: 0.2in">Added -writechaps option to write out
+chapter markers to &lt;slideshow_name&gt;.chap</P>
+<P STYLE="margin-bottom: 0.2in"><I><B>Bug fixes:</B></I></P>
+<P STYLE="margin-bottom: 0.2in">Fixed bugs causing errors when spaces
+were in paths.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bugs in the audio processing:
+error on last audio file.</P>
+<P STYLE="margin-bottom: 0.2in">Changed mpeg2enc -M 3 (use
+multiprocessors) to -M 0 because 1.8.0 
+</P>
+<P STYLE="margin-bottom: 0.2in">was crashing on athlon 64 X2
+machines.</P>
+<P STYLE="margin-bottom: 0.2in">Added &quot;-compose src-over&quot;
+option to composite calls for compatibility with Debian Etch.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when passing a single audio
+file longer than the slideshow.</P>
+<P STYLE="margin-bottom: 0.2in">Removed rpm check for supporting
+applications.</P>
+<P STYLE="margin-bottom: 0.2in">Checks for crossfade duration = 0 and
+handles it correctly.</P>
+<P STYLE="margin-bottom: 0.2in">Checks that audio and image files
+exist while parsing .txt file.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed minor bug where an extra
+(non-existant) subtitle was rendered.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when fading in to a first
+slide that is a scroll effect.</P>
+<P STYLE="margin-bottom: 0.2in">Subtitle timing bug fixed!</P>
+<P STYLE="margin-bottom: 0.2in">Small fix in displaying total number
+of pictures processed</P>
+<P STYLE="margin-bottom: 0.2in">Better logging to logfile.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed ignored line if last line does
+not contain a line break.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+** Changed output directory option to be the same as dvd-slideshow</P>
+<P STYLE="margin-bottom: 0.2in">Spaces in filenames should work now.</P>
+<P STYLE="margin-bottom: 0.2in">Checks that xml files exist before
+proceeding.</P>
+<P STYLE="margin-bottom: 0.2in">Added option to pass an embedded
+image (-e image.jpg). Thanks Marcus Brown</P>
+<P STYLE="margin-bottom: 0.2in">Added &quot;upAction&quot; option for
+use with dvd-bakery. Thanks Marcus Brown!</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug in pal mode variable
+passing. (thanks Marcus Brown)</P>
+<P STYLE="margin-bottom: 0.2in">Changed head 4 to head -n 4</P>
+<P STYLE="margin-bottom: 0.2in">Added variable &quot;mpeg2enc_params&quot;
+for easier changing of mpeg2enc parameters.</P>
+<P STYLE="margin-bottom: 0.2in">Get rid of rpm checks.</P>
+<P STYLE="margin-bottom: 0.2in">Added low quality mode -L for use
+with dvd-slideshow.</P>
+<P STYLE="margin-bottom: 0.2in">Added -nocleanup option to save files
+in temp directory for debugging.</P>
+<P STYLE="margin-bottom: 0.2in">Added &quot;-compose src-over&quot;
+to all composite lines for compatibility with Debian Etch.</P>
+<P STYLE="margin-bottom: 0.2in">Added -H high-quality option as a
+placeholder for future use</P>
+<P STYLE="margin-bottom: 0.2in">Added -smp option as a dummy option
+for compatibility with dvd-slideshow</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Passing -c 0 does not create crossfades.</P>
+<P STYLE="margin-bottom: 0.2in">Added option -notitle</P>
+<P STYLE="margin-bottom: 0.2in">Added option to specify background
+color or image -b image.jpg</P>
+<P STYLE="margin-bottom: 0.2in">Fix output of &quot;backgound:0:black&quot;
+on first line.</P>
+<P STYLE="margin-bottom: 0.2in">It should read &quot;background:0::black&quot;</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">gallery1-to-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Changed name from gallery2slideshow to gallery1-to-slideshow to avoid</P>
+<P STYLE="margin-bottom: 0.2in">confusion... it does not work on
+gallery v.2.x albums!</P>
+<P STYLE="margin-bottom: 0.2in">Add -b background image option</P>
+<P STYLE="margin-bottom: 0.2in">Fix for finding all images in album.
+Thanks Ivan Espinosa!</P>
+<P STYLE="margin-bottom: 0.2in">Added a few more quotes around
+variables to help with spaces in filenames.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in"><BR><BR>
+		</DT></DL>
+</DL>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.2</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Faster Kenburns effect rendering when using black background.</P>
+<P STYLE="margin-bottom: 0.2in">Allow multiple sequential audio files
+in input .txt file.</P>
+<P STYLE="margin-bottom: 0.2in">Changed &quot;head -1&quot; to &quot;head
+-n 1&quot;</P>
+<P STYLE="margin-bottom: 0.2in">Allow .png and .jpeg extensions.</P>
+<P STYLE="margin-bottom: 0.2in">Allow \n in subtitles to designate
+end-of line breakpoints</P>
+<P STYLE="margin-bottom: 0.2in">Checks for required program version
+better now.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed ppmtoy4m compatibility error
+for compatibility with mjpegtools &gt;= 1.6.3-0.1</P>
+<P STYLE="margin-bottom: 0.2in">Allow &quot;exit&quot; keyword in
+.txt file (for easier debugging).</P>
+<P STYLE="margin-bottom: 0.2in">Fixed pixel aspect ratio problem.
+(hopefully)</P>
+<P STYLE="margin-bottom: 0.2in">Add option to render subtitles with
+spumux and .srt files (beta)</P>
+<P STYLE="margin-bottom: 0.2in">Cleans up old temporary files if they
+exist.</P>
+<P STYLE="margin-bottom: 0.2in">Better logfile output. Hopefully
+catches program call errors.</P>
+<P STYLE="margin-bottom: 0.2in">Title2 text and bar locations
+referenced to bottom of frame for better PAL/NTSC compatibility.</P>
+<P STYLE="margin-bottom: 0.2in">Subtitle stays constant between
+slides if they both have the same subtitle (thanks Andre Weilert)</P>
+<P STYLE="margin-bottom: 0.2in">All temporary files are created in a
+temporary directory now.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when fading in to a scroll
+effect. (remove tab at EOL).</P>
+<P STYLE="margin-bottom: 0.2in">Changed progress display slightly (
+counts pictures ).</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Better checking for correct versions of required programs.</P>
+<P STYLE="margin-bottom: 0.2in">Logfile output to dvd-menu.log</P>
+<P STYLE="margin-bottom: 0.2in">Reads default variables from
+~/.dvd-slideshowrc</P>
+<P STYLE="margin-bottom: 0.2in">Obeys &quot;autocrop&quot; option</P>
+<P STYLE="margin-bottom: 0.2in">Pixel aspect ratio should be correct
+now.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">gallery2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Another fix to allow newlines in gallery comments. These should
+correctly get translated into \n characters.</P>
+<P STYLE="margin-bottom: 0.2in">Strips out &lt;a href=””&gt; and
+&lt;/a&gt; tags also. 
+</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.1</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Added log file output to dvd-slideshow.log</P>
+<P STYLE="margin-bottom: 0.2in">Updated documentation and examples</P>
+<P STYLE="margin-bottom: 0.2in">Background color can now take a
+#RRGGBB value</P>
+<P STYLE="margin-bottom: 0.2in">Nicer progress indicator</P>
+<P STYLE="margin-bottom: 0.2in">AC3 audio is now the default. Pass
+-mp2 to force MP2 audio.</P>
+<P STYLE="margin-bottom: 0.2in">Autocrop works on background images
+now also.</P>
+<P STYLE="margin-bottom: 0.2in">Added code to check for all temporary
+fade_xxxx.ppm images before proceeding to encode mpeg video. 
+</P>
+<P STYLE="margin-bottom: 0.2in">Fadein or crossfade to a scroll
+effect works correctly now.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Automatically creates output directory if it does not exist.</P>
+<P STYLE="margin-bottom: 0.2in">Added option -nomenu if you do not
+want to create a menu</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Now reads the following file extensions in the specified directory: 
+</P>
+<P STYLE="margin-bottom: 0.2in">.jpg .JPG .jpeg .png .PNG</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.0</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Default variables can be set in a ${HOME}/.dvd-slideshowrc file</P>
+<P STYLE="margin-bottom: 0.2in">Default variables can be set in the
+input .txt file</P>
+<P STYLE="margin-bottom: 0.2in">Crossfade and fadein to kenburns
+effect correctly fades to the first frame geometry instead of the
+whole image.</P>
+<P STYLE="margin-bottom: 0.2in">New keywords for the start and end
+points in kenburns effect:</P>
+<P STYLE="margin-bottom: 0.2in">topleft/middle/middleright etc. See
+docs for details.</P>
+<P STYLE="margin-bottom: 0.2in">New keywords for the crop function
+also.</P>
+<P STYLE="margin-bottom: 0.2in">9999 audio files possible now. Used
+to be a limit of 9</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when fading in to a cropped
+image.</P>
+<P STYLE="margin-bottom: 0.2in">Removed -R 2 and -c options in
+mpeg2enc because some people had problems.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed subtitle timing bug, so now the
+subtitles appear and disappear closer to the correct time.</P>
+<P STYLE="margin-bottom: 0.2in">Changed encoded audio bitrate from
+224kb/s to 128kb/s</P>
+<P STYLE="margin-bottom: 0.2in">Works with toolame 0.2m beta and 0.2L
+now</P>
+<P STYLE="margin-bottom: 0.2in">Got rid of calls to NetPBM functions,
+so it is no longer required...</P>
+<P STYLE="margin-bottom: 0.2in">Changed &quot;wc -m&quot; call to &quot;wc
+--chars&quot; for better compatibility.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed syntax so spaces should be
+allowed in input files now.</P>
+<P STYLE="margin-bottom: 0.2in">Changed &quot;seq 2 1&quot; to &quot;seq
+2 -1 1&quot; for better compatibility</P>
+<P STYLE="margin-bottom: 0.2in">Added option to &quot;autocrop&quot;
+images (-c) that are close to the output aspect ratio, but not quite.</P>
+<P STYLE="margin-bottom: 0.2in">Title syntax changed... (see
+documentation)</P>
+<P STYLE="margin-bottom: 0.2in">Fadein/crossfade to a title or
+background slide works now.</P>
+<P STYLE="margin-bottom: 0.2in">Fadein/fadeout/crossfade works when
+previous/next slide is not actually an image/title/background. The
+next real slide will be used instead.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug in Low quality mode (-L)
+(extracopies bug)</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Added option -iso option to create the iso image</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">gallery2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Fix to not show hidden pictures for gallery v1.4.3-pl1</P>
+<P STYLE="margin-bottom: 0.2in">( thanks Frederic! )</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when passing html links in
+subtitle field</P>
+<P STYLE="margin-bottom: 0.2in">dvd-slideshow supports duration in
+fractional seconds.</P>
+<P STYLE="margin-bottom: 0.2in">Allow for &quot;.&quot; as the album
+path</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.6.0</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Fixed major bug/error when generating long slideshows.</P>
+<P STYLE="margin-bottom: 0.2in">Now all video gets piped in YUV fomat
+through mpeg2enc</P>
+<P STYLE="margin-bottom: 0.2in">in one single block. (fix by Mike
+Beller. Thanks!)</P>
+<P STYLE="margin-bottom: 0.2in">Added option to generate AC3 audio
+files (requires ffmpeg &gt; 0.4.8)</P>
+<P STYLE="margin-bottom: 0.2in">Fixed title slide when using -L (low
+quality mode)</P>
+<P STYLE="margin-bottom: 0.2in">Allow for slide durations to be
+specified in hundreths of a second: 5.23</P>
+<P STYLE="margin-bottom: 0.2in">Reports total audio and video lengths
+at the beginning of the code.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when using subtitles. (no
+subtitles were generated)</P>
+<P STYLE="margin-bottom: 0.2in">Changed output files to be .vob
+extension instead of .mpg</P>
+<P STYLE="margin-bottom: 0.2in">Better font searching (thanks Jim
+Crumley)</P>
+<P STYLE="margin-bottom: 0.2in">Use backslash to escape a colon in
+subtitles (thanks Jim Crumley)</P>
+<P STYLE="margin-bottom: 0.2in">Allow avi input files. pre-alpha
+support. (thanks Jim Crumley)</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Added AC3 audio option (requires ffmpeg &gt; 0.4.8).</P>
+<P STYLE="margin-bottom: 0.2in">Mplexed files are now correctly
+labeled with the .vob extension.</P>
+<P STYLE="margin-bottom: 0.2in">Better font searching (thanks Jim
+Crumley)</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.5.4</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Added option to re-define background image from text file input.</P>
+<P STYLE="margin-bottom: 0.2in">Code cleanup (slightly)</P>
+<P STYLE="margin-bottom: 0.2in">Added support for two audio tracks.</P>
+<P STYLE="margin-bottom: 0.2in">Added audio effects: fadein/fadeout</P>
+<P STYLE="margin-bottom: 0.2in">Default command-line audio
+fadein/fadeout time is 3 seconds.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+New! Creates an dvd-slideshow input file from a directory of
+pictures.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-bottom: 0.2in">Updated man pages for dir2slideshow,
+gallery2slideshow, and jigl2slideshow.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.5.2</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Fixed bug in musictitle Title info parsing.</P>
+<P STYLE="margin-bottom: 0.2in">Checks to make sure a slidshow name
+is passed.</P>
+<P STYLE="margin-bottom: 0.2in">Added low-quality mode (-L) for
+testing. Speeds things up about 4x.</P>
+<P STYLE="margin-bottom: 0.2in">Reduced verbosity.</P>
+<P STYLE="margin-bottom: 0.2in">Checks for required fonts. Subtitles
+look much better now.</P>
+<P STYLE="margin-bottom: 0.2in">Word-wraps long subtitle lines into
+two lines.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Fixed audio bug when no audio was used. (re-mplex error)</P>
+<P STYLE="margin-bottom: 0.2in">Added -c continuous play option
+(&lt;post&gt; jumps to next title).</P>
+<P STYLE="margin-bottom: 0.2in">Added -D do not run dvdauthor option.</P>
+<P STYLE="margin-bottom: 0.2in">Added -W do not create a 50% white
+background under menu text.</P>
+<P STYLE="margin-bottom: 0.2in">dvdauthor xml structure changed
+slightly</P>
+<P STYLE="margin-bottom: 0.2in">DVD Title (-n) is now optional.</P>
+<P STYLE="margin-bottom: 0.2in">Added man page.</P>
+<P STYLE="margin-bottom: 0.2in">Checks for nice fonts and uses them
+if available.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-bottom: 0.2in">Added install.sh script to install
+man pages along with dvd-slideshow and dvd-menu.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.5.0</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Added KenBurns effect! See docs for usage.</P>
+<P STYLE="margin-bottom: 0.2in">Added scroll effect! See docs for
+usage.</P>
+<P STYLE="margin-bottom: 0.2in">Added crop effect. See docs for
+usage.</P>
+<P STYLE="margin-bottom: 0.2in">Audio can be started and stoped for
+multiple files within the text file. See docs for usage.</P>
+<P STYLE="margin-bottom: 0.2in">Added &quot;musictitle&quot; option
+for displaying audio info.</P>
+<P STYLE="margin-bottom: 0.2in">You can now comment out lines in the
+textfile by using the # character.</P>
+<P STYLE="margin-bottom: 0.2in">Also ignores blank lines in textfile.</P>
+<P STYLE="margin-bottom: 0.2in">Fades can now have up to 9999 frames.</P>
+<P STYLE="margin-bottom: 0.2in">Total slides can now be 9999. You
+guys are crazy.</P>
+<P STYLE="margin-bottom: 0.2in">fixed small bug when no chapters are
+specified.</P>
+<P STYLE="margin-bottom: 0.2in">Chapter markers are now rounded up to
+the next full second due to a bug in some versions of dvdauthor.</P>
+<P STYLE="margin-bottom: 0.2in">Only checks for oggdec or lame if you
+pass an ogg or mp3 file.</P>
+<P STYLE="margin-bottom: 0.2in">Changed syntax of command line input
+for files and audio.</P>
+<P STYLE="margin-bottom: 0.2in">Passing images on the command line is
+no longer public. Use the text file in put instead.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed audio problem with some mp3
+files getting pops in them.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in"><B>dvd-menu</B></DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Changed name to dvd-menu from dvd-mainmenu</P>
+<P STYLE="margin-bottom: 0.2in">Only requires lame or oggdec if
+you're passing a mp3 or ogg file.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed some audio bugs (sampling) so
+it should work better.</P>
+<P STYLE="margin-bottom: 0.2in">Will automatically delete AUDIO_TS
+and VIDEO_TS directories in your output directory if they already
+exist.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">gallery2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+Added option (-c duration) to put a crossfade for duration seconds
+between every picture.</P>
+<P STYLE="margin-bottom: 0.2in">Added default fadeout after title
+slide.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4.8</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4.8 Changed audio to process raw (headerless) audio files before
+joining them.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when passing multiple audio
+files (again).</P>
+<P STYLE="margin-bottom: 0.2in">Fixed audio fadein/fadeout time to 1
+second</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug in audio where it plays to
+fast when burned on dvd.</P>
+<P STYLE="margin-bottom: 0.2in">Checks to make sure audio files exist
+before processing.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4.6</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in"><B>dvd-slideshow</B></DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4.6 Fixed bug when passing multiple audio files. (thanks Scott
+Merrill)</P>
+<P STYLE="margin-bottom: 0.2in">Removed -t option from toolame
+command for better support for old versions.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-mainmenu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4.6 Fixed bug when checking for toolame (thanks Scott Merrill)</P>
+<P STYLE="margin-bottom: 0.2in">Removed -t option from toolame for
+better compatibility with old versions.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4.4</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in"><B>dvd-slideshow</B></DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4.4 Only writes chapter markers when there is a picture or title</P>
+<P STYLE="margin-bottom: 0.2in">First chapter marker is now fixed at
+time 0</P>
+<P STYLE="margin-bottom: 0.2in">Max number of chapter markers is now
+99 (thanks Jens Gecius)</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when checking for toolame
+(thanks Jens Gecius)</P>
+<P STYLE="margin-bottom: 0.2in">Added &quot;crossfade&quot; option!</P>
+<P STYLE="margin-bottom: 0.2in">Will use mpeg3cat from libmpeg3 to
+join mpegs if available.</P>
+<P STYLE="margin-bottom: 0.2in">Small fix to allow semicolons in
+subtitles (thanks Jim Crumley)</P>
+<P STYLE="margin-bottom: 0.2in">Added -s option to mpeg2enc calls for
+(maybe?) better compatibility.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">gallery2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4 Added fadein before first picture and fadeout at the end</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in"><B>jigl2slideshow</B></DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.3 Added default fade in at beginning and out at end</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4.2</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4.2 Current working directory will be used if -o not specified.</P>
+<P STYLE="margin-bottom: 0.2in">Allow &quot;background&quot; keyword
+in text file to insert background.</P>
+<P STYLE="margin-bottom: 0.2in">Make sure all ImageMagick calls have
+-depth 8 to make ppmtoy4m happy.</P>
+<P STYLE="margin-bottom: 0.2in">No font is specified in ImageMagick
+calls, so it should use the default.</P>
+<P STYLE="margin-bottom: 0.2in">Changed default menu to a steelblue
+gradient when no image is passed.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-mainmenu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4.2 Changed location of main title slightly lower.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed one hardcoded 720x480 image so
+PAL option should work better.</P>
+<P STYLE="margin-bottom: 0.2in">Added -depth 8 to ImageMagick calls
+to fix ppmtoy4m errors.</P>
+<P STYLE="margin-bottom: 0.2in">Upgraded main menu background when no
+background is passed.</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4 Fixed bug when no background specified (again).</P>
+<P STYLE="margin-bottom: 0.2in">Added error checking to make sure
+image files exist.</P>
+<P STYLE="margin-bottom: 0.2in">Ogg audio format supported (you must
+have oggdec).</P>
+<P STYLE="margin-bottom: 0.2in">Uses toolame for mp2 audio encoding
+when available.</P>
+<P STYLE="margin-bottom: 0.2in">Audio timing improved.</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when double-quotes were in
+subtitle.</P>
+<P STYLE="margin-bottom: 0.2in">Added black, fadein, and fadeout
+options in txtfile!</P>
+<P STYLE="margin-bottom: 0.2in">-p (PAL format option) added. Not
+tested, but should work.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-mainmenu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.4 Added support for ogg and wav audio tracks</P>
+<P STYLE="margin-bottom: 0.2in">Fixed bug when no background
+specified.</P>
+<P STYLE="margin-bottom: 0.2in">-p (PAL format option) added. Not
+tested, but should work.</P>
+<P STYLE="margin-bottom: 0.2in">White background behind buttons is
+now 50% transparency so it looks better.</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.3</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.3 Fixed error when no background specified. Now default is
+black<BR>Added checking for required programs before running.</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-mainmenu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.3 Added section to check for required programs</P>
+<P STYLE="margin-bottom: 0.2in">If no background passed, a black one
+will be used.</P>
+<P STYLE="margin-bottom: 0.2in">gallery2slideshow</P>
+<P STYLE="margin-bottom: 0.2in">0.3 Added extra file checking before
+processing for better stability from Scott Merrill &lt;skippy at
+skippy.net&gt; Thanks!!!</P>
+<P STYLE="margin-bottom: 0.2in">jigl2slideshow</P>
+<P STYLE="margin-bottom: 0.2in">0.2 Fixed minor bug when checking for
+output directory</P>
+<P STYLE="margin-bottom: 0.2in">0.1 Initial release (contributed by
+Scott Merrill &lt;skippy at skippy.net&gt; )</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.2</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in"><B>dvd-slideshow</B></DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+0.2 Initial release</P>
+<P STYLE="margin-bottom: 0.2in">dvd-mainmenu</P>
+<P STYLE="margin-bottom: 0.2in">0.2 Initial release</P>
+<P STYLE="margin-bottom: 0.2in">gallery2slideshow</P>
+<P STYLE="margin-bottom: 0.2in">0.2 Initial release</P>
+</BODY>
+</HTML>

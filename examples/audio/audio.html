@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Linux)">
+	<META NAME="CREATED" CONTENT="20040229;21092900">
+	<META NAME="CHANGED" CONTENT="20060121;15422300">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<DL>
+	<DT># Audio techniques example slideshow:</DT><DT>
+	# This is an example of a &quot;music video&quot; cd. My idea here</DT><DT>
+	# is to be able to burn a dvd full of music for a party, and have</DT><DT>
+	# it play for a long time. While it plays, the TV displays the 
+	</DT><DT>
+	# track titles. It turns out it takes way too long to encode a music</DT><DT>
+	# dvd, so this just serves as an example for how to do the audio...</DT><DT>
+	<FONT COLOR="#0000ff">title:5:My music DVD</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	# Audio is done just like a storyboard, where the starting point</DT><DT>
+	# is determined by where it occurs in the video sequence.</DT><DT>
+	# The audio file length is determined by the VIDEO sequence length.</DT><DT>
+	# the format is:</DT><DT>
+	# <FONT COLOR="#800000">audiofile:track:effect1
+	effect1_params:effect2 effect2_params</FONT></DT><DT>
+	# the effects are: fadein, fadeout, crossfade</DT><DT>
+	# Track is the audio track number, 1 or 2. For example, you can have</DT><DT>
+	# music on track 1 (default), and then narrate (director's cut) on</DT><DT>
+	# track 2. 
+	</DT><DT>
+	<FONT COLOR="#0000ff">strojovna_07-TEXEMPO-5s.ogg:1</FONT></DT><DT>
+	# this starts the audio track at the same time the next picture
+	starts.</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">picture1.jpg:3:Picture 1</FONT></DT><DT>
+	<FONT COLOR="#0000ff">picture2.jpg:5:Picture 2</FONT></DT><DT>
+	# note that since the audio track is only 5 seconds long, and the
+	two</DT><DT>
+	# pictures are 7 seconds long, the audio gets buffered out with
+	silence</DT><DT>
+	# for 2 seconds.</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">strojovna_07-TEXEMPO-5s.ogg:1</FONT></DT><DT>
+	<FONT COLOR="#0000ff">picture1.jpg:3:Picture 1</FONT></DT><DT>
+	# note that even though each audio track is 5 seconds long in this
+	example,</DT><DT>
+	# the last audio track will be cropped after 3 seconds since you're</DT><DT>
+	# about to pass a new audio track.</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">strojovna_07-TEXEMPO-5s.ogg:1</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	# now let's start some audio on track 2:</DT><DT>
+	<FONT COLOR="#0000ff">strojovna_07-TEXEMPO-5s.ogg:2</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	# if you want to display a slide with only the music info on the
+	screen,</DT><DT>
+	# use the &quot;musictitle&quot; keyword. The syntax is:</DT><DT>
+	# <FONT COLOR="#800000">musictitle:duration:subtitle:Title;Artist;Album</FONT></DT><DT>
+	# Note that you can use the special &quot;audio&quot; keyword in
+	place of the</DT><DT>
+	# duration. What this does is force the duration to continue for as
+	long</DT><DT>
+	# as the last audio track plays.</DT><DT>
+	<FONT COLOR="#0000ff">musictitle:audio::TEXEMPO:Strojovna 07;Mirnix</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	# in order to have two audio tracks separted by a delay, use</DT><DT>
+	# the &quot;silence&quot; audio keyword:</DT><DT>
+	# <FONT COLOR="#800000">silence:track</FONT></DT><DT>
+	<FONT COLOR="#0000ff">silence:1</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	# put in a delay image slide:</DT><DT>
+	<FONT COLOR="#0000ff">background:2::black</FONT></DT><DT>
+	# note that this could just as well be a picture like:</DT><DT>
+	# picture1.jpg:2:Picture 1</DT><DT>
+	<BR>
+	</DT><DT>
+	# Each audio file can have effects fadein or fadeout. The default</DT><DT>
+	# is fadein=0, fadeout=0 seconds. The syntax looks like:</DT><DT>
+	<FONT COLOR="#0000ff">strojovna_07-TEXEMPO-5s.ogg:1:fadein:0:fadeout:1</FONT></DT><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">musictitle:audio::TEXEMPO:Strojovna 07;Mirnix</FONT></DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DT>
+	<FONT COLOR="#0000ff">strojovna_07-TEXEMPO-5s.ogg:2:fadein:1:fadeout:1</FONT></DT><DT>
+	<FONT COLOR="#0000ff">musictitle:audio::TEXEMPO:Strojovna 07;Mirnix
+	(again)</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">strojovna_07-TEXEMPO-5s.ogg:1:fadein:1:fadeout:1</FONT></DT><DT>
+	<FONT COLOR="#0000ff">musictitle:audio::TEXEMPO:Strojovna 07;Mirnix
+	(yet again)</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	# if you have a long slideshow and short audio tracks,</DT><DD STYLE="margin-left: 0in">
+	# you can also add multiple audio files together in the following
+	way:</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">strojovna_07
+	TEXEMPO-5s.ogg:1:fadein:1:fadeout:1</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">strojovna_07
+	TEXEMPO-5s.ogg:1:fadein:1:fadeout:1</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">strojovna_07
+	TEXEMPO-5s.ogg:1:fadein:1:fadeout:1</FONT></DD><DD STYLE="margin-left: 0in">
+	# and then they will all be concatenated as one audio file</DD><DD STYLE="margin-left: 0in">
+	# for the rest of the slideshow...</DD><DD STYLE="margin-left: 0in">
+	<BR>
+	</DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">picture1.jpg:8:Picture 1</FONT></DD><DD STYLE="margin-left: 0in">
+	<FONT COLOR="#0000ff">picture2.jpg:8:Picture 2</FONT></DD><DD>
+	<BR>
+	</DD><DT STYLE="margin-bottom: 0.2in">
+	# you get the idea?</DT></DL>
+</BODY>
+</HTML>

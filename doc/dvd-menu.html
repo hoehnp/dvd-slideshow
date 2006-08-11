@@ -1,0 +1,160 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of dvd-menu</TITLE>
+</HEAD><BODY>
+<H1>dvd-menu</H1>
+Section: dvd-slideshow (1)<BR>Updated: 0.7.5<BR><A HREF="#index">Index</A>
+<A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+<P>
+
+dvd-menu - Creates a DVD navigation menu with buttons.
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+
+dvd-menu <I>-t</I> &lt;<I>ButtonText1</I>&gt; ... <I>-t</I> &lt;<I>ButtonTextN</I>&gt; <I>-f</I> &lt;<I>XML_file1 | MPEG_file1</I>&gt; ... <I>-f</I> &lt;<I>XML_fileN | MPEG_fileN</I>&gt; [<I>-o</I> &lt;<I>output directory</I>&gt;] [<I>-n</I> &lt;<I>DVD Title</I>&gt;] [<I>-b</I> &lt;<I>background jpeg</I>&gt;] [<I>-e</I> &lt;<I>embed image</I>&gt;] [<I>-a</I> &lt;<I>audiofile</I>&gt;]  [<I>-p</I>] [<I>-c</I>] [<I>-D</I>] [<I>-W</I>] [<I>-mp2</I>] [<I>-iso</I>] [<I>-nomenu</I>] [<I>-L</I>]
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<P>
+
+Creates a simple top-level DVD menu with buttons that link to movies.  Accepts the output XML files from dvd-slideshow or your own self-defined MPEG movies.
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<P>
+
+<P>
+<DL COMPACT>
+<DT><B>-t</B> &lt;<I>Button text</I>&gt;<DD>
+The button text visible on the menu which will link to each corresponding (in order passed) -f option.  Use this option multiple times with -f to define multiple titles/buttons.
+<P>
+<DT><B>-f</B> &lt;<I>Input file</I>&gt;<DD>
+Can be an XML file output from dvd-slidshow or a full-scale mpeg2 video in the proper format (.vob).  No error checking is done if you pass a MPEG2 .vob input file, so you are on your own. Use this option multiple times with -t to define multiple titles/buttons.
+<P>
+<DT>[<B>-o</B> &lt;<I>Output directory</I>&gt;]<DD>
+Directory where the final DVD filesystem files VIDEO_TS/ will be written.
+<P>
+<DT>[<B>-n</B> &lt;<I>DVD Title</I>&gt;]<DD>
+This will be printed at the top of the DVD menu page.
+<P>
+<DT>[<B>-b</B> &lt;<I>Background jpeg</I>&gt;]<DD>
+Image to use for the background DVD menu. If no file is specified, a blue gradient will be used for the menu background.
+<P>
+<P>
+<DT>[<B>-e</B> &lt;<I>embed image</I>&gt;]<DD>
+Embed an image in the menu screen.  This image will show up to the left of the menu buttons.
+<P>
+<DT>[<B>-a</B> &lt;<I>Audio file</I>&gt;]<DD>
+Audio file to play while the menu is active. Supports mp3, ogg, or wav formats at this point.
+<P>
+<DT>[<B>-mp2</B>]<DD>
+Use mp2 audio by default (requires ffmpeg with ac3 encoding). The default audio format is now AC3 instead of mpeg2 sinceI have found that many DVD players do not play the audio when it is in mp2 format, so this may be a better, more compatible option for most people. 
+<P>
+<DT>[<B>-p</B>]<DD>
+Use PAL output video format instead of NTSC.
+<P>
+<DT>[<B>-c</B>]<DD>
+Use continuous &lt;post&gt; commands within dvdauthor.  This will make each video play one after another without going back up to the main menu until the last video is finished.  If this option is not used, the dvd will return to the top menu after playing each track.
+<P>
+<DT>[<B>-D</B>]<DD>
+Do not call dvdauthor.  This will tell dvd-menu to create the menu and output xml files to pass to dvdauthor, but will not actually run dvdauthor.  Useful for people who want to modify their xml file before running dvdauthor.
+<P>
+<DT>[<B>-W</B>]<DD>
+Do not generate 50% transparent white background overlays under the title and menu buttons.
+<P>
+<DT>[<B>-iso</B>]<DD>
+Create iso image with mkisofs when finished.
+<P>
+<DT>[<B>-nomenu</B>]<DD>
+Do not create a menu.  Useful for just finishing the dvdauthor xml file from one video that you want to just start playing when the user puts it into a dvd player.
+<P>
+<DT>[<B>-L</B>]<DD>
+Create a low quality, half-slize menu.  This works with dvd-slideshow so you can render your whole project in low-quality mode and still test everything quickly.
+<P>
+<DT><B>-h</B><DD>
+Prints help file (basically this manpage).
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>INPUT FILE</H2>
+
+<P>
+
+<DL COMPACT>
+<DT>No input file info yet.  Hopefully we will be able to control dvd-menu better in the future by means of a simple text file like in dvd-slideshow.  This should allow sub-menus and more complex menuing. (not implemented yet)<DD>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>Variables</H2>
+
+<P>
+
+<DL COMPACT>
+<DT>Reads variables from the ~/.dvd-slideshowrc file.  See dvd-slideshow for settings.<DD>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>FILES</H2>
+
+<P>
+
+<I>dvd-slideshow</I> 
+<BR>
+
+<I>dvd-menu</I> 
+<BR>
+
+<I>gallery1-to-slideshow</I> 
+<BR>
+
+<I>dir2slideshow</I> 
+<BR>
+
+<I>jigl2slideshow</I> 
+<A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+<P>
+
+There are a few heavily-commented examples available in the examples section of the dvd-slideshow webpage, which you can find at <A HREF="http://dvd-slideshow.sourceforge.net/examples">http://dvd-slideshow.sourceforge.net/examples</A>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+<P>
+
+Scott Dylewski &lt;scott at dylewski dot com&gt;
+<BR>
+
+<A HREF="http://dvd-slideshow.sourceforge.net">http://dvd-slideshow.sourceforge.net</A>
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<P>
+
+<A HREF="http://localhost/cgi-bin/man/man2html?1+dvd-slideshow">dvd-slideshow</A>(1)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">INPUT FILE</A><DD>
+<DT><A HREF="#lbAG">Variables</A><DD>
+<DT><A HREF="#lbAH">FILES</A><DD>
+<DT><A HREF="#lbAI">EXAMPLES</A><DD>
+<DT><A HREF="#lbAJ">AUTHORS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 06:09:55 GMT, March 10, 2006
+</BODY>
+</HTML>

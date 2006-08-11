@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# example dvd burning command.  I use this to burn a dvd iso image
+
+sudo cdrecord -v driveropts=burnfree -eject -dao dev=ATA:1,0,0 $1
+

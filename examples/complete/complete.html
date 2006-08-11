@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Linux)">
+	<META NAME="CREATED" CONTENT="20040118;17014100">
+	<META NAME="CHANGED" CONTENT="20060308;23385100">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<DL>
+	<DT>This example is designed to show how to make a simple dvd
+	slideshow from start to finish. I'm assuming you have installed all
+	the required packages first.</DT><DT>
+	<BR>
+	</DT><DT>
+	Let's assume we have a directory with a bunch of pictures that we
+	want to use in a slideshow. The directory is called &quot;my_pictures&quot;.</DT><DT>
+	Use the dir2slideshow script to quickly generate an appropriate
+	listing of the pictures in &quot;my_pictures&quot;. We want each
+	picture to be displayed for 5 seconds before going on to the next
+	picture. The name of the slideshow will be &quot;Complete example&quot;:</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; dir2slideshow -n 'Complete example' -t 5
+	-c 1 my_pictures</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	This will generate an output file &quot;Complete_example.txt&quot;
+	that looks like this:</DT><DD>
+	<BR>
+	</DD><DT>
+	background:0::black</DT><DD STYLE="margin-left: 0in">
+	title:5:Complete example</DD><DD STYLE="margin-left: 0in">
+	fadeout:1</DD><DD STYLE="margin-left: 0in">
+	background:1</DD><DD STYLE="margin-left: 0in">
+	fadein:1</DD><DD STYLE="margin-left: 0in">
+	my_pictures/640x480_grid.jpg:5:</DD><DD STYLE="margin-left: 0in">
+	crossfade:1:</DD><DD STYLE="margin-left: 0in">
+	my_pictures/pano.jpg:5:</DD><DD STYLE="margin-left: 0in">
+	crossfade:1:</DD><DD STYLE="margin-left: 0in">
+	my_pictures/picture1.jpg:5:</DD><DD STYLE="margin-left: 0in">
+	crossfade:1:</DD><DD STYLE="margin-left: 0in">
+	my_pictures/picture2.jpg:5:</DD><DD STYLE="margin-left: 0in">
+	fadeout:1</DD><DD STYLE="margin-left: 0in">
+	background:1</DD><DT>
+	<BR>
+	</DT><DT>
+	This will be the input file to dvd-slideshow. If you want to do
+	anything fancy, you could edit this text file by hand at this point.
+	We won't bother since this is a simple example. We want to name the
+	slideshow &quot;test complete&quot;, and add some simple audio
+	during the slideshow:</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; dvd-slideshow -n 'test complete' -f
+	Complete_example.txt -a 'strojovna_07-TEXEMPO-30s.ogg'</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	You'll see the program display the progress, and assuming there are
+	no errors, it will finish by producing the following files in the
+	current directory:</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">test_complete.xml</FONT></DT><DT>
+	<FONT COLOR="#0000ff">test_complete.vob</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	The mpeg file is the actual video file that you can check to make
+	sure it looks ok. Use mplayer or your favorite video player:</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; mplayer test_complete.vob</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	Make sure everything looks ok. At this point, you could repeat this
+	process on a different directory to generate a new slideshow, where
+	we'd get a new set of .xml and .vob files corresponding to that
+	slideshow, but let's keep it simple for now with just one. 
+	</DT><DT>
+	<BR>
+	</DT><DT>
+	The .xml file is fairly simple. It contains the chapter information
+	and the name of the .vob file that you just created. It is used when
+	making a dvd button menu with dvd-menu. 
+	</DT><DT>
+	<BR>
+	</DT><DT>
+	To create a dvd navigation menu, call dvd-menu with the dvd title
+	&quot;Complete Example DVD&quot;, creating two buttons labeled &quot;My
+	example&quot; and &quot;Slideshow 2&quot; which both point to the
+	same video, test_complete.mpg:</DT><DT>
+	<BR>
+	</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; dvd-menu -t 'My example' -t 'Slideshow 2'
+	-f test_complete.xml -f test_complete.xml -n 'Complete Example DVD'</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	This command will write the output (real dvd filesystem) in the
+	directory &quot;dvd_fs&quot;. After the dvd-menu script finishes,
+	you can check out your final dvd with xine using the command:</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; xine -g -u 0 dvd:&quot;`pwd`/dvd_fs/&quot;</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	Now you may want to have a backup copy of all the original pictures
+	that went into your slideshow on the dvd. Before making the
+	dvd-compatible UDF filesystem, you can copy other stuff into the
+	top-level of your dvd:</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; cp -a my_pictures dvd_fs</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	The -a option copies recursively and keeps the date the same. Note
+	that you can now use the “-c” option in dvd-slideshow to perform
+	this same function! Now, in the dvd_fs directory, it looks like
+	this:</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; ls -F</FONT></DT><DT>
+	<FONT COLOR="#0000ff">AUDIO_TS/ my_pictures/ VIDEO_TS/</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	The AUDIO_TS/ and VIDEO_TS/ directories are required by the dvd
+	video standard, and contain all of the menus and video that will be
+	used when you put this dvd into your home dvd player. If you mount
+	it on your computer, you'll see the filesystem above.</DT><DT>
+	<BR>
+	</DT><DT>
+	Now let's create a dvd-compatible UDF filesystem that we can burn to
+	a real dvd:</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; mkisofs -dvd-video -udf -o dvd.iso dvd_fs</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	This will create the iso image dvd.iso that you can burn to a real
+	dvd with dvdrecord. You could have also used the &quot;-iso&quot;
+	option in dvd-menu to automatically create the iso image at the end
+	of the dvd-menu script. I'm assuming that you've already found out
+	which device your dvd recorder is on with &quot;dvdrecord –scanbus&quot;
+	or equivalent. Mine is at bus 1, device 0, hence the dev=ATA:1,0,0.</DT><DT>
+	<BR>
+	</DT><DT>
+	<FONT COLOR="#0000ff">&gt; dvdrecord -v -eject -dao speed=4
+	dev=ATA:0,1,0 dvd.iso</FONT></DT><DT>
+	<BR>
+	</DT><DT>
+	When finished, try it out in your computer or home dvd player! 
+	</DT><DD STYLE="margin-bottom: 0.2in">
+	<BR><BR>
+	</DD></DL>
+</BODY>
+</HTML>

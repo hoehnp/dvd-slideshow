@@ -1,0 +1,15 @@
+Known bugs:
+
+0.7.2
+Subtitle timings can be off
+Fadein to a first slide that is a "scroll" effect problem
+Using a crossfade/fadein/fadeout duration of zero caused problem
+RPM checks were outputting lots of garbage on Debian systems.
+Bug when only using "silence" audio keyword in a slideshow.
+Bug when passing only one audio file longer than slideshow.
+Bug when audio or image files didn't exist.
+Crashes on some x86_64 systems due to -M 3 option in mjpegtools.
+
+0.7.1
+mjpegtools >= 1.6.3 causes error, ""
+

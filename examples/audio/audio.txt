@@ -1,0 +1,77 @@
+# Audio techniques example slideshow:
+# This is an example of a "music video" cd.  My idea here
+# is to be able to burn a dvd full of music for a party, and have
+# it play for a long time.  While it plays, the TV displays the 
+# track titles. It turns out it takes way too long to encode a music
+# dvd, so this just serves as an example for how to do the audio...
+title:5:My music DVD
+
+# Audio is done just like a storyboard, where the starting point
+# is determined by where it occurs in the video sequence.
+# The audio file length is determined by the VIDEO sequence length.
+# the format is:
+# audiofile:track:effect1 effect1_params:effect2 effect2_params
+# the effects are: fadein, fadeout, crossfade
+# Track is the audio track number, 1 or 2.  For example, you can have
+# music on track 1 (default), and then narrate (director's cut) on
+# track 2. 
+strojovna_07 TEXEMPO-5s.ogg:1
+# this starts the audio track at the same time the next picture starts.
+
+picture1.jpg:3:Picture 1
+picture2.jpg:5:Picture 2
+# note that since the audio track is only 5 seconds long, and the two
+# pictures are 7 seconds long, the audio gets buffered out with silence
+# for 2 seconds.
+
+strojovna_07 TEXEMPO-5s.ogg:1
+picture1.jpg:3:Picture 1
+# note that even though each audio track is 5 seconds long in this example,
+# the last audio track will be cropped after 3 seconds since you're
+# about to pass a new audio track.
+
+strojovna_07 TEXEMPO-5s.ogg:1
+
+# now let's start some audio on track 2:
+strojovna_07 TEXEMPO-5s.ogg:2
+
+# if you want to display a slide with only the music info on the screen,
+# use the "musictitle" keyword.  The syntax is:
+# musictitle:duration:subtitle:Title;Artist;Album
+# Note that you can use the special "audio" keyword in place of the
+# duration.  What this does is force the duration to continue for as long
+# as the last audio track plays.
+musictitle:audio::TEXEMPO:Strojovna 07;Mirnix
+
+# in order to have two audio tracks separted by a delay, use
+# the "silence" audio keyword:
+# silence:track
+silence:1
+
+# put in a delay image slide:
+background:2::black
+# note that this could just as well be a picture like:
+# picture1.jpg:2:Picture 1
+
+# Each audio file can have effects fadein or fadeout.  The default
+# is fadein=0, fadeout=0 seconds.  The syntax looks like:
+strojovna_07 TEXEMPO-5s.ogg:1:fadein:0:fadeout:1
+musictitle:audio::TEXEMPO:Strojovna 07;Mirnix
+
+strojovna_07 TEXEMPO-5s.ogg:2:fadein:1:fadeout:1
+musictitle:audio::TEXEMPO:Strojovna 07;Mirnix (again)
+
+strojovna_07 TEXEMPO-5s.ogg:1:fadein:1:fadeout:1
+musictitle:audio::TEXEMPO:Strojovna 07;Mirnix (yet again)
+
+# if you have a long slideshow and short audio tracks, 
+# you can also add multiple audio files together in the following way:
+strojovna_07 TEXEMPO-5s.ogg:1:fadein:1:fadeout:1
+strojovna_07 TEXEMPO-5s.ogg:1:fadein:1:fadeout:1
+strojovna_07 TEXEMPO-5s.ogg:1:fadein:1:fadeout:1
+# and then they will all be concatenated as one audio file
+# for the rest of the slideshow...
+picture1.jpg:8:Picture 1
+picture2.jpg:8:Picture 2
+
+# you get the idea?

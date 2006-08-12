@@ -10,9 +10,9 @@ title:5:This is my title
 # full_path_to_file.jpg:Duration:Subtitle
 # duration is how long the picture will be visible in seconds.
 # The Subtitle field is optional and can be left blank.
-picture 1.jpg:5:Picture 1
-pano.jpg:5:What a cool picture
-picture2.jpg:5
+../images/picture 1.jpg:5:Picture 1
+../images/pano.jpg:5:What a cool picture
+../images/picture2.jpg:5
 
 # At any time in the slideshow, you can use special keywords:
 # "background:2:subtitle:black" will insert a black background frame

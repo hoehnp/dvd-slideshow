@@ -2,7 +2,7 @@
 # set some variables:
 debug=0
 # define background but don't display it:
-background:0::background.jpg
+background:0::../images/background.jpg
 # note that tenths or hundredths or thousandths of seconds can be specified:
 fadein:1.582
 # titlebar slides have an upper and lower title:
@@ -12,7 +12,7 @@ crossfade:1
 title:5.5:My Title
 fadeout:1.42
 # display a picture
-picture2.jpg:3.1
+../images/picture2.jpg:3.1
 # there are also effects which you can use:
 # scroll right/left, crop, and kenburns.
 # let's go through a "crop" first, because the syntax is simpler:
@@ -44,10 +44,10 @@ picture2.jpg:3.1
 # image.jpg:dur:sub:crop:50%;topleft
 # image.jpg:dur:sub:crop:imageheight;left
 crossfade:1
-picture1.jpg:2:Picture 1 cropped:crop:50%;topleft
+../images/picture1.jpg:2:Picture 1 cropped:crop:50%;topleft
 
 # now let's start playing the audio on track 1:
-strojovna_07-TEXEMPO-30s.ogg:1:
+../audio/strojovna_07-TEXEMPO-30s.ogg:1:
 
 # kenburns is the most flexible effect:
 # image.jpg:dur:sub:kenburns:start_box;end_box
@@ -70,20 +70,18 @@ strojovna_07-TEXEMPO-30s.ogg:1:
 # image.jpg:dur:sub:kenburns:50%;topleft;50%;bottomright
 # image.jpg:dur:sub:kenburns:100%;left;0,0;720,480
 # image.jpg:dur:sub:kenburns:100%;left;imageheight;left
-picture1.jpg:5:Wow, it's moving!:kenburns:50%;topleft;50%;middle;
+../images/picture1.jpg:5:Wow, it's moving!:kenburns:50%;topleft;50%;middle;
 # note that a fadeout gets applied to the previous picture
 # while the previous picture duration stays at 5 seconds here.
-
-exit
 
 fadeout:1
 background:1
 # now let's start playing the audio on track 2:
 # this is independent of audio track 1
-strojovna_07-TEXEMPO-30s.ogg:2
+../audio/strojovna_07-TEXEMPO-30s.ogg:2
 fadein:1
 # zoom in to left side of panorama:
-pano.jpg:4::kenburns:100%;left;imageheight;left
+../images/pano.jpg:4::kenburns:100%;left;imageheight;left
 # pano.jpg:2:pausing...:crop:imageheight;left # pause
 # You can scroll across a panorama picture by using the "scroll right"
 # or "scroll left" effects (up/down works also).
@@ -91,17 +89,17 @@ pano.jpg:4::kenburns:100%;left;imageheight;left
 # image.jpg:duration:subtitle:scroll:left
 # a duration of 10 is way too fast for the image below.  Change
 # it to 30 to make it look better, but it take longer to render.
-pano.jpg:10:Scrolling way too fast:scroll:right
+../images/pano.jpg:10:Scrolling way too fast:scroll:right
 # note that crossfadfes between scroll or kenburns effects get applied
 # so that it looks like they're laid on top of each other.
 crossfade:1
-pano.jpg:4::kenburns:imageheight;right;100%;left
+../images/pano.jpg:4::kenburns:imageheight;right;100%;left
 # note that this is the same as the following syntax, but it's much
 # easier to deal with instead of the older method:
 # pano.jpg:2::crop:4610,0;5334,480
 # we could do the kenburn effect backwards to zoom out, but
 # I hope you get the idea...
 crossfade:1
-picture2.jpg:3
+../images/picture2.jpg:3
 fadeout:1
 background:2:This is the background

@@ -4,7 +4,7 @@
 # it's often easier to do it in this text file:
 # background:duration:subtitle:image
 # a duration of 0 means to set the image, but don't display it.
-background:0::background.jpg
+background:0::../images/background.jpg
 
 # Titles are put in the center:
 title:5:My title
@@ -30,7 +30,7 @@ background:1
 # use a backslash to escape a colon ':' in the subtitles.
 # use '\n' to force a newline (only two subtitle lines supported now).
 fadein:1
-picture1.jpg:5:Picture 1 is so cool\:\nI can't believe how cool it really is.
+../images/picture1.jpg:5:Picture 1 is so cool\:\nI can't believe how cool it really is.
 
 # fadeout is similar:
 # fadeout:duration:subtitle
@@ -43,7 +43,7 @@ titlebar:5::Panoramas  # note this just has the bottom title specified.
 # crossfade works similar to fadein/fadeout
 # crossfade:duration:subtitle
 crossfade:1
-pano.jpg:5:Cool panorama picture
+../images/pano.jpg:5:Cool panorama picture
 
 # now let's change the background color:
 # syntax is background:duration:subtitle:image
@@ -53,9 +53,9 @@ background:2.5::#11a004
 # or
 background:2.5::black
 
-picture1.jpg:5:Picture 1 is so cool.  I can't believe how cool it really is.
+../images/picture1.jpg:5:Picture 1 is so cool.  I can't believe how cool it really is.
 crossfade:1
-picture2.jpg:5
+../images/picture2.jpg:5
 
 # it often looks nice to end the slideshow with a fadeout to the 
 # background instead of just stopping the video quickly:

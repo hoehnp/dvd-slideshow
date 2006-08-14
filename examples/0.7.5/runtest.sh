@@ -35,8 +35,8 @@ if [ ! -f "my_slideshow.vob" ] ; then
 fi
 
 echo "[runtest.sh] Executing command:"
-echo "[runtest.sh] dvd-menu -e picture1.jpg -t 'My slideshow' -f my_slideshow.xml -n 'my slideshow dvd' $*"
-dvd-menu -e picture1.jpg -t 'My slideshow' -f my_slideshow.xml -n 'my slideshow dvd' $*
+echo "[runtest.sh] dvd-menu -e ../images/picture1.jpg -t 'My slideshow' -f my_slideshow.xml -n 'my slideshow dvd' $*"
+dvd-menu -e "../images/picture1.jpg" -t 'My slideshow' -f my_slideshow.xml -n 'my slideshow dvd' $*
 
 if [ ! -f "menu.vob" ] ; then
         echo "[runtest.sh] ERROR: No output files found from dvd-menu!"

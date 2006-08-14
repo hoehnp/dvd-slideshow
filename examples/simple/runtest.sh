@@ -30,7 +30,7 @@ if [ ! -f "simple.xml" ] ; then
 fi
 
 echo "[runtest.sh] Executing command:"
-echo "[runtest.sh] dvd-menu -b background.jpg -t 'Test simple' -f simple.xml -n 'Simple DVD' $*"
+echo "[runtest.sh] dvd-menu -t 'Test simple' -f simple.xml -n 'Simple DVD' $*"
 dvd-menu -t 'Test simple' -f simple.xml -n 'Simple DVD' $*
 
 if [ ! -f "vmgm.xml" ] ; then

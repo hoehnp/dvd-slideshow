@@ -1105,8 +1105,8 @@ waitforfiles ()
 	local dir_tmp=`dirname "$1"`
 	local newfile_tmp="0"
 	local di_tmp="0"
-	[ -n "$3" ] && local start="$3" || local start="1" 
-	local end=$2
+	[ -n "$3" ] && local start=$( printf %4.0f $3 ) || local start="1" 
+	local end=$( printf %4.0f $2 )
 #	for i_tmp in `seq $start $2` ; do
 	for (( i_tmp=start ; i_tmp<=end ; i_tmp++ )) ; do
 		di_tmp=`addzeros $i_tmp`
@@ -2216,9 +2216,11 @@ kenburns ()  # KENBURNS
 		## start loop for kenburns effect: #################################
 		echo -n  "[dvd-slideshow]"
 #		for fr in `seq $l_startframe $stepsize $l_endframe`; do
+echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 		for (( fr=l_startframe ; fr<=l_endframe ; fr=fr+stepsize )) ; do
 			dj=`addzeros $fr`
 #			echo "frame=$fr/$l_frames"
+echo "s_height=$s_height e_height=$e_height"
 			if [ "$s_height" -eq "$e_height" ] ; then
 	#			logfactor=$(( 1000 * $fr / $l_frames ))
 				logfactor=$( echo "scale=3; 1000 * $fr / $l_frames" | bc )
@@ -2237,6 +2239,7 @@ kenburns ()  # KENBURNS
 					logfactor=$( echo "l( 1- $fr / $l_frames * ( 1 - $s_height / $e_height ) ) / l( $s_height / $e_height) * 1000 " | bc -l )
 				fi
 			fi
+echo "logfactor=$logfactor"
 			[ -z `echo $logfactor | awk -F. '{print $1}'` ] && logfactor=0$logfactor
 #			frl_frames_linear=$(( 1000 * $fr / $l_frames ))
 	                x0=$( echo "scale=3; 1000 * $xs0 + ($xe0-$xs0) * $logfactor" | bc )
@@ -2261,7 +2264,9 @@ kenburns ()  # KENBURNS
 				y1_dec=`printf %3.3f $y1_d | awk -F. '{print "0."$2}'`;
 #				myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec logfactor=$logfactor"
 			fi
+echo "before crop_parameters"
 			crop_parameters # figure out final crop parameters  0.19s
+echo "after crop_parameters"
 #			myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec logfactor=$logfactor"
 			# outputs correct predicted_resized_width and predicted_resized_height
 
@@ -2538,7 +2543,6 @@ set_system_variables ()
 	[ -n "$2" -a "$2" == 1 ] && noecho=1 || noecho=0
 	## check for global configuration variables:
 	case "$config" in 
-		debug) debug="$config2" ; [ "$noecho" -eq 0 ] && echo "debug=$debug" ;;
 		pal) pal="$config2" ; [ "$noecho" -eq 0 ] && echo "pal=$pal" ;;
 		ac3) ac3="$config2" ; [ "$noecho" -eq 0 ] && echo "ac3=$ac3" ;;
 		copy) copy="$config2" ; [ "$noecho" -eq 0 ] && echo "copy=$copy" ;;
@@ -2781,6 +2785,7 @@ set_variables ()
 	[ -n "$2" -a "$2" == 1 ] && noecho=1 || noecho=0
 	## check for global configuration variables:
 	case "$config1" in 
+		debug) debug="$config2" ; [ "$noecho" -eq 0 ] && echo "debug=$debug" ;;
 		# title
 		title_font_size) title_font_size="$config2" ; [ "$noecho" -eq 0 ] && echo "title_font_size=$title_font_size" ;;
 		title_font_color) title_font_color="$config2" ; [ "$noecho" -eq 0 ] && echo "title_font_color=$title_font_color" ;;
@@ -3647,7 +3652,7 @@ frame_height=$(( $dvd_height - 2 * $frame_border ))
 [ "$svcd" -eq 1 ] && myecho "[dvd-slideshow] SVCD mode"
 myecho "[dvd-slideshow] Video: $ntsc_or_pal $dvd_width"x"$dvd_height $framerate $aspect_ratio"
 myecho "[dvd-slideshow] Audio: $mp2_or_ac3 $audio_sample_rate $audio_bitrate" 
-myecho "[dvd-slideshow] Debug=$debug  Autocrop=$autocrop Subtitles=$subtitle_type"
+myecho "[dvd-slideshow] Debug=$debug  Autocrop=$autocrop Subtitles=$subtitle_type Border=$frame_border"
 if [ "$manual_chapter_markers" == 1 ] ; then
 	myecho "[dvd-slideshow] Chapter markers= Manual"
 fi	
@@ -4970,7 +4975,8 @@ for file in "${image[@]}"; do
 			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
 		fi
-#		echo "previous_increment=$previous_increment next_increment=$next_increment"
+		echo "previous_increment=$previous_increment next_increment=$next_increment"
+		echo "previous_frames=$previous_frames next_frames=$next_frames frames=$frames"
 		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
 			kenburns "$window_start" "$window_end" "$file" "$frames" "$(( $previous_frames + 1 ))" "$(( $frames - $next_frames ))" "$normal_bg"
 

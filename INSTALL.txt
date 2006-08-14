@@ -1,3 +1,17 @@
+Install locations according to LSB:
+http://www.freestandards.org/docs/lsbbook/install-app.html
+
+For dvd-slideshow 0.8.0, we'll install into this location:
+/opt/dvd-slideshow/bin  (how to add to path?)
+/opt/dvd-slideshow/share/man
+/opt/dvd-slideshow/share/doc
+/etc/opt/dvd-slideshow/
+/var/opt/dvd-slideshow/
+system administrator may add links from /opt/bin to the /opt/dvd-slideshow/bin 
+I figure we'll have to add a link from /usr/local/bin to
+/opt/dvd-slideshow/bin/ also...
+
+
 First, you'll need all of the required packages in order to create
 and burn a dvd:
 

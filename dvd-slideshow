@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.0-pre5'
+version='0.8.0-pre6'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -46,6 +46,7 @@ changes ()
 echo 'Changes:
 0.8.0	
     New features & Changes:	
+	Add option to sharpen images (-sharpen) with ImageMagicks unsharp mask.
 	*Now using ffmpeg to encode video.  Seems over 2x faster than mpeg2enc.
 	.flv and .mp4 output [alpha] use -flv for now, but his might change
 	Specify output size other than default with -s 320x240 (alpha)
@@ -722,7 +723,7 @@ do
                 exit 1
                 fi ;;
 	-border) shift; commandline_border="$1" ; shift ;;  # add border around image [in pixels]
-	-sharpen) shift; commandline_sharpen="-unsharp" ; shift ;;  # Sharpen image
+	-sharpen) commandline_sharpen="1" ; shift ;;  # Sharpen image
 	-s) shift; commandline_output_size="$1" ; shift ;;  # output size (over-rides defaults).  use something like 320x240
 #	-c) shift; chapmenu=1 ; submenu=1 ;;  # create a chapter select sub-menu (implies submenu)
 	-writechaps) shift; write_chaps=1 ;;  # Write out chapter times to $slideshow_name.chap
@@ -2142,7 +2143,7 @@ kenburns ()  # KENBURNS
 		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Pan/zoom uses $c_width x $c_height of original $image_width x $image_height image"
 		did_resize=0
 
-		convert "$l_file" -resize "$sq_to_dvd_pixels" +repage "$tmpdir"/temp_slideshow_image_scaled.mpc
+		convert "$l_file" -resize "$sq_to_dvd_pixels" +repage $sharpen "$tmpdir"/temp_slideshow_image_scaled.mpc
 		############################ end crop/resize large images
 
 		## adjust step size: ##############################
@@ -2169,18 +2170,15 @@ kenburns ()  # KENBURNS
 		else
 			yvelocity=$(( 1000 * ($ys0-$ye0) / $l_frames ))
 		fi
-#		if [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 9000 ] ; then
-#			echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
-#		elif [ "$interp" -eq 1 ] && [ "$yvelocity" -eq 0 ] && [ "$xvelocity" -lt 9000 ] ; then
-#			echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
-#		elif [ "$interp" -eq 1 ] && [ "$xvelocity" -lt 5000 -a "$yvelocity" -lt 9000 ] ; then
-#			echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
-#		else
-#			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Not using interpolation. Velocity=$xvelocity $yvelocity"
-#			interp=0
-#		fi
-		if [ "$interp" -eq 1 ] ; then
+		if [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 4000 ] ; then
 			echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
+		elif [ "$interp" -eq 1 ] && [ "$yvelocity" -eq 0 ] && [ "$xvelocity" -lt 4000 ] ; then
+			echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
+		elif [ "$interp" -eq 1 ] && [ "$xvelocity" -lt 5000 -a "$yvelocity" -lt 4000 ] ; then
+			echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
+		else
+			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Disabling high-quality mode for fast effect. Velocity=$xvelocity $yvelocity"
+			interp=0
 		fi
 		
 		smoothing=0
@@ -2272,10 +2270,10 @@ echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 				# force the output size to be exact:  no composite needed!
 				if [ "$smp" -eq 1 ] ; then
 					echo "deltawh<1 smp=1"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen "$tmpdir/fade_$dj.$suffix"  & 
+					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix"  & 
 				elif [ "$smp" -eq 0 ] ; then
 					echo "deltawh<1 smp=0"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen "$tmpdir/fade_$dj.$suffix" 
+					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix" 
 				fi
 #				i_width=$dvd_width; i_height=$dvd_height
 			elif [ $bgfile == 'black' ] ; then
@@ -2286,25 +2284,25 @@ echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 				# splice in black background if we can for better speed!
 				# split the difference between the two sides. If odd, add extra
 				# to bottom right?
-				left=$(( $xci )); right=$(( $delta_width - $left ))
-				top=$(( $yci )) ; bottom=$(( $delta_height - $top ))
+				left=$(( $xci + $frame_border )); right=$(( $delta_width - $left ))
+				top=$(( $yci + $frame_border )) ; bottom=$(( $delta_height - $top ))
 	                        [ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom"
 				if [ "$smp" -eq 1 ] ; then
 					echo "deltawh>1 bg=black smp=1"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  $sharpen -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"  & 
+					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"  & 
 #					composite -compose src-over -dissolve "$beta" "$tmpdir"/B_temp.ppm "$tmpdir"/A_temp.ppm -type TrueColor -depth 8 ppm:- | composite -compose src-over -dissolve "$gamma" "$tmpdir"/C_temp.ppm - -type TrueColor -depth 8 ppm:- | composite -compose src-over -dissolve "$delta" "$tmpdir"/D_temp.ppm - -type TrueColor -depth 8 ppm:- | convert - -resize "$frame_width"x"$frame_height" -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix"
 				else
 					echo "deltawh>1 bg=black smp=0"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  $sharpen -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"
+					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"
 # works with imagemagick > 6.0.6  (convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+$xc0+$yc0 +repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
 				fi
 			else   # need to composite over background image:
 				if [ "$smp" -eq 1 ] ; then
 					echo "deltawh>1 bg=image smp=1"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$xci+$yci" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix") & 
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix") & 
 				else
 					echo "deltawh>1 bg=image smp=0"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$xci+$yci" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix")
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix") 
 #					(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+"$xc0"+"$yc0"\! +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite - -compose src-over -geometry "+$xci+$yci" -type TrueColor -depth 8 "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames )
 				fi
 			fi
@@ -2538,7 +2536,7 @@ create_slide ()
 }
 
 
-scroll ()
+scroll ()  # SCROLL
 # scroll $direction $file $total_frames [$startframe] [$lastframe] [$char]
 {
 	local l_direction="$1"
@@ -2553,33 +2551,33 @@ scroll ()
 	## calculate frame size after adding black side bars for portrait pictures:
 	if [ $image_width -gt $image_height ] ; then
 		# landscape:  (for scroll left/right)
-		convert "$l_file" -resize "$sq_to_dvd_pixels" -resize x"$frame_height" +repage -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc		
+		convert "$l_file" -resize "$sq_to_dvd_pixels" -resize x"$frame_height" +repage $sharpen -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc		
 	else
 		# portrait:  (for scroll up/down )
-		convert "$l_file" -resize "$sq_to_dvd_pixels" -resize "$frame_width" +repage -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc		
+		convert "$l_file" -resize "$sq_to_dvd_pixels" -resize "$frame_width" +repage $sharpen -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc		
 	fi
 
 	# now the image is scaled so the height is correct
 	image_width="`imagewidth_sq "$tmpdir/temp_slideshow_image_scaled.mpc"`" # already non-suqare pixels
 	image_height="`imageheight "$tmpdir/temp_slideshow_image_scaled.mpc"`"
-	[ "$debug" -ge 1 ] && myecho "[dvd-slideshow:scroll] image_width=$image_width image_height=$image_height"
-#	if [ "${effect1_params[$i]}" == 'right' ] ; then
+	[ "$debug" -ge 1 ] && myecho "[dvd-slideshow:scroll] Temp image_width=$image_width image_height=$image_height"
+	## these are the crop parameters that will be used to crop the temp image:
 	if [ "$l_direction" == 'right' ] ; then
 #		myecho "[dvd-slideshow] Doing scroll right effect"
-		xs0=$frame_border ; ys0=$frame_border # scroll right
-		xe0=$(( $image_width - $dvd_width + $frame_border )) ; ye0=$frame_border
+		xs0=0 ; ys0=0 # scroll right
+		xe0=$(( $image_width - $frame_width )) ; ye0=0
 	elif [ "$l_direction" == 'left' ] ; then
 #		myecho "[dvd-slideshow] Doing scroll left effect"
-		xs0=$(( $image_width - $dvd_width - $frame_border )) ; ys0=$frame_border
-		xe0=$frame_border ; ye0=$frame_border # scroll left
+		xs0=$(( $image_width - $frame_width )) ; ys0=0
+		xe0=0 ; ye0=0 # scroll left
 	elif [ "$l_direction" == 'up' ] ; then
 #		myecho "[dvd-slideshow] Doing scroll up effect"
-		xs0=$frame_border ; ys0=$(( $image_height - $dvd_height - $frame_border )) 
-		xe0=$frame_border ; ye0=$frame_border # scroll up
+		xs0=0 ; ys0=$(( $image_height - $frame_height )) 
+		xe0=0 ; ye0=0 # scroll up
 	elif [ "$l_direction" == 'down' ] ; then
 #		myecho "[dvd-slideshow] Doing scroll down effect"
-		xs0=$frame_border ; ys0=$frame_border # scroll down
-		xe0=$frame_border ; ye0=$(( $image_height - $dvd_height + $frame_border )) 
+		xs0=0 ; ys0=0 # scroll down
+		xe0=0 ; ye0=$(( $image_height - $frame_height )) 
 	else
 		myecho "[dvd-slideshow:scroll] ERROR: bad effect parameters $l_direction"
 		cleanup; exit 1
@@ -2594,30 +2592,16 @@ scroll ()
 		stepsize=1; interp=0
 	fi
 
-#	if [ "$interp" -eq 1 ] ; then
-#		## create the 3 images representing shifted pixels:
-#		##  A B
-#		##  C 
-#		## where A is the original image
-#		iwn="`imagewidth_sq "$tmpdir/temp_slideshow_image_scaled.mpc"`"
-#		ihn="`imageheight "$tmpdir/temp_slideshow_image_scaled.mpc"`"
-#                convert "$tmpdir/temp_slideshow_image_scaled.mpc" -type TrueColor -depth 8 "$tmpdir/A.mpc"
-#                convert "$tmpdir/temp_slideshow_image_scaled.mpc" -type TrueColor -depth 8 -crop "$(($iwn-1))"x"$ihn"+1+0 +repage -background black -splice 1x0+"$(($iwn-1))"+"$ihn" "$tmpdir/B.mpc"
-#                convert "$tmpdir/temp_slideshow_image_scaled.mpc" -type TrueColor -depth 8 -crop "$iwn"x"$(($ihn-1))"+0+1 +repage -background black -splice 0x1+"$iwn"+"$(($ihn-1))" "$tmpdir/C.mpc"
-#	fi
 	xvelocity=$(( 1000 * ($xe0-$xs0) / $l_frames ))
 	yvelocity=$(( 1000 * ($ye0-$ys0) / $l_frames ))
-#	myecho "[dvd-slideshow] xVelocity=$xvelocity yVelocity=$yvelocity interp=$interp"
-#	if [ "$interp" -eq 1 ] && [ "$yvelocity" -eq 0 ] && [ "$xvelocity" -lt 5000 ] ; then
-#		myecho "[dvd-slideshow:scroll] Using interpolation. xVelocity=$xvelocity"
-#	elif [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 5000 ] ; then
-#		myecho "[dvd-slideshow:scroll] Using interpolation. yVelocity=$yvelocity"
-#	else
-#		myecho "[dvd-slideshow:scroll] Using standard method, not extra-smooth mode. "
-#		interp=0
-#	fi
-	if [ "$interp" -eq 1 ] ; then
+	[ $debug -ge 2 ] && myecho "[dvd-slideshow] xVelocity=$xvelocity yVelocity=$yvelocity interp=$interp"
+	if [ "$interp" -eq 1 ] && [ "$yvelocity" -eq 0 ] && [ "$xvelocity" -lt 4000 ] ; then
 		myecho "[dvd-slideshow:scroll] Using interpolation. xVelocity=$xvelocity"
+	elif [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 4000 ] ; then
+		myecho "[dvd-slideshow:scroll] Using interpolation. yVelocity=$yvelocity"
+	else
+		myecho "[dvd-slideshow:scroll] No need to use high-quality mode for a fast scroll... disabling -H"
+		interp=0
 	fi
 #	end_frame_info $rendered_frames
 	[ $debug -ge 2 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
@@ -2655,29 +2639,30 @@ scroll ()
 		if [ "$interp" -eq 1 ] ; then
 			if [ "$smp" -eq 1 ] ; then
 				if [ "$frame_border" -eq 0 ] ; then
-			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage $sharpen -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" &
+			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" &
 				else
-			    	(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage $sharpen -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm") &
+			    	(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm") &
 				fi
 			else
 				if [ "$frame_border" -eq 0 ] ; then
-			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage $sharpen -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm"
+			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm"
 				else
-			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage $sharpen -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" 
+			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" 
 				fi
 			fi
 		else
+			[ $debug -ge 3 ] && echo "[dvd-slideshow:scroll] $dj crop:$frame_width"x"$frame_height"+"$x0"+"$y0 composite: +$frame_border"+"$frame_border"
 			if [ "$smp" -eq 1 ] ; then
 				if [ "$frame_border" -eq 0 ] ; then
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 $sharpen "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames) &
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames) &
 				else
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 $sharpen  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames) &
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames) &
 				fi
 			else
 				if [ "$frame_border" -eq 0 ] ; then
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 $sharpen "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames)
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames)
 				else
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 $sharpen  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames)
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames)
 				fi
 			fi
 		fi
@@ -2731,6 +2716,7 @@ set_variables ()
 		bottomtitle_text_location_x) bottomtitle_text_location_x="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_text_location_x=$bottomtitle_text_location_x" ;;
 		bottomtitle_text_location_y) bottomtitle_text_location_y="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_text_location_y=$bottomtitle_text_location_y" ;;
 		border) border="$config2" ; [ "$noecho" -eq 0 ] && echo "border=$border" ;;
+		sharpen) sharpen="$config2" ; [ "$noecho" -eq 0 ] && echo "sharpen=$sharpen" ;;
 	esac
 }
 
@@ -3065,7 +3051,6 @@ do
         # change @: which is "escaped" : to something else so that
         # it doesn't separate parameters.
         thisline=`sed -n "$line"p "$tmpdir/$tmptxtfile" | sed -e 's/\\\:/xxx_xxx/g'`
-#	thisline="$( echo "$thisline" | sed -e 's/\\\:/xxx_xxx/g')"
 	if [ "${thisline:0:1}" == '#' ] ; then
 		line=$(( $line + 1 )); continue # commented line. ignore it.
 	elif [ -z `echo "$thisline" | tr -d [:blank:]` ] ; then
@@ -3218,7 +3203,7 @@ do
 		done
 		#######################################################################
 
-	elif [ "${image[$i]}" == 'fadein' ] || [ "${image[$i]}" == 'fadeout' ] || [ "${image[$i]}" == 'crossfade' ] || [ "{$image[$i]}" == 'wipe' ] ; then
+	elif [ "${image[$i]}" == 'fadein' ] || [ "${image[$i]}" == 'fadeout' ] || [ "${image[$i]}" == 'crossfade' ] || [ "${image[$i]}" == 'wipe' ] ; then
 		image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
 		if [ "${duration[$i]}" == '0' ] ; then
 			myecho ""
@@ -3368,6 +3353,7 @@ do
 		duration_ms=`seconds2ms ${duration[$i]}`
 		total_video_length="$(( $total_video_length + $duration_ms ))"
 	fi
+	[ $debug -ge 3 ] && echo "[dvd-slideshow:parsetxtfile] Total video length = $total_video_length"
 #	echo "line=$i"
 	line=$(( $line + 1 ))
 	i=$(( $i + 1 ))
@@ -3571,6 +3557,12 @@ fi
 [ -n "$border" ] && frame_border=$border || frame_border=0
 frame_width=$(( $dvd_width - 2 * $frame_border ))
 frame_height=$(( $dvd_height - 2 * $frame_border ))
+
+if [ -n "$sharpen" -a "$sharpen" == "1" ] ; then
+	sharpen='-unsharp 4.8x2.2+0.5+0.05'
+else
+	sharpen=''
+fi
 
 ## summarize configuration:
 [ "$pal" -eq 1 ] && ntsc_or_pal="PAL" || ntsc_or_pal="NTSC"
@@ -3820,8 +3812,8 @@ for file in "${image[@]}"; do
 			next_duration=`seconds2ms ${duration[$i+$next_increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
 		fi
-		echo "previous_increment=$previous_increment next_increment=$next_increment"
-		echo "previous_duration=$previous_duration next_duration=$next_duration"
+		[ $debug -ge 2 ] && echo "previous_increment=$previous_increment next_increment=$next_increment"
+		[ $debug -ge 2 ] && echo "previous_duration=$previous_duration next_duration=$next_duration"
 		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
 			rendered_frames=`div1000 $(( $frames_per_sec * ( ${duration[$i]} - $previous_duration - $next_duration ) / 1000 ))` # both duration and fps are in ms
 		elif [ "$previous_increment" -ne 0 ] ; then
@@ -3831,7 +3823,7 @@ for file in "${image[@]}"; do
 		else
 			rendered_frames="$frames"
 		fi
-echo "rendered_frames=$rendered_frames"
+		[ $debug -ge 2 ] && echo "[dvd-slideshow] rendered_frames=$rendered_frames"
 		if [ "$rendered_frames" -le 0 ] ; then
 			echo "[dvd-slideshow] ERROR: Frames rendered are less than 1!"
 			echo "[dvd-slideshow] 	Either you specified a duration = 0 "
@@ -4029,9 +4021,9 @@ echo "rendered_frames=$rendered_frames"
 		else
 			rendered_frames="$frames"
 		fi
-		echo "previous_increment=$previous_increment next_increment=$next_increment"
-		echo "previous_duration=$previous_duration next_duration=$next_duration"
-		echo "rendered_frames=$rendered_frames frames=$frames"
+		[ $debug -ge 2 ] && echo "previous_increment=$previous_increment next_increment=$next_increment"
+		[ $debug -ge 2 ] && echo "previous_duration=$previous_duration next_duration=$next_duration"
+		[ $debug -ge 2 ] && echo "rendered_frames=$rendered_frames frames=$frames"
 		if [ "$rendered_frames" -le 0 ] ; then
 			echo "[dvd-slideshow] ERROR: Image frames rendered are less than 1!"
 			echo "[dvd-slideshow] 	Either you specified a duration = 0 "

@@ -1,0 +1,43 @@
+.\" 
+.TH "gallery1-to-slideshow" "1" "0.7.5" "Scott Dylewski" "dvd-slideshow"
+.SH "NAME"
+.LP 
+gallery1\-to\-slideshow \- Creates an input file for dvd\-slideshow from pictures in Gallery online photo album.
+.SH "SYNOPSIS"
+.LP 
+gallery1\-to\-slideshow [\fI\-o\fP <\fIoutput directory\fP>]
+[\fI\-t\fP <\fISeconds per picture\fP>] [\fI\-b\fP <\fIbackground image\fP>] [\fI\-c\fP <\fICrossfade seconds\fP>] <\fIpath to album\fP>
+.SH "DESCRIPTION"
+.LP 
+Generates a text file listing of the pictures visible in a given "Gallery" (http://gallery.sourceforge.net) photo album in order to easily pass the information to dvd_slideshow.  Only works with version 1.X of Gallery, not version 2.X.
+.SH "OPTIONS"
+.LP 
+.TP 
+[\fB\-o\fR <\fIOutput directory\fP>]
+Directory where the output file will be written.  If not specified, the current directory is used.
+
+.TP 
+[\fB\-t\fR <\fISeconds per picture\fP>]
+Number of seconds to display each picture in the movie.  Defaults to 5 seconds if not specified.
+
+.TP 
+[\fB\-b\fR <\fIBackground image\fP>]
+Specify a background image to use for the slideshow.
+
+.TP 
+[\fB\-c\fR <\fICrossfade seconds\fP>]
+Number of seconds to crossfade between images. One second is usually fine.  Note that this will increase the processing time considerably, but it looks nice.
+
+.TP 
+<\fIpath to album\fP>
+The path to the Gallery album that you want to generate a slideshow for.
+.SH "EXAMPLES"
+http://dvd\-slideshow.sourceforge.net/examples
+.SH "AUTHORS"
+.LP 
+Scott Dylewski <scott at dylewski dot com>
+.br 
+http://dvd\-slideshow.sourceforge.net/
+.SH "SEE ALSO"
+.LP 
+dvd\-menu(1), dvd\-slideshow(1)

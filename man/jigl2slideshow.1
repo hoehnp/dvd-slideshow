@@ -1,0 +1,34 @@
+.\" 
+.TH "jigl2slideshow" "1" "0.4" "Scott Dylewski" "dvd-slideshow"
+.SH "NAME"
+.LP 
+jigl2slideshow \- Creates an input file for dvd\-slideshow from pictures in a jigl online photo album.
+.SH "SYNOPSIS"
+.LP 
+jigl2slideshow \fI\-o\fP <\fIoutput directory\fP> [\fI\-t\fP <\fISeconds per picture\fP>] <\fIpath to album\fP>
+.SH "DESCRIPTION"
+.LP 
+Generates a text file listing of the pictures visible in a given jigl (http://xome.net/projects/jigl/) photo album in order to easily pass the information to dvd_slideshow.
+.SH "OPTIONS"
+.LP 
+.TP 
+[\fB\-o\fR <\fIOutput directory\fP>]
+Directory where the output file will be written.  If not specified, the current directory is used.
+
+.TP 
+[\fB\-t\fR <\fISeconds per picture\fP>]
+Number of seconds to display each picture in the movie.  Defaults to 5 seconds if not specified.
+
+.TP 
+<\fIpath to album\fP>
+The path to the gallery.dat that you want to generate a slideshow for.
+.SH "EXAMPLES"
+
+.SH "AUTHORS"
+.LP 
+Scott Dylewski <scott at dylewski dot com>
+.br 
+http://dvd\-slideshow.sourceforge.net
+.SH "SEE ALSO"
+.LP 
+dvd\-menu(1), dvd\-slideshow(1)

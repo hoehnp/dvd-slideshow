@@ -1,0 +1,108 @@
+.\" 
+.TH "dvd-menu" "1" "0.7.5" "Scott Dylewski" "dvd-slideshow"
+.SH "NAME"
+.LP 
+dvd\-menu \- Creates a DVD navigation menu with buttons.
+.SH "SYNOPSIS"
+.LP 
+dvd\-menu \fI\-t\fP <\fIButtonText1\fP> ... \fI\-t\fP <\fIButtonTextN\fP> \fI\-f\fP <\fIXML_file1 | MPEG_file1\fP> ... \fI\-f\fP <\fIXML_fileN | MPEG_fileN\fP> [\fI\-o\fP <\fIoutput directory\fP>] [\fI\-n\fP <\fIDVD Title\fP>] [\fI\-b\fP <\fIbackground jpeg\fP>] [\fI\-e\fP <\fIembed image\fP>] [\fI\-a\fP <\fIaudiofile\fP>]  [\fI\-p\fP] [\fI\-c\fP] [\fI\-D\fP] [\fI\-W\fP] [\fI\-mp2\fP] [\fI\-iso\fP] [\fI\-nomenu\fP] [\fI\-L\fP]
+.SH "DESCRIPTION"
+.LP 
+Creates a simple top\-level DVD menu with buttons that link to movies.  Accepts the output XML files from dvd\-slideshow or your own self\-defined MPEG movies.
+.SH "OPTIONS"
+.LP 
+
+.TP 
+\fB\-t\fR <\fIButton text\fP>
+The button text visible on the menu which will link to each corresponding (in order passed) \-f option.  Use this option multiple times with \-f to define multiple titles/buttons.
+
+.TP 
+\fB\-f\fR <\fIInput file\fP>
+Can be an XML file output from dvd\-slidshow or a full\-scale mpeg2 video in the proper format (.vob).  No error checking is done if you pass a MPEG2 .vob input file, so you are on your own. Use this option multiple times with \-t to define multiple titles/buttons.
+
+.TP 
+[\fB\-o\fR <\fIOutput directory\fP>]
+Directory where the final DVD filesystem files VIDEO_TS/ will be written.
+
+.TP 
+[\fB\-n\fR <\fIDVD Title\fP>]
+This will be printed at the top of the DVD menu page.
+
+.TP 
+[\fB\-b\fR <\fIBackground jpeg\fP>]
+Image to use for the background DVD menu. If no file is specified, a blue gradient will be used for the menu background.
+
+
+.TP 
+[\fB\-e\fR <\fIembed image\fP>]
+Embed an image in the menu screen.  This image will show up to the left of the menu buttons.
+
+.TP 
+[\fB\-a\fR <\fIAudio file\fP>]
+Audio file to play while the menu is active. Supports mp3, ogg, or wav formats at this point.
+
+.TP 
+[\fB\-mp2\fR]
+Use mp2 audio by default (requires ffmpeg with ac3 encoding). The default audio format is now AC3 instead of mpeg2 sinceI have found that many DVD players do not play the audio when it is in mp2 format, so this may be a better, more compatible option for most people. 
+
+.TP 
+[\fB\-p\fR]
+Use PAL output video format instead of NTSC.
+
+.TP 
+[\fB\-c\fR]
+Use continuous <post> commands within dvdauthor.  This will make each video play one after another without going back up to the main menu until the last video is finished.  If this option is not used, the dvd will return to the top menu after playing each track.
+
+.TP 
+[\fB\-D\fR]
+Do not call dvdauthor.  This will tell dvd\-menu to create the menu and output xml files to pass to dvdauthor, but will not actually run dvdauthor.  Useful for people who want to modify their xml file before running dvdauthor.
+
+.TP 
+[\fB\-W\fR]
+Do not generate 50% transparent white background overlays under the title and menu buttons.
+
+.TP 
+[\fB\-iso\fR]
+Create iso image with mkisofs when finished.
+
+.TP 
+[\fB\-nomenu\fR]
+Do not create a menu.  Useful for just finishing the dvdauthor xml file from one video that you want to just start playing when the user puts it into a dvd player.
+
+.TP 
+[\fB\-L\fR]
+Create a low quality, half\-slize menu.  This works with dvd\-slideshow so you can render your whole project in low\-quality mode and still test everything quickly.
+
+.TP 
+\fB\-h\fR
+Prints help file (basically this manpage).
+.SH "INPUT FILE"
+.LP 
+.TP 
+No input file info yet.  Hopefully we will be able to control dvd\-menu better in the future by means of a simple text file like in dvd\-slideshow.  This should allow sub\-menus and more complex menuing. (not implemented yet)
+.SH "Variables"
+.LP 
+.TP 
+Reads variables from the ~/.dvd\-slideshowrc file.  See dvd\-slideshow for settings.
+.SH "FILES"
+.LP 
+\fIdvd\-slideshow\fP 
+.br 
+\fIdvd\-menu\fP 
+.br 
+\fIgallery1\-to\-slideshow\fP 
+.br 
+\fIdir2slideshow\fP 
+.br 
+\fIjigl2slideshow\fP 
+.SH "EXAMPLES"
+.LP 
+There are a few heavily\-commented examples available in the examples section of the dvd\-slideshow webpage, which you can find at http://dvd\-slideshow.sourceforge.net/examples
+.SH "AUTHORS"
+.LP 
+Scott Dylewski <scott at dylewski dot com>
+.br 
+http://dvd\-slideshow.sourceforge.net
+.SH "SEE ALSO"
+.LP 
+dvd\-slideshow(1)

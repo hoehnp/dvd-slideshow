@@ -1,0 +1,63 @@
+.\" 
+.TH "dir2slideshow" "1" "0.7.5" "Scott Dylewski" "dvd-slideshow"
+.SH "NAME"
+.LP 
+dir2slideshow \- Creates an input file for dvd\-slideshow from pictures in a directory.
+.SH "SYNOPSIS"
+.LP 
+dir2slideshow [\fI\-o\fP <\fIoutput directory\fP>]
+[\fI\-t\fP <\fISeconds per picture\fP>]
+[\fI\-c\fP <\fICrossfade seconds\fP>]
+\fI\-n\fP <\fISlideshow name\fP>
+[\fI\-T\fP] [\fI\-M\fP] [\fI\-s subtitle_text\fP] [\fI\-notitle\fP] <\fIImages directory\fP>
+.SH "DESCRIPTION"
+.LP 
+Creates a input file for dvd\-slideshow from all the JPEG images in a given directory.  Now it reads all .jpg .JPG .jpeg .png and .PNG files in the specified directory.
+.SH "OPTIONS"
+.LP 
+.TP 
+[\fB\-o\fR <\fIOutput directory\fP>]
+Directory where the output file will be written.  If not specified, the current directory is used.
+
+.TP 
+[\fB\-t\fR <\fISeconds per picture\fP>]
+Number of seconds to display each picture in the movie.  Defaults to 5 seconds if not specified.
+
+.TP 
+[\fB\-c\fR <\fICrossfade seconds\fP>]
+Number of seconds to crossfade between images. One second is usually fine.  Note that this will increase the processing time considerably, but it looks nice.
+
+.TP 
+\fB\-n\fR <\fISlideshow name\fP>
+The name of this slideshow.  This name is used as the default title text for the first title slide in the slideshow. This name will be used (converting spaces to underscores) for the output file name.
+
+.TP 
+[\fB\-T\fR]
+Sort images by the JPEG header picture taken time, then by the file modification date, and finally by the filename. Default sort is by name only. Requires the jhead program.
+
+.TP 
+[\fB\-M\fR]
+Sort images by the file modification date, and then by the filename. Default sort if by name only.
+
+.TP 
+[\fB\-s subtitle_text\fR]
+Add default subtitle "subtitle_text" to every slide.
+
+.TP 
+[\fB\-notitle\fR]
+Do not create a title slide.
+
+.TP 
+<\fIImages directory\fP>
+The path to the directory containing the images you want to use.
+.SH "EXAMPLES"
+.LP 
+http://dvd\-slideshow.sourceforge.net/examples
+.SH "AUTHORS"
+.LP 
+Scott Dylewski <scott at dylewski dot com>
+.br 
+http://dvd\-slideshow.sourceforge.net/
+.SH "SEE ALSO"
+.LP 
+dvd\-menu(1), dvd\-slideshow(1)

@@ -945,7 +945,7 @@ rpmversion ()
 	echo "$vers"  # returns 0 if no version found, but executable exists
 }
 
-hms ()
+hms ()  # HMS
 {
 	## pass a number in thousandths of seconds and get back a 
 	## time code of the form HR:MM:SS.XXX
@@ -958,21 +958,21 @@ hms ()
 		minutes=$(( $it / 60000 )) ; [ $minutes -eq 0 ] && minutes="0" 
 		it=$(( $1 - $minutes * 60000 ))
 		seconds=$(( $it / 1000 )) ; [ $seconds -eq 0 ] && seconds="0" 
-		thousandths=$(( $it - $seconds * 1000 )) ;
+		thousandths_out=$( printf %3.3d $(( $it - $seconds * 1000 )) );
 #		characters=`echo "$thousandths" | wc --chars`
-		characters=${#thousandths}
-		if [ $characters -eq 1 ] ; then
-			thousandths_out="000"  # empty string!
-		elif [ $characters -eq 2 ] ; then
-			thousandths_out="00$thousandths"  # 1 decimal place
-		elif [ $characters -eq 3 ] ; then
-			thousandths_out="0$thousandths"  # 2 decimal places
-		elif [ $characters -eq 4 ] ; then
-			thousandths_out="$thousandths"  # 3 decimal places
-		else
-			myecho "[dvd-slideshow] Error in hms function"	
-			function_error=1
-		fi
+#		characters=${#thousandths}
+#		if [ $characters -eq 1 ] ; then
+#			thousandths_out="000"  # empty string!
+#		elif [ $characters -eq 2 ] ; then
+#			thousandths_out="00$thousandths"  # 1 decimal place
+#		elif [ $characters -eq 3 ] ; then
+#			thousandths_out="0$thousandths"  # 2 decimal places
+#		elif [ $characters -eq 4 ] ; then
+#			thousandths_out="$thousandths"  # 3 decimal places
+#		else
+#			myecho "[dvd-slideshow] Error in hms function"	
+#			function_error=1
+#		fi
 		it="$hours:$minutes:$seconds.$thousandths_out"
 		echo "${it}"
 	fi
@@ -1607,7 +1607,7 @@ parse_window ()
 {
 	# pass a string $1 (kenburns start or end arguments)
 
-	# xi,yi is the top left corner of the image relative to the DVD frame
+	# xi,yi is the top left corner of the image relative to the frame
 	# xw,yh are the width and height of the crop (must be even numbers)
 	# x0,y0 is the top left corner of the crop in the image frame.
 	# x1,y1 is the bottom right corner of the crop in the image frame.
@@ -1647,15 +1647,16 @@ parse_window ()
 		# image width greater than output width at same scale
 		new_image_width=$image_width
 		new_image_height=`div10 $(( 10* $frame_height * $image_width / $frame_width ))`
-		xi=$frame_border
-		yi=`div10 $(( 10*( $new_image_height - $image_height ) / 2 + $frame_border ))`
+		xi=0  # will need to add frame border later...
+		yi=`div10 $(( 10*( $new_image_height - $image_height ) / 2 ))`
 	elif [ "$ratio" -le $out_ratio ] ; then
 		# image height greater than output height at same scale 
 		new_image_width=`div10 $(( 10* $frame_width * $image_height / $frame_height * ( $sq_pixel_multiplier / 1000 ) ))`
 		new_image_height=$image_height
-		yi=$frame_border
-		xi=`div10 $(( 10*( $new_image_width - $image_width ) / 2 + $frame_border ))`
+		yi=0 # will need to add frame border later...
+		xi=`div10 $(( 10*( $new_image_width - $image_width ) / 2 ))`
 	fi
+	[ $debug -ge 3 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
 	[ $debug -ge 3 ] && myecho "[dvd-slideshow:parse_window] new_image_width=$new_image_width new_image_height=$new_image_height xi=$xi yi=$yi"
 	if [ "$it" -eq 2 ] || [ "$firstarg" == 'imagewidth' ] || [ "$firstarg" == 'imageheight' ] ; then 
 		## use "keywords"
@@ -1699,11 +1700,14 @@ parse_window ()
 #			[ $debug -ge 3 ] && myecho "[dvd-slideshow] xcenter_pct=$xcenter_pct ycenter_pct=$ycenter_pct"
 			[ -z "$xcenter_pct" ] && (myecho '[dvd-slideshow] Error: bad xcenter percentage' ; cleanup; exit 1)
 			[ -z "$ycenter_pct" ] && (myecho '[dvd-slideshow] Error: bad ycenter percentage' ; cleanup; exit 1)
-			xcenter=`div10 $(( 10 * $new_image_width * $xcenter_pct / 100 ))`
-			ycenter=`div10 $(( 10 * $new_image_height * $ycenter_pct / 100 ))`
-#			[ $debug -ge 3 ] && myecho "[dvd-slideshow:parse_window] xcenter=$xcenter ycenter=$ycenter"
-			x0=$(( $xcenter - $xw / 2 )) ; x1=$(( $xcenter + $xw / 2 ))
-			y0=$(( $ycenter - $yh / 2 )) ; y1=$(( $ycenter + $yh / 2 ))
+			xcenter=$(( 10 * $new_image_width * $xcenter_pct / 100 ))
+			ycenter=$(( 10 * $new_image_height * $ycenter_pct / 100 ))
+			[ $debug -ge 3 ] && myecho "[dvd-slideshow:parse_window] xcenter=$xcenter ycenter=$ycenter"
+#			x0=`div10 $(( $xcenter - 10 * $xw / 2 ))`; x1=$(( $xcenter + $xw / 2 ))
+#			y0=`div10 $(( $ycenter - 10 * $yh / 2 ))`; y1=$(( $ycenter + $yh / 2 ))
+			x0=`div10 $(( $xcenter - 10 * $xw / 2 ))`; x1=$(( $x0 + $xw ))
+			y0=`div10 $(( $ycenter - 10 * $yh / 2 ))`; y1=$(( $y0 + $yh ))
+	[ $debug -ge 3 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
 		elif [ "$loc" == 'topleft' ] ; then
 			x0=0; x1=$xw
 			y0=0; y1=$yh
@@ -1758,6 +1762,7 @@ parse_window ()
 		[ $yi -eq 0 ] && y0=$y0 || y0=$(( $y0 + $yi ))
 		[ $yi -eq 0 ] && y1=$y1 || y1=$(( $y1 + $yi ))
 	fi
+	[ $debug -ge 2 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
 }
 
 is_even ()
@@ -2007,7 +2012,7 @@ mycrop ()
 	# keep changing during the pan/zoom.
 
 	## the input coordinates are relative to the original image size, buffered out to
-	## the output dvd aspect ratio
+	## the output frame aspect ratio
 	
 	## we need to convert the existing coordinates back to the actual image coordinates:
 	## top left corner of dvd window is 0,0
@@ -2016,7 +2021,7 @@ mycrop ()
 
 	x_width=$(( $x1 - $x0 )) ; y_height=$(( $y1 - $y0 ))
 	out_ratio=$(( 1000* $x_width / $y_height ))
-	[ $debug -ge 3 ] && myecho "[dvd-slideshow:mycrop] mycrop input: xcenter=$x_center ycenter=$y_center w=$x_width h=$y_height ratio=$out_ratio"
+	[ $debug -ge 3 ] && myecho "[dvd-slideshow:mycrop] mycrop input: x0=$x0 y0=$y0    x1=$x1 y1=$y1   xi=$xi yi=$yi (orig buffered image frame)"
 
 	## figure out the size of the window scaled to the original image size:
 	ratio=$(( 1000* $image_width / $image_height ))
@@ -2031,7 +2036,7 @@ mycrop ()
 		newheight=$image_height
 	fi
 	out_ratio=$(( 1000* $newwidth / $newheight ))  # this number is correct
-#	[ $debug -ge 0 ] && myecho "[dvd-slideshow] new_width=$newwidth new_height=$newheight ratio=$out_ratio"
+	[ $debug -ge 3 ] && myecho "[dvd-slideshow] frame_width=$newwidth frame_height=$newheight ratio=$out_ratio"
 
 	## shift coordinate system to start at xi,yi:
 	xi0=$(( $x0-$xi )); yi0=$(( $y0-$yi )) 
@@ -2048,7 +2053,7 @@ mycrop ()
 	[ $yi1 -gt $image_height ] && yc1=$image_height || yc1=$yi1
 	c_width=$(( $xc1 - $xc0 )) ; c_height=$(( $yc1 - $yc0 ))
 	out_ratio=$(( 1000* $c_width / $c_height )) ## 
-	[ $debug -ge 3 ] && myecho "[dvd-slideshow:mycrop] image crop coordinates=$xi0,$yi0 ; $xi1,$yi1 w=$w h=$h ratio=$out_ratio"
+	[ $debug -ge 3 ] && myecho "[dvd-slideshow:mycrop] xc0=$xc0 yc0=$yc0 xc1=$xc1 yc1=$yc1 w=$w h=$h"
 
 	## where to put the top left corner of the cropped image relative to the background?
 	deltax=$(( 10000* $frame_width / $c_width )); deltay=$(( 10000* $frame_height / $c_height ))
@@ -2068,7 +2073,7 @@ mycrop ()
 		## top of cropped image should be at y=0 afterward
 		yci=0
 	fi
-	[ $debug -ge 3 ] && myecho "[dvd-slideshow:mycrop] image crop coordinates=$xi0,$yi0 ; $xi1,$yi1 w=$w h=$h ratio=$out_ratio"
+	[ $debug -ge 3 ] && myecho "[dvd-slideshow:mycrop] xci=$xci yci=$yci"
 }
 
 kenburns ()  # KENBURNS
@@ -2495,6 +2500,7 @@ end_frame_info ()
 	slide_end_frame="$total_slideshow_frames"
 	slide_end_time=$(( $slide_end_frame * 1000 * 1000 / $frames_per_sec ))  ## in thousandths of a second
 	slide_end_hms=`hms "$slide_end_time"`
+	echo "slide_end_frame=$slide_end_frame slide_end_time=$slide_end_time slide_end_hms=$slide_end_hms"
 }
 
 truncate_filename ()
@@ -3650,8 +3656,6 @@ fi
 #mpeg2enc_params='-v 0 -a 2 -q 8 -s -M 0 -f $mplex_type -b 6000 -I 0'
 #mpeg2enc_params='-v 0 -a 2 -s -M 0 -f $mplex_type -b 6000'
 
-#echo "sq_to_dvd_pixels=$sq_to_dvd_pixels"
-
 resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}'`
 sq_to_dvd_pixels="${resize_factor}x100%"
 [ $debug -ge 1 ] && myecho "[dvd-slideshow] sq_to_dvd_pixels=$sq_to_dvd_pixels"
@@ -4093,8 +4097,8 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i+$increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" miff:- | \
-			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
+echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci frame_border=$frame_border"
+			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then  # if next picture has kenburns effect
 			myecho "[dvd-slideshow] Pre-rendering kenburns effect for fadein..."
 			[ -f "$tmpdir"/fade_0001.ppm ] && \rm "$tmpdir"/fade_????.ppm  # remove any old files
@@ -4810,7 +4814,7 @@ for file in "${image[@]}"; do
 		previous_increment="`previouseffectincrement`"
 		previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 		next_increment="`nexteffectincrement`"
-		next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
+		next_duration=`seconds2ms ${duration[$i+$next_increment]}`  # duration in thousandths of sec
 		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
 			rendered_frames=`div1000 $(( $frames_per_sec * ( ${duration[$i]} - $previous_duration - $next_duration ) / 1000 ))` # both duration and fps are in ms
 		elif [ "$previous_increment" -ne 0 ] ; then
@@ -4820,6 +4824,9 @@ for file in "${image[@]}"; do
 		else
 			rendered_frames="$frames"
 		fi
+		[ $debug -ge 2 ] && echo "[dvd-slideshow] previous_increment=$previous_increment next_increment=$next_increment"
+		[ $debug -ge 2 ] && echo "[dvd-slideshow] this_duration=${duration[$i]} previous_duration=$previous_duration next_duration=$next_duration"
+		[ $debug -ge 2 ] && echo "[dvd-slideshow] rendered_frames=$rendered_frames"
 		if [ "$rendered_frames" -le 0 ] ; then
 			echo "[dvd-slideshow] ERROR: Frames rendered are less than 1!"
 			echo "[dvd-slideshow] 	Either you specified a duration = 0 "
@@ -4840,7 +4847,7 @@ for file in "${image[@]}"; do
 		image_number=$(( $image_number + 1 ))
 		[ "$manual_chapter_markers" -eq 0 ] && write_chap=1
 		end_frame_info $rendered_frames
-		[ $debug -ge 2 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
+		[ $debug -ge 2 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms rendered_frames=$rendered_frames"
 		if [ "${image[$i+$next_increment]}" == 'fadeout' ] ; then
                 	echo -n ""
 		else
@@ -4867,7 +4874,7 @@ for file in "${image[@]}"; do
 		fi
 		next_increment="`nexteffectincrement`"
 		if [ "$next_increment" -ne 0 ] ; then
-			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
+			next_duration=`seconds2ms ${duration[$i+$next_increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
 		fi
 		echo "previous_increment=$previous_increment next_increment=$next_increment"
@@ -4913,7 +4920,7 @@ for file in "${image[@]}"; do
 		fi
 		next_increment="`nexteffectincrement`"
 		if [ "$next_increment" -ne 0 ] ; then
-			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
+			next_duration=`seconds2ms ${duration[$i+$next_increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
 		fi
 		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
@@ -4952,9 +4959,8 @@ for file in "${image[@]}"; do
 		myecho "[dvd-slideshow]        black:duration:subtitle            <depreciated>"
 		cleanup; exit 1
 	elif [ "$file" == 'testslide' ] ; then  # TESTSLIDE
-		## Create a slide of size 720x480 with yellow lines spaced every 100 pixels
-		convert -size 720x480 xc:gray -fill yellow -draw "line 0,40,720,40 text 110,40 \"40\" line 0,140,720,140 text 110,140 \"140\" line 0,240,720,240 text 110,240 \"240\" line 0,340,720,340 text 110,340 \"340\" line 0,440,720,440 text 110,440 \"440\" " -fill orange -draw "line 60,0,60,480 text 60,180 \"60\" line 160,0,160,480 text 160,180 \"160\" line 260,0,260,480 text 260,180 \"260\" line 360,0,360,480 text 360,180 \"360\" line 460,0,460,480 text 460,180 \"460\" line 560,0,560,480 text 560,180 \"560\" line 660,0,660,480 text 660,180 \"660\" " -type TrueColor -depth 8 -resize "$sq_to_dvd_pixels" -resize "$dvd_width"x"$dvd_height" -quality 100 "$tmpdir/slide_$i.ppm"
-		encode "$tmpdir/slide_$i.ppm" "$frames"
+		## Create a slide of size 720x480 with yellow lines
+		convert -size 720x480 xc:gray -fill yellow -draw "line 0,0,719,0 text 110,0 \"0\" line 0,60,719,60 text 110,60 \"60\" line 0,120,719,120 text 110,120 \"120\" line 0,180,719,180 text 110,180 \"180\" line 0,240,719,240 text 110,240 \"240\" line 0,300,719,300 text 110,300 \"300\" line 0,360,719,360 text 110,360 \"360\" line 0,420,719,420 text 110,420 \"420\" line 0,479,719,479 text 110,479 \"479\" " -fill orange -draw "line 0,0,0,480 text 0,180 \"0\" line 90,0,90,480 text 90,180 \"90\" line 180,0,180,480 text 180,180 \"180\" line 270,0,270,480 text 270,180 \"270\" line 360,0,360,480 text 360,180 \"360\" line 450,0,450,480 text 450,180 \"450\" line 540,0,540,480 text 540,180 \"540\" line 630,0,630,480 text 630,180 \"630\" line 719,0,719,480 text 719,180 \"719\" " -type TrueColor -depth 8 -resize "$sq_to_dvd_pixels" -resize "$dvd_width"x"$dvd_height" -quality 100 "$tmpdir/slide_$i.ppm"
 		end_frame_info $rendered_frames
 		[ $debug -ge 2 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		myecho "[dvd-slideshow]############################################################"

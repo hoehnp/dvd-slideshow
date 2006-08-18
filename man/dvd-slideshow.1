@@ -1,0 +1,346 @@
+.\" 
+.TH "dvd-slideshow" "1" "0.7.5" "Scott Dylewski" "dvd-slideshow"
+.SH "NAME"
+.LP 
+dvd\-slideshow \- Creates a slideshow movie in DVD video format from a list of pictures and effects.
+.SH "SYNOPSIS"
+.LP 
+dvd\-slideshow [\fI\-n\fP <\fIslideshow name\fP>]
+[\fI\-o\fP <\fIoutput directory\fP>]
+[\fI\-b\fP <\fIbackground jpeg\fP>]
+[\fI\-a\fP <\fIaudiofile1\fP> \fI\-a\fP <\fIaudiofile2\fP> \fI\-a\fP <\fIaudiofileN\fP>]
+[\fI\-p\fP] [\fI\-L\fP] [\fI\-H\fP] [\fI\-mp2\fP] [\fI\-r\fP] [\fI\-smp\fP]
+\fI\-f\fP <\fIinput text file\fP>
+.SH "DESCRIPTION"
+.LP 
+Creates a dvd\-compatible mpeg2 video from a bunch of images. You can add music on the command line or in the text input file. Supports several effects like fadein, fadeout, crossfade, crop, and kenburns.  dvd\-slideshow is designed to work with dvd\-menu to create a dvd navigation menu that you can then burn onto a dvd. There are also some helper scripts to convert a directory of pictures or your favorite online photo album to a dvd.
+.SH "OPTIONS"
+.LP 
+.TP 
+[\fB\-n <Slideshow name>\fR]
+The program uses this string as the filename base for the output files so you can distinguish it from other slideshows that you can send to the same output directory. If not specified, the default value is the name of the input file.
+
+.TP 
+[\fB\-o <Output directory>\fR]
+Directory where the final .vob and dvdauthor .xml files will be written. Defaults to the current working directory.
+
+.TP 
+[\fB\-b <Background jpeg>\fR]
+Image to use for the background of the slideshow. All of the pictures will be overlaid on top of this background image. If no file is specified, black will be used for the slideshow and a blue gradient for the title slide.
+
+.TP 
+[\fB\-a <Audio file>\fR]
+Audio file to play in background during the slideshow. It will be faded out at the end.  Supports mp3, ogg, or wav formats at this point.  Multiple files will be joined. See also the more flexible text file input method. To pass multiple files, use the \-a switch again.
+
+.TP 
+[\fB\-mp2\fR]
+Use mp2 audio by default.  AC3 audio seems to be more stable when playing in dvd hardware players, but requires ffmpeg.  This will over\-ride the AC3 default and use the mp2 audio encoder.
+
+.TP 
+[\fB\-p\fR]
+Use PAL output video format instead of NTSC.
+
+.TP 
+[\fB\-L\fR]
+Render a low\-quality video suitable for debugging. This sets the resolution to 1/2 of full resolution and decreases the quality of fades/transitions.  It should speed up the encoding process by at least a factor of 4.
+
+.TP 
+[\fB\-H\fR]
+(Beta) Render a higher\-quality video. This uses the default dvd resolution and keeps all other output parameters the same, but enables some pixel\-sampling methods that make the scroll effect look better at very slow velocities. This will make dvd\-slideshow take up to 4x longer to process the scroll effect. Only applied when needed; the output will explain if it is being used.
+
+.TP 
+[\fB\-r\fR]
+Autocrop images near the DVD output aspect ratio to fill the whole window.
+
+.TP 
+[\fB\-smp\fR]
+Enable more processes to run at the same time for multiprocessor machines.  Basically, this just renders each frame of a transition in the background at the same time, and then waits for them to be finished. 
+WARNING: If you do not have enough memory to hold all the frames for one "crossfade" or "kenburns" effect,then linux starts swapping to disk, and your machine may seem to lock up for a while.  I have crashed my old machine using this.
+Use at your own risk!
+
+.TP 
+\fB\-f <Input text file>\fR
+See the INPUT FILE section.
+
+.TP 
+\fB\-h\fR
+Prints help file (basically this manpage).
+.SH "INPUT FILE"
+.LP 
+.TP 
+The input file is a text file that acts like a timeline or storyboard for your slideshow.  In the most simple form, it is just a list of images.  See EXAMPLES for some simple examples of these text files. The input file also allows for many more special effects that are not available on the command line. Each line contains one image or effect. It uses the : character as a separator for the fields. Here is the syntax:
+
+.TP 
+[image.jpg|keyword]:duration:subtitle:effect:effect_params
+
+.TP 
+Duration can be specified in integer seconds like 5 or with up to three decimal points of accuracy, like 5.683.  
+
+.TP 
+When passing a picture, you can optionally use the keyword "audio" instead of the duration in seconds.  What this does is force the duration of that image to be the length of the previous audio track.  This is useful for making a music video dvd.
+
+.TP 
+The subtitle field is optional, but if you are passing effects after the subtitle field, be sure to include all the colons :: in order for the parser to get the correct info.  You can escape a colon in subtitles with a backslash.
+
+.TP 
+\fBNOTE:\fR the effect parameters are separated by a semicolon ; instead of a colon :.
+
+
+.TP 
+\fBKEYWORDS:\fR
+\fBtitle\fR:duration:title text
+.br 
+Makes a title slide with text centered in the screen.  Further control of the font, size, and position of the title text can be achieved by setting variables (see the VARIABLES section).
+
+\fBtitlebar\fR:duration:Upper title text:Lower title text
+.br 
+Makes a title slide using <Upper title text> as a title at the top of the screen, and <Lower title text> as a lower title, in a band at the bottom of the screen.  Each title is optional.  If one is missing, it will not be displayed. White ands are underlayed behind the text for better contrast. Further control of the font, size, and position of the title text can be achieved by setting variables (see the VARIABLES section).
+
+\fBmusictitle\fR:duration:subtitle:Title:Artist;Album
+.br 
+Makes a black frame with the song info printed in the bottom left corner. Yes, that is a semicolon between Artist and Album.
+
+\fBbackground\fR:duration:subtitle:image.jpg
+.br 
+Makes a slide with the current background image (or black if no image is passed).  If a new image name is passed, the background will be reset to that picture. Examples:
+.br 
+"background:2" will display the current background for 2 seconds.
+.br 
+"background:2::image.jpg" will set the background to image.jpg and also display it for 2 seconds.
+.br 
+"background:0::image.jpg" will set the background image to image.jpg, but will not use it until the next picture. 
+.br 
+"black" or "white" can be used instead of an image name to display a black or white background.
+
+\fBfadein\fR:duration:subtitle
+.br 
+Fades in to the next slide
+
+\fBfadeout\fR:duration:subtitle
+.br 
+Fades out to the background
+
+\fBcrossfade\fR:duration:subtitle
+.br 
+Fades from one slide to the next.
+.br 
+
+\fBchapter\fR
+.br 
+Force manual chapter marker timing.  Chapter markers will only be created where the "chapter" keyword occurs. The default is to add chapter markers at every slide.
+
+\fBinclude\fR:includefile.txt
+.br 
+Other input files can be included in the input .txt file. The file includefile.txt will be concatenated in the place where the line occurs..
+
+\fBexit\fR
+.br 
+Stops the slideshow at the current point as if the input.txt file ended at this point. Useful for debugging
+
+
+.TP 
+\fBEFFECTS:\fR
+Effects are only used with images, not keywords. In the following effects, x0,y0 represents the top left corner of a defined box, and x1,y1 is the bottom right corner.
+.br 
+NOTE: the effect parameters are separated by a semicolon ; instead of a colon :
+
+
+\fBcrop\fR
+.br 
+image.jpg:duration:subtitle:crop:x0,y0;x1,y1
+.br 
+Crops the image about the coordinates specified (in the original image coordinate system).
+.br 
+\fICrop keyword description:\fR
+.br 
+Because it is difficult to figure out the exact locations where you want to crop, it is possible to use special keywords for the locations where you want to crop the image.  The basic format is:
+.br 
+	frame_size%;frame_location
+.br 
+where frame_size indicates the relative scale(%) in percent of the final dvd window width/height, and frame_location refers to the location of the center point of the picture relative to the dvd window.
+.br 
+Frame_location can be any of the following keywords:
+.br 
+	topleft		top			topright
+.br 
+	left			middle		right
+.br 
+	bottomleft	bottom		bottomright
+.br 
+or
+.br 
+	x%,y%
+.br 
+where % is a percentage of the window width,height
+starting from the top left corner of the dvd window.
+.br 
+or
+.br 
+	imagewidth | imageheight
+.br 
+where the image width or height will be scaled to 
+fill the full width or height of the dvd screen.
+.br 
+\fICrop examples:\fR
+.br 
+	image.jpg:dur:sub:crop:651,390;1134,759
+.br 
+	image.jpg:dur:sub:crop:30%;60%,60%
+.br 
+	image.jpg:dur:sub:crop:50%;topleft
+.br 
+	image.jpg:dur:sub:crop:imageheight;left
+.br 
+
+
+\fBkenburns\fR
+.br 
+image.jpg:duration:subtitle:kenburns:start_box;end_box
+.br 
+Where now we have starting (s) and ending (e) boxes, defined in the same way as in the "crop" function, above. The kenburns effect will crop/zoom from the start to the end for the given duration.
+.br 
+Full box description:
+.br 
+	xs0,ys0;xs1,ys1;xe0,ye0;xe1,ye1
+.br 
+Specifies the top\-left(0) and bottom\-right(1) points.
+.br 
+\fIKeyword description:\fR
+.br 
+	start_frame_size%;start_location;end_frame_size%;end_location
+\fIKenburns examples:\fR
+.br 
+   	image.jpg:5::kenburns:651,390;1134,759;372,330;1365,1089
+	image.jpg:5:sub:kenburns:30%;60%,60%;75%;40%,50%
+	image.jpg:5:sub:kenburns:50%;topleft;50%;bottomright
+	image.jpg:5:sub:kenburns:100%;left;0,0;720,480
+	image.jpg:5:sub:kenburns:100%;left;imageheight;left
+.br 
+
+
+\fBscroll\fR
+.br 
+image.jpg:duration:subtitle:scroll:left
+.br 
+image.jpg:duration:subtitle:scroll:right
+.br 
+image.jpg:duration:subtitle:scroll:up
+.br 
+image.jpg:duration:subtitle:scroll:down
+.br 
+This is most useful for displaying panorama\-style pictures that are much wider than they are tall. For example, "scroll:right" will automatically resize the picture so that the image height is equal to the video display height (480) before scrolling right.
+
+Note that in high quality mode (\-H), some calculations will be made to see how slow the scroll is, and if it is slow enough, sub\-pixel sampling will be used to make the scroll effect look much smoother.  Sounds good, right?  Well, it will take a LOT longer to process the frames also!  
+
+
+.TP 
+\fBAUDIO:\fR
+.br 
+Audio tracks can be inter\-mixed with the video.  If an audio track is placed between two different images/effects, that audio track will begin playing at the start of the second image/effect.  When placing audio, use the syntax:
+.br 
+
+audiofile:track:effect1:effect1_params:effect2:effect2_params
+.br 
+
+The audiofile can be a .ogg, .mp3, or .wav file.
+.br 
+Track is the resulting dvd audio track.
+
+\fBAudio Effects\fR are audio effects where you can specify things like fadein and fadeout for the audio.  Example:
+.br 
+
+audiofile:1:fadein:3:fadeout:2
+.br 
+
+(*NEW in 0.7.3) If you want to concatenate two audio files, just place them one right after another in the .txt file.
+.SH "CONFIGURATION"
+You can specify lots of variables and options throughout the dvd\-slideshow script.  Settings can be passed on the command line, in a default ~/.dvd\-slideshowrc file, or within the input text file.  The order in which the script reads the settings is as follows:
+.br 
+Default script settings \-\-> ~/dvd\-slideshowrc \-\-> command line \-\-> input text file
+.br 
+so each successive setting will over\-ride the previous settings if they are already set.
+
+.TP 
+\fB~/.dvd\-slideshowrc:\fR
+.br 
+With the syntax shown below, the following variables can be specified in the ~/.dvd\-slideshowrc file.  All lines are optional, and everything after the # character is not read.
+.br 
+
+debug=1		# 0 (low) to 3 (lots of info)
+.br 
+pal=0		# 0=ntsc 1=pal
+.br 
+ac3=1		# 0=mp2 1=ac3 audio
+.br 
+copy=0		# add copies of original images to the output directory
+.br 
+autocrop=1	# autocrop images to fill full screen
+.br 
+
+font_dir="/usr/share/fonts"
+.br 
+font="n019004l.pfb" # helvetica bold URW fonts
+.br 
+
+## Title:
+.br 
+title_font_size=48
+.br 
+title_font_color="black"  # or use hex "#RRGGBB"
+.br 
+
+## top title:
+.br 
+toptitle_font_size=48
+.br 
+toptitle_font_color="black"  # or use hex "#RRGGBB"
+.br 
+toptitle_bar_height=125  # 0 for no 50% white behind text
+.br 
+toptitle_text_location_x=80
+.br 
+toptitle_text_location_y=50
+.br 
+
+# bottom title:
+.br 
+bottomtitle_font_size=36
+.br 
+bottomtitle_font_color="black"  # or use hex "#RRGGBB"
+.br 
+bottomtitle_bar_location_y=156 # relative to bottom of image
+.br 
+bottomtitle_bar_height=55  # 0 for no 50% white behind text
+.br 
+bottomtitle_text_location_x=0
+.br 
+bottomtitle_text_location_y=155
+.br 
+
+.TP 
+\fBInput text file:\fR
+.br 
+The same syntax used in ~/.dvd\-slideshowrc can be used in the input text file.  This way, you could specify settings specifit to the slideshow you are working on without changing your default settings. 
+.br 
+.SH "FILES"
+.LP 
+\fIdvd\-slideshow\fP 
+.br 
+\fIdvd\-menu\fP 
+.br 
+\fIdir2slideshow\fP 
+.br 
+\fIgallery1\-to\-slideshow\fP 
+.br 
+\fIjigl2slideshow\fP 
+.SH "EXAMPLES"
+.LP 
+There are a few heavily\-commented examples available in the examples section of the dvd\-slideshow webpage, which you can find at http://dvd\-slideshow.sourceforge.net/examples
+.SH "AUTHORS"
+.LP 
+Scott Dylewski <scott at dylewski dot com>
+.br 
+http://dvd\-slideshow.sourceforge.net/
+.SH "SEE ALSO"
+.LP 
+dvd\-menu(1)

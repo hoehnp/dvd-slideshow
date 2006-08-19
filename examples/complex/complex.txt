@@ -79,9 +79,10 @@ background:1
 # now let's start playing the audio on track 2:
 # this is independent of audio track 1
 ../audio/strojovna_07-TEXEMPO-30s.ogg:2
+
 fadein:1
 # zoom in to left side of panorama:
-../images/pano.jpg:4::kenburns:100%;left;imageheight;left
+../images/pano.jpg:5::kenburns:100%;left;imageheight;left
 # pano.jpg:2:pausing...:crop:imageheight;left # pause
 # You can scroll across a panorama picture by using the "scroll right"
 # or "scroll left" effects (up/down works also).
@@ -93,7 +94,7 @@ fadein:1
 # note that crossfadfes between scroll or kenburns effects get applied
 # so that it looks like they're laid on top of each other.
 crossfade:1
-../images/pano.jpg:4::kenburns:imageheight;right;100%;left
+../images/pano.jpg:5::kenburns:imageheight;right;100%;left
 # note that this is the same as the following syntax, but it's much
 # easier to deal with instead of the older method:
 # pano.jpg:2::crop:4610,0;5334,480

@@ -72,6 +72,7 @@ echo 'Changes:
 	Automatically sets smp option if the current kernel has "smp" in the name.
 	Removed internal option for yuvcat
     Bug fixes: 	
+	Escape brackets in [:blank:] (thanks Christian Molière)
 	Manual chapter markers fixed.
 	Fixed reading of $HOME/.dvd-slideshowrc settings.
 	Single or double quotes allowed in variable settings.
@@ -732,6 +733,7 @@ do
 	-svcd) shift; svcd=1 ;;  # use svcd resolution and mp1 audio
 	-mpeg2enc) shift; mpeg_encoder='mpeg2enc' ;; # force using mpeg2enc instead of ffmpeg
 	-flv) shift; output_format='flv' ;; # force using mpeg2enc instead of ffmpeg
+	-swf) shift; output_format='swf' ;; # force using mpeg2enc instead of ffmpeg
 	-L) shift; low_quality=1 ;;  # use low-quality mode
 	-w) shift; widescreen=1 ;;  # use 16:9 instead of 4:3 aspect ratio
 	-M) shift; high_quality=0 ; low_quality=0 ;;  # use medium-quality mode (this is the default)
@@ -1327,18 +1329,18 @@ titlebarslide ()
 	check_rm "$output_file"
 
 	# figure out actual coordinates:
-	if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
+	if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
 		## top title:
-		local f_toptitle_font_size=$(( $toptitle_font_size / 2 ))
-		local f_toptitle_bar_height=$(( $toptitle_bar_height / 2 ))
-		local f_toptitle_text_location_x=$(( $toptitle_text_location_x / 2 ))
-		local f_toptitle_text_location_y=$(( $toptitle_text_location_y / 2 ))
+		local f_toptitle_font_size=$(( $toptitle_font_size * $dvd_height / 480 ))
+		local f_toptitle_bar_height=$(( $toptitle_bar_height * $dvd_height / 480 ))
+		local f_toptitle_text_location_x=$(( $toptitle_text_location_x * $dvd_height / 480 ))
+		local f_toptitle_text_location_y=$(( $toptitle_text_location_y * $dvd_height / 480 ))
 		# bottom title:
-		local f_bottomtitle_font_size=$(( $bottomtitle_font_size / 2 ))
-		local f_bottomtitle_bar_location_y=$(( $bottomtitle_bar_location_y / 2 ))
-		local f_bottomtitle_bar_height=$(( $bottomtitle_bar_height / 2 ))
-		local f_bottomtitle_text_location_x=$(( $bottomtitle_text_location_x / 2 ))
-		local f_bottomtitle_text_location_y=$(( $bottomtitle_text_location_y / 2 ))
+		local f_bottomtitle_font_size=$(( $bottomtitle_font_size * $dvd_height / 480 ))
+		local f_bottomtitle_bar_location_y=$(( $bottomtitle_bar_location_y * $dvd_height / 480 ))
+		local f_bottomtitle_bar_height=$(( $bottomtitle_bar_height * $dvd_height / 480 ))
+		local f_bottomtitle_text_location_x=$(( $bottomtitle_text_location_x * $dvd_height / 480 ))
+		local f_bottomtitle_text_location_y=$(( $bottomtitle_text_location_y * $dvd_height / 480 ))
 	elif [ "$svcd" -eq 1 ] ; then  # x-resolution is 480x480 (ntsc) or 480x576 (pal)
 		## top title:
 		local f_toptitle_font_size=$(( $toptitle_font_size ))
@@ -1435,8 +1437,8 @@ titleslide ()
 	fi
 	check_rm "$output_file"
 
-	if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
-		local f_title_font_size=$(( $title_font_size / 2 ))
+	if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
+		local f_title_font_size=$(( $title_font_size * $dvd_height / 480 ))
 	else
 		local f_title_font_size=$(( $title_font_size ))
 	fi
@@ -1483,8 +1485,8 @@ musictitleslide ()
 			local bg="$tmpdir"/slideshow_background.ppm
 		fi
 		check_rm "$output_file"
-		if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
-			f_subtitle_font_size=$(( $subtitle_font_size / 2 ))
+		if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
+			f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 			convert -depth 8 -size $dvd_width"x"$dvd_height xc:transparent \
 			-pointsize "$f_subtitle_font_size" -gravity SouthWest -font "$title_font" \
 			-draw "fill white text 40,100 \"$Title\"" \
@@ -2243,10 +2245,10 @@ echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 	                        Bfactor=$( echo "scale=3; 100*($x0_dec)*(1-$y0_dec)" | bc )
 	                        Cfactor=$( echo "scale=3; 100*(1-$x0_dec)*($y0_dec)" | bc )
 	                        Dfactor=$( echo "scale=3; 100*($x0_dec)*($y0_dec)" | bc )
-	                        Afactor=`printf %3.0f $Afactor | tr -d [:blank:]`
-	                        Bfactor=`printf %3.0f $Bfactor | tr -d [:blank:]`
-	                        Cfactor=`printf %3.0f $Cfactor | tr -d [:blank:]`
-	                        Dfactor=`printf %3.0f $Dfactor | tr -d [:blank:]`
+	                        Afactor=`printf %3.0f $Afactor | tr -d \[:blank:\]`
+	                        Bfactor=`printf %3.0f $Bfactor | tr -d \[:blank:\]`
+	                        Cfactor=`printf %3.0f $Cfactor | tr -d \[:blank:\]`
+	                        Dfactor=`printf %3.0f $Dfactor | tr -d \[:blank:\]`
 				convolve="-convolve 0,0,0,0,$Afactor,$Bfactor,0,$Cfactor,$Dfactor"
 #	                        myecho "$fr Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor alpha=$alpha beta=$beta gamma=$gamma delta=$delta"
 	                        myecho "[dvd-slideshow:kenburns] $fr Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor"
@@ -2325,7 +2327,7 @@ wavlength ()
 # returns song length in ms
 {
 		sox "$1" -e stat 2> "$tmpdir"/trash.txt 
-		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d [:blank:]`
+		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
 		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
 		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
 		song_length_ms=`echo $song_length | awk -F. '{printf ("%3.3f",$0)}' | awk -F. '{print $2}'`
@@ -2339,7 +2341,7 @@ wavlength ()
 rawlength ()
 {
 		sox -t raw -r $audio_sample_rate -w -s -c 2 "$1" -e stat 2> "$tmpdir"/trash.txt 
-		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d [:blank:]`
+		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
 		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
 		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
 		song_length_ms=`echo $song_length | awk -F. '{printf ("%3.3f",$0)}' | awk -F. '{print $2}'`
@@ -2457,9 +2459,9 @@ finish_progressbar ()
 set_system_variables ()
 {
 	## check for config variables: only specified once per slideshow
-	config=`echo "$1" | cut -d= -f1 | tr -d [:blank:]`
-	config2=`echo "$1" | tr '\t' ' ' | tr -d '\047' | tr -d '\042' | cut -d= -f2 | awk -F' #' '{print $1}' | tr -d [:blank:]`
-#	config2=`echo "$1" | cut -d= -f2 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+	config=`echo "$1" | cut -d= -f1 | tr -d \[:blank:\]`
+	config2=`echo "$1" | tr '\t' ' ' | tr -d '\047' | tr -d '\042' | cut -d= -f2 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
+#	config2=`echo "$1" | cut -d= -f2 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 	[ -n "$2" -a "$2" == 1 ] && noecho=1 || noecho=0
 	## check for global configuration variables:
 	case "$config" in 
@@ -2481,9 +2483,9 @@ set_system_variables ()
 set_theme ()
 {
 	## check for config variables: only specified once per slideshow
-	config=`echo "$1" | cut -d= -f1 | tr -d [:blank:]`
-	config2=`echo "$1" | tr '\t' ' ' | tr -d '\047' | tr -d '\042' | cut -d= -f2 | awk -F' #' '{print $1}' | tr -d [:blank:]`
-#	config2=`echo "$1" | cut -d= -f2 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+	config=`echo "$1" | cut -d= -f1 | tr -d \[:blank:\]`
+	config2=`echo "$1" | tr '\t' ' ' | tr -d '\047' | tr -d '\042' | cut -d= -f2 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
+#	config2=`echo "$1" | cut -d= -f2 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 	[ -n "$2" -a "$2" == 1 ] && local noecho=1 || local noecho=0
 	## check for global configuration variables:
 	case "$config" in 
@@ -2500,7 +2502,6 @@ end_frame_info ()
 	slide_end_frame="$total_slideshow_frames"
 	slide_end_time=$(( $slide_end_frame * 1000 * 1000 / $frames_per_sec ))  ## in thousandths of a second
 	slide_end_hms=`hms "$slide_end_time"`
-	echo "slide_end_frame=$slide_end_frame slide_end_time=$slide_end_time slide_end_hms=$slide_end_hms"
 }
 
 truncate_filename ()
@@ -2605,8 +2606,10 @@ scroll ()  # SCROLL
 		myecho "[dvd-slideshow:scroll] Using interpolation. xVelocity=$xvelocity"
 	elif [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 4000 ] ; then
 		myecho "[dvd-slideshow:scroll] Using interpolation. yVelocity=$yvelocity"
-	else
+	elif [ "$interp" -eq 1 ] ; then
 		myecho "[dvd-slideshow:scroll] No need to use high-quality mode for a fast scroll... disabling -H"
+		interp=0
+	else
 		interp=0
 	fi
 #	end_frame_info $rendered_frames
@@ -2632,10 +2635,10 @@ scroll ()  # SCROLL
                         Bfactor=$( echo "scale=3; 100*($x0_dec)*(1-$y0_dec)" | bc )
                         Cfactor=$( echo "scale=3; 100*(1-$x0_dec)*($y0_dec)" | bc )
                         Dfactor=$( echo "scale=3; 100*($x0_dec)*($y0_dec)" | bc )
-	                Afactor=`printf %3.0f $Afactor | tr -d [:blank:]`
-	                Bfactor=`printf %3.0f $Bfactor | tr -d [:blank:]`
-	                Cfactor=`printf %3.0f $Cfactor | tr -d [:blank:]`
-	                Dfactor=`printf %3.0f $Dfactor | tr -d [:blank:]`
+	                Afactor=`printf %3.0f $Afactor | tr -d \[:blank:\]`
+	                Bfactor=`printf %3.0f $Bfactor | tr -d \[:blank:\]`
+	                Cfactor=`printf %3.0f $Cfactor | tr -d \[:blank:\]`
+	                Dfactor=`printf %3.0f $Dfactor | tr -d \[:blank:\]`
 			convolve="-convolve 0,0,0,0,$Afactor,$Bfactor,0,$Cfactor,$Dfactor"
 			[ $debug -ge 3 ] && myecho "[dvd-slideshow:scroll] x0=$x0 y0=$y0 Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor"
 		else
@@ -2699,8 +2702,8 @@ fi
 set_variables ()
 {
 	## check for config variables:
-	config1=`echo "$1" | cut -d= -f1 | tr -d [:blank:]`
-	config2=`echo "$1" | tr '\t' ' ' | cut -d= -f2 | tr -d '\047' | tr -d '\042' | awk -F' #' '{print $1}' | tr -d [:blank:]`
+	config1=`echo "$1" | cut -d= -f1 | tr -d \[:blank:\]`
+	config2=`echo "$1" | tr '\t' ' ' | cut -d= -f2 | tr -d '\047' | tr -d '\042' | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 	[ -n "$2" -a "$2" == 1 ] && noecho=1 || noecho=0
 	## check for global configuration variables:
 	case "$config1" in 
@@ -3059,7 +3062,7 @@ do
         thisline=`sed -n "$line"p "$tmpdir/$tmptxtfile" | sed -e 's/\\\:/xxx_xxx/g'`
 	if [ "${thisline:0:1}" == '#' ] ; then
 		line=$(( $line + 1 )); continue # commented line. ignore it.
-	elif [ -z `echo "$thisline" | tr -d [:blank:]` ] ; then
+	elif [ -z `echo "$thisline" | tr -d \[:blank:\]` ] ; then
 		line=$(( $line + 1 )); continue # blank line. ignore it.
 	elif [ "$thisline" == 'exit' ] ; then
 		line=$(( $line + 1 )); break # skip ahead
@@ -3112,14 +3115,14 @@ do
 	if [ "${filetype[$i]}" == 'musictitle' ] || [ "${filetype[$i]}" == 'title' ] || [ "${filetype[$i]}" == 'Title' ] ; then
 		effect1_params[$i]=`echo "${thisline}" | cut -d: -f5 | awk -F' #' '{print $1}'`
 	else
-		effect1_params[$i]=`echo "${thisline}" | cut -d: -f5 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+		effect1_params[$i]=`echo "${thisline}" | cut -d: -f5 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 	fi
 	effect2[$i]=`echo "${thisline}" | cut -d: -f6 | awk -F' #' '{print $1}'`
-	effect2_params[$i]=`echo "${thisline}" | cut -d: -f7 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+	effect2_params[$i]=`echo "${thisline}" | cut -d: -f7 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 	effect3[$i]=`echo "${thisline}" | cut -d: -f8 | awk -F' #' '{print $1}'`
-	effect_params3[$i]=`echo "${thisline}" | cut -d: -f9 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+	effect_params3[$i]=`echo "${thisline}" | cut -d: -f9 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 	effect4[$i]=`echo "${thisline}" | cut -d: -f10 | awk -F' #' '{print $1}'`
-	effect_params4[$i]=`echo "${thisline}" | cut -d: -f11 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+	effect_params4[$i]=`echo "${thisline}" | cut -d: -f11 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 
 	if [ "${filetype[$i]}" == 'jpg' ] || [ "${filetype[$i]}" == 'png' ] || [ "${filetype[$i]}" == 'jpeg' ] ; then
 		## make sure file exists:
@@ -3284,9 +3287,9 @@ do
 			fi
 		fi
 		effect1[$i]=`echo "${thisline}" | cut -s -d: -f3 | awk -F' #' '{print $1}'`  
-		effect1_params[$i]=`echo "${thisline}" | cut -s -d: -f4 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+		effect1_params[$i]=`echo "${thisline}" | cut -s -d: -f4 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 		effect2[$i]=`echo "${thisline}" | cut -s -d: -f5 | awk -F' #' '{print $1}'`
-		effect2_params[$i]=`echo "${thisline}" | cut -s -d: -f6 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+		effect2_params[$i]=`echo "${thisline}" | cut -s -d: -f6 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
         	video_length=`tcprobe -i "${image[$i]}" 2> /dev/null | grep 'duration=' | awk -F'duration=' '{print $2}'`
 		it=`hms2seconds "$video_length"`
 		duration_ms=`seconds2ms $it`
@@ -3314,9 +3317,9 @@ do
 		audio_inside_txtfile=1
 		audio_file[$i]=1 ; image_file[$i]=0 ; avi_file[$i]=0
 		effect1[$i]=`echo "${thisline}" | cut -d: -f3 | awk -F' #' '{print $1}'`  # no subtitle for audio 
-		effect1_params[$i]=`echo "${thisline}" | cut -d: -f4 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+		effect1_params[$i]=`echo "${thisline}" | cut -d: -f4 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 		effect2[$i]=`echo "${thisline}" | cut -d: -f5 | awk -F' #' '{print $1}'`
-		effect2_params[$i]=`echo "${thisline}" | cut -d: -f6 | awk -F' #' '{print $1}' | tr -d [:blank:]`
+		effect2_params[$i]=`echo "${thisline}" | cut -d: -f6 | awk -F' #' '{print $1}' | tr -d \[:blank:\]`
 		if [ "${effect1[$i]}" != 'fadein' ] && [ -n "${effect1[$i]}" ]; then
 			myecho ""
 			myecho "[dvd-slideshow] ERROR: First audio effect must be fadein"
@@ -3504,60 +3507,92 @@ else
 fi
 
 
-if [ "$pal" -eq 1 ] ; then
-	framerate='25'
-	frames_per_sec=25000  # in ms
-#	sq_to_dvd_pixels='93.75x100%' # i.e., make the horizontal smaller
-	sq_pixel_multiplier=$(( 1000 * 540 / 576 ))
-	ppmtoy4m_frc='25:1'
-	ppmtoy4m_aspect='59:54'
+if [ "$output_format" == 'flv' ] ; then
+	video_bitrate=50
+	video_suffix='flv'
+	framerate='15'  # is this needed for .flv?
+	frames_per_sec=15000  # in ms
+	sq_pixel_multiplier=$(( 1000 * 320 / 240 ))  # keep pixels square?
+	ppmtoy4m_frc='15:1'  # 15 fps
+	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
-	if [ "$vcd" -eq 1 ] ; then
-		dvd_width='352' ; dvd_height='288'
-		ffmpeg_target='pal-vcd'
-	elif [ "$svcd" -eq 1 ] ; then
-		dvd_width='480' ; dvd_height='576'
-		ffmpeg_target='pal-svcd'
-	elif [ "$high_quality" -eq 1 ] ; then
-		dvd_width='720' ; dvd_height='576'
-		ffmpeg_target='pal-dvd'
-	elif [ "$low_quality" -eq 1 ] ; then
-		dvd_width='352' ; dvd_height='288'
-		ffmpeg_target='pal-dvd'
-	else
-		dvd_width='720' ; dvd_height='576'
-		ffmpeg_target='pal-dvd'
-	fi
-else  ## NTSC
-	framerate='29.97'
+	dvd_width='320' ; dvd_height='240'
+elif [ "$output_format" == 'swf' ] ; then
+	video_bitrate=50
+	video_suffix='swf'
+	framerate='15'  # is this needed for .swf?
+	frames_per_sec=15000  # in ms
+	sq_pixel_multiplier=$(( 1000 * 320 / 240 ))  # keep pixels square?
+	ppmtoy4m_frc='15:1'  # 15 fps
+	ppmtoy4m_aspect='1:1'  # square pixels
+		# see http://www.uwasa.fi/~f76998/video/conversion
+	dvd_width='320' ; dvd_height='240'
+elif [ "$output_format" == 'mp4' ] ; then
+	video_suffix='mp4'
+	framerate='29.97'  # is this needed for .
 	frames_per_sec=29970  # in ms
-#	sq_to_dvd_pixels='112.5x100%' # i.e., make the horizontal 12% larger
-	sq_pixel_multiplier=$(( 1000 * 540 / 480 ))
+	sq_pixel_multiplier=$(( 1000 * 320 / 240 ))  # keep pixels square?
 	ppmtoy4m_frc='30000:1001'
-	ppmtoy4m_aspect='10:11'
+	ppmtoy4m_aspect='10:11'  # 4:3
 		# see http://www.uwasa.fi/~f76998/video/conversion
-	if [ "$vcd" -eq 1 ] ; then
-		dvd_width='352' ; dvd_height='240'
-		ffmpeg_target='ntsc-vcd'
-	elif [ "$svcd" -eq 1 ] ; then
-		dvd_width='480' ; dvd_height='480'
-		ffmpeg_target='ntsc-svcd'
-	elif [ "$high_quality" -eq 1 ] ; then
-		dvd_width='720' ; dvd_height='480'
-		ffmpeg_target='ntsc-dvd'
-	elif [ "$low_quality" -eq 1 ] ; then
-		dvd_width='352' ; dvd_height='240'
-		ffmpeg_target='ntsc-dvd'
-	else
-		dvd_width='720' ; dvd_height='480'
-		ffmpeg_target='ntsc-dvd'
+	dvd_width='320' ; dvd_height='240'
+else 
+	video_suffix='mpg'
+	if [ "$pal" -eq 1 ] ; then
+		framerate='25'
+		frames_per_sec=25000  # in ms
+	#	sq_to_dvd_pixels='93.75x100%' # i.e., make the horizontal smaller
+		sq_pixel_multiplier=$(( 1000 * 540 / 576 ))
+		ppmtoy4m_frc='25:1'
+		ppmtoy4m_aspect='59:54'
+			# see http://www.uwasa.fi/~f76998/video/conversion
+		if [ "$vcd" -eq 1 ] ; then
+			dvd_width='352' ; dvd_height='288'
+			ffmpeg_target='pal-vcd'
+		elif [ "$svcd" -eq 1 ] ; then
+			dvd_width='480' ; dvd_height='576'
+			ffmpeg_target='pal-svcd'
+		elif [ "$high_quality" -eq 1 ] ; then
+			dvd_width='720' ; dvd_height='576'
+			ffmpeg_target='pal-dvd'
+		elif [ "$low_quality" -eq 1 ] ; then
+			dvd_width='352' ; dvd_height='288'
+			ffmpeg_target='pal-dvd'
+		else
+			dvd_width='720' ; dvd_height='576'
+			ffmpeg_target='pal-dvd'
+		fi
+	else  ## NTSC
+		framerate='29.97'
+		frames_per_sec=29970  # in ms
+	#	sq_to_dvd_pixels='112.5x100%' # i.e., make the horizontal 12% larger
+		sq_pixel_multiplier=$(( 1000 * 540 / 480 ))
+		ppmtoy4m_frc='30000:1001'
+		ppmtoy4m_aspect='10:11'
+			# see http://www.uwasa.fi/~f76998/video/conversion
+		if [ "$vcd" -eq 1 ] ; then
+			dvd_width='352' ; dvd_height='240'
+			ffmpeg_target='ntsc-vcd'
+		elif [ "$svcd" -eq 1 ] ; then
+			dvd_width='480' ; dvd_height='480'
+			ffmpeg_target='ntsc-svcd'
+		elif [ "$high_quality" -eq 1 ] ; then
+			dvd_width='720' ; dvd_height='480'
+			ffmpeg_target='ntsc-dvd'
+		elif [ "$low_quality" -eq 1 ] ; then
+			dvd_width='352' ; dvd_height='240'
+			ffmpeg_target='ntsc-dvd'
+		else
+			dvd_width='720' ; dvd_height='480'
+			ffmpeg_target='ntsc-dvd'
+		fi
 	fi
 fi
 
 if [ -n "$output_size" ] ; then
 	# used user-set size, instead of defaults!
-	dvd_width=$( echo "$output_size" | cut -dx -f1 | tr -d [:blank:] )
-	dvd_height=$( echo "$output_size" | cut -dx -f2 | tr -d [:blank:] )
+	dvd_width=$( echo "$output_size" | cut -dx -f1 | tr -d \[:blank:\] )
+	dvd_height=$( echo "$output_size" | cut -dx -f2 | tr -d \[:blank:\] )
 fi
 
 [ -n "$border" ] && frame_border=$border || frame_border=0
@@ -3694,7 +3729,12 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .flv file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$outdir/$logfile" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$outdir/$logfile" 2>&1 &
+	elif [ "$output_format" == 'swf' ] ; then
+		# do pass one first, then add audio at the end during pass 2?
+		# don't do mplex, do second pass instead.
+		myecho "[dvd-slideshow] Exporting .swf file"
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f swf "$tmpdir/video.swf" >> "$outdir/$logfile" 2>&1 &
 	elif [ "$output_format" == 'mp4' ] ; then   # NOT TESTED YET
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
@@ -3777,7 +3817,7 @@ for file in "${image[@]}"; do
 	slide_start_time=$(( $slide_start_frame *1000 * 1000 / $frames_per_sec )) ## in thousandths of a sec.
 	slide_start_hms=`hms "$slide_start_time"`
 	if [ $debug -ge 1 ] ; then
-		myecho "[dvd-slideshow] frames=$frames duration=`echo ${duration[$i]} | tr -d [:blank:]` ms"
+		myecho "[dvd-slideshow] frames=$frames duration=`echo ${duration[$i]} | tr -d \[:blank:\]` ms"
 		myecho "[dvd-slideshow] start_frame_number=$slide_start_frame start_time=$slide_start_hms"
 	fi
 
@@ -4774,10 +4814,10 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 		                        Bfactor=$( echo "scale=3; 100*($x1_dec)*(1-$y1_dec)" | bc )
 		                        Cfactor=$( echo "scale=3; 100*(1-$x1_dec)*($y1_dec)" | bc )
 			                Dfactor=$( echo "scale=3; 100*($x1_dec)*($y1_dec)" | bc )
-	                		Afactor=`printf %3.0f $Afactor | tr -d [:blank:]`
-			                Bfactor=`printf %3.0f $Bfactor | tr -d [:blank:]`
-			                Cfactor=`printf %3.0f $Cfactor | tr -d [:blank:]`
-			                Dfactor=`printf %3.0f $Dfactor | tr -d [:blank:]`
+	                		Afactor=`printf %3.0f $Afactor | tr -d \[:blank:\]`
+			                Bfactor=`printf %3.0f $Bfactor | tr -d \[:blank:\]`
+			                Cfactor=`printf %3.0f $Cfactor | tr -d \[:blank:\]`
+			                Dfactor=`printf %3.0f $Dfactor | tr -d \[:blank:\]`
 					convolve="-convolve 0,0,0,0,$Afactor,$Bfactor,0,$Cfactor,$Dfactor"
 		                       echo "Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor"
 					it="${effect1_params[$i]}"
@@ -4990,7 +5030,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 		[ $debug -ge 2 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		myecho "[dvd-slideshow]############################################################"
 #identify "$tmpdir/slide_$i.ppm"
-	elif [ "`echo $file | tr -d [:blank:]`" == 'chapter' ] ; then   # CHAPTER
+	elif [ "`echo $file | tr -d \[:blank:\]`" == 'chapter' ] ; then   # CHAPTER
 		## create a chapter marker at this time, but don't do anything else...
 		manual_chapter_markers=1  # allow manual chapter markers
 		write_chap=1
@@ -5174,11 +5214,11 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 #			logecho "[dvd-slideshow]  Line1=$subtitle1"
 #			logecho "[dvd-slideshow]  Line2=$subtitle2"
 			transparent_color="ff0000"
-			if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
-				f_subtitle_font_size=$(( $subtitle_font_size / 2 ))
-			else
-				f_subtitle_font_size=$(( $subtitle_font_size ))
-			fi
+#			if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
+				f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
+#			else
+#				f_subtitle_font_size=$(( $subtitle_font_size ))
+#			fi
 	        	convert -size $dvd_width"x"$dvd_height xc:red -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
 			-gravity South -fill white -stroke black -strokewidth 3 -colors 3 +antialias \
 			-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
@@ -5825,15 +5865,6 @@ fi
 
 
 ## check to make sure the output files exist before running mplex:
-if [ "$output_format" == 'flv' ] ; then
-	video_suffix='flv'
-elif [ "$output_format" == 'mp4' ] ; then   # NOT TESTED YET
-	video_suffix='mp4'
-elif [ "$output_format" == 'mp4_ipod' ] ; then   # NOT TESTED YET
-	video_suffix='mp4'
-else
-	video_suffix='mpg'
-fi
 if [ ! -f "$tmpdir/video.$video_suffix" ] ; then
 	myecho "[dvd-slideshow] ERROR: no output .$video_suffix file found!"
 	myecho "[dvd-slideshow] This usually happens when ffmpeg screws up something"
@@ -5860,8 +5891,20 @@ if [ -n "${audio_2[0]}" ] && [ "$vcd" -eq 0 -a "$svcd" -eq 0 ] ; then
 else  # only one audio track used:
 	if [ "$output_format" == 'flv' ] ; then
 		myecho "[dvd-slideshow] Adding audio to .flv file"
-		ffmpeg -i "$tmpdir/audio1.ac3" -i "$tmpdir/video.flv" -vcodec copy -f flv -ar 22050 -ab 64 -ac 1 "$tmpdir/video1.flv" >> "$outdir"/"$logfile" 2>&1 
+		ffmpeg -y -i "$tmpdir/audio1.ac3" -i "$tmpdir/video.flv" -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir/video1.flv" >> "$outdir"/"$logfile" 2>&1 
 		mv "$tmpdir/video1.flv" "$outdir"/"$slideshow_name".flv
+		myecho "[dvd-slideshow] Generating video thumbnail..."
+		ffmpeg -y -i "$outdir"/"$slideshow_name".flv -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$outdir"/"$logfile" 2>&1
+		if [ -f "/usr/bin/flvtool2" ] ; then
+			myecho "[dvd-slideshow] Running flvtool2 -U $slideshow_name".flv
+			/usr/bin/flvtool2 -U "$outdir"/"$slideshow_name".flv
+		fi
+	elif [ "$output_format" == 'swf' ] ; then
+		myecho "[dvd-slideshow] Adding audio to .swf file"
+		ffmpeg -y -i "$tmpdir/audio1.ac3" -i "$tmpdir/video.swf" -vcodec copy -f swf -ar 22050 -ab 48 -ac 1 "$tmpdir/video1.swf" >> "$outdir"/"$logfile" 2>&1 
+		mv "$tmpdir/video1.swf" "$outdir"/"$slideshow_name".swf
+		myecho "[dvd-slideshow] Generating video thumbnail..."
+		ffmpeg -y -i "$outdir"/"$slideshow_name".swf -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$outdir"/"$logfile" 2>&1
 	elif [ "$output_format" == 'mp4' ] ; then   # NOT TESTED YET
 		myecho "[dvd-slideshow] Exporting .mp4 file"
 #		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$outdir/$logfile" 2>&1
@@ -5899,6 +5942,8 @@ verbosity=0
 ## now run spumux only if the png was generated:
 if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 	echo "[dvd-slideshow] VCD mode: not running spumux"
+elif [ "$output_format" == "flv" ] || [ "$output_format" == "mp4" ] || [ "$output_format" == 'swf' ] ; then
+	echo "[dvd-slideshow] FLV mode: not running spumux"
 elif [ "$has_subtitles" -eq 1 ] ; then   # dvd
 	spumux -m dvd -v $verbosity -s 0 -P "$tmpdir/${slideshow_name}".spumux < "$outdir/${slideshow_name}.vob" > "$outdir/tmp.vob"  2>> "$outdir/$logfile"
 	if [ $? -ne 0 ] ; then

@@ -4,7 +4,7 @@
 # use "title" in the image field to create a title slide.
 # title:duration:description 
 # The "description" string gets put on the title slide.
-title:5:This is my title
+title:5:Very Simple Example
 
 # each picture gets put on a separate line.  The format is:
 # full_path_to_file.jpg:Duration:Subtitle

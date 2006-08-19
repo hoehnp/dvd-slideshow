@@ -7,7 +7,7 @@
 background:0::../images/background.jpg
 
 # Titles are put in the center:
-title:5:My title
+title:5:Simple Example
 background:1
 
 # The titlebar type of title has two titles, one on top and one lower:

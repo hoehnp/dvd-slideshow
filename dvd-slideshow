@@ -73,6 +73,7 @@ echo 'Changes:
 	Removed internal option for yuvcat
     Bug fixes: 	
 	Escape brackets in [:blank:] (thanks Christian Molière)
+	Fixed mismatch in kenburns coordinates due to non-square pixels. (thanks Tony Sauri)
 	Manual chapter markers fixed.
 	Fixed reading of $HOME/.dvd-slideshowrc settings.
 	Single or double quotes allowed in variable settings.
@@ -1103,25 +1104,25 @@ waitforfile ()
 	done
 }
 
-waitforfiles ()
-# waitforfiles $filename $last_file [$start_file]
+waitforfiles ()  # WAITFORFILES
+# waitforfiles $filename $ext $last_file [$start_file]
 {
 	# $1 is the filename (with path)
-	# $2 is the max digits in the series
-	# $1_$2.ppm
+	# $2 is the filename extension
+	# $3 is the max digits in the series
 	## wait for all files in a fade to exist...
 	local dir_tmp=`dirname "$1"`
 	local newfile_tmp="0"
 	local di_tmp="0"
-	[ -n "$3" ] && local start=$( printf %4.0f $3 ) || local start="1" 
-	local end=$( printf %4.0f $2 )
-#	for i_tmp in `seq $start $2` ; do
+	local ext=$2
+	[ -n "$4" ] && local start="$( printf %4.0f $4 )" || local start="1" 
+	local end="$( printf %4.0f $3 )"
 	for (( i_tmp=start ; i_tmp<=end ; i_tmp++ )) ; do
 		di_tmp=`addzeros $i_tmp`
-		newfile_tmp="$1"_$di_tmp.ppm
+		newfile_tmp="$1"_$di_tmp.$ext
 		while [ ! -f "$newfile_tmp" ] 
 		do
-			sleep 0.2s
+			sleep 0.1s
 		done
 	done
 }
@@ -2081,7 +2082,6 @@ mycrop ()
 kenburns ()  # KENBURNS
 # Kenburns $window_start $window_end $file $total_frames $startframe $lastframe bg [$char]
 {
-#		echo "kb: $1 $2 $3 $4 $5 $6"
 		local l_window_start="$1"
 		local l_window_end="$2"
 		local l_file="$3"
@@ -2183,7 +2183,7 @@ kenburns ()  # KENBURNS
 			echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
 		elif [ "$interp" -eq 1 ] && [ "$xvelocity" -lt 5000 -a "$yvelocity" -lt 4000 ] ; then
 			echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
-		else
+		elif [ "$interp" -eq 1 ] ; then
 			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Disabling high-quality mode for fast effect. Velocity=$xvelocity $yvelocity"
 			interp=0
 		fi
@@ -2318,7 +2318,9 @@ echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 #			progressbar $(( $fr - $l_startframe +1 )) $l_frames "k"
 		done
 #		finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
-		waitforfiles "$tmpdir/fade" $dj $l_startframe
+echo "waiting for files dj=$dj l_startframe=$l_startframe"
+		waitforfiles "$tmpdir/fade" $suffix $dj $l_startframe
+echo "done waiting for files"
 		finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 }
 
@@ -2544,15 +2546,21 @@ create_slide ()
 
 
 scroll ()  # SCROLL
-# scroll $direction $file $total_frames [$startframe] [$lastframe] [$char]
+# scroll $direction $file $bg $total_frames [$startframe] [$lastframe] [$char]
 {
 	local l_direction="$1"
 	local l_file="$2"
-	local l_frames="$3"
+	local l_bg="$3"
+	local l_frames="$4"
 	lastbar=0 # required for progressbar to set back to zero
-	[ -z "$4" ] && local l_startframe="1" || local l_startframe="$4"
-	[ -z "$5" ] && local l_endframe="$l_frames" || local l_endframe="$5"
-	[ -z "$6" ] && local c='#' || local c="$6"
+	[ -z "$5" ] && local l_startframe="1" || local l_startframe="$5"
+	[ -z "$6" ] && local l_endframe="$l_frames" || local l_endframe="$6"
+	[ -z "$7" ] && local c='#' || local c="$7"
+	if [ "$3" == "$transparent_bg" ] ; then
+		local suffix='png'
+	else
+		local suffix='ppm'
+	fi
 	image_width="`imagewidth "$l_file"`"
 	image_height="`imageheight "$l_file"`"
 	## calculate frame size after adding black side bars for portrait pictures:
@@ -2648,36 +2656,35 @@ scroll ()  # SCROLL
 		if [ "$interp" -eq 1 ] ; then
 			if [ "$smp" -eq 1 ] ; then
 				if [ "$frame_border" -eq 0 ] ; then
-			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" &
+			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix" &
 				else
-			    	(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm") &
+			    	(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix") &
 				fi
 			else
 				if [ "$frame_border" -eq 0 ] ; then
-			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm"
+			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix"
 				else
-			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" 
+			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" 
 				fi
 			fi
 		else
 			[ $debug -ge 3 ] && echo "[dvd-slideshow:scroll] $dj crop:$frame_width"x"$frame_height"+"$x0"+"$y0 composite: +$frame_border"+"$frame_border"
 			if [ "$smp" -eq 1 ] ; then
 				if [ "$frame_border" -eq 0 ] ; then
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames) &
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames) &
 				else
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames) &
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames) &
 				fi
 			else
 				if [ "$frame_border" -eq 0 ] ; then
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames)
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames)
 				else
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames)
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColor -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames)
 				fi
 			fi
 		fi
 	done
-	waitforfiles "$tmpdir/fade" $dj $l_startframe
-#	waitforfiles "$tmpdir/fade" $dj
+	waitforfiles "$tmpdir/fade" $suffix $dj $l_startframe
 	finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 }
 
@@ -2806,6 +2813,65 @@ if [ -n "$theme" ] ; then
 	        fi
 	fi
 fi
+}
+
+subtitle ()  # SUBTITLE
+{
+	# $1 = the subtitle passed
+	## fix any special characters:
+	local mysubtitle="$( echo "$1" | sed -e 's/"/\\\\"/g' | sed -e 's/\!/\\\!/g')"
+	## check to see if we find any user-specified breaks \n
+	it=`echo "$mysubtitle" | awk -F'\\' '{print $2}' | cut -c 1`
+	if [ "$it" == 'n' ] ; then
+		logecho "[dvd-slideshow] Found \\n in subtitle"
+		# user entered a \n to force line wraps
+		# break lines at line wraps
+		subtitle1=`echo "$mysubtitle" | awk -F'\\' '{print $1}'`
+		subtitle2=`echo "$mysubtitle" | awk -F'\\' '{print $2}' | cut -c 2-`
+	else	# no forced line wraps.  Check for long lines:	
+		## make the subtitle break up into up to 4 different lines?
+		font_width=15  # actually it's 14.4, but this should give us some margin
+		characters="${#mysubtitle}"
+		line_width=$(( $font_width * $characters ))
+#		myecho "[dvd-slideshow] $i characters=$characters linewidth=$line_width"
+		if [ "$line_width" -gt "$dvd_width" ] ; then # $dvd_width=720
+			## need to split the line:
+			characters2=$(( $characters / 2 + 1))
+			# try cutting in the middle:
+			subtitle1="${mysubtitle:0:$characters2}"
+			subtitle2="${mysubtitle:$characters2:$characters2}" 
+			# now re-join a potential broken word:
+			if [ "${mysubtitle:$characters2:1}" != ' ' ] ; then	
+				# break occurred in the middle of a word. re-join the word:
+				wordend=`echo "$subtitle2" | awk '{print $1}'`
+				wordend_length=${#wordend}
+				subtitle1="$subtitle1$wordend"
+				subtitle2="${subtitle2:$wordend_length}"
+			fi
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow] Splitting long subtitle... New values:"
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle1"
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle2"
+		else
+			subtitle1=""
+			subtitle2="$mysubtitle"
+		fi
+	fi	
+#	myecho "[dvd-slideshow] $i subtitle1=$subtitle1 subtitle2=$subtitle2"
+	
+	## render subtitles, if necessary:
+	## let dvd-slideshow render its own subtitles:
+	subtitle1=`echo "$subtitle1" | sed -e 's/\\\!/\!/g' `
+	subtitle2=`echo "$subtitle2" | sed -e 's/\\\!/\!/g' `
+#	logecho "[dvd-slideshow]  Line1=$subtitle1"
+#	logecho "[dvd-slideshow]  Line2=$subtitle2"
+	transparent_color="ff0000"
+	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
+       	convert -size $dvd_width"x"$dvd_height xc:red -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
+	-gravity South -fill white -stroke black -strokewidth 3 -colors 3 +antialias \
+	-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+	-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+	-quality 100 "$tmpdir/subtitle_$i.png"
+
 }
 
 ############################################# End of functions
@@ -4157,7 +4223,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 			direction="${effect1_params[$i+$increment]}"
 			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
-			scroll "$direction" "${image[$i+$increment]}" "$next_frames" 1 "$frames" "."
+			scroll "$direction" "${image[$i+$increment]}" "$normal_bg" "$next_frames" 1 "$frames" "."
 		elif [ "$nextslide" == 'background' ] && [ "${duration[$i+$increment]}" -ne 0 ] ; then
 			bg="$nextslide_effect"
 			if [ -n "$bg" ] ; then
@@ -4211,7 +4277,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames )
 			fi
 		done
-		waitforfiles "$tmpdir/fade" $dj
+		waitforfiles "$tmpdir/fade" ppm $dj
 		encode_fade
 		finish_progressbar "$fr" $frames
 		if [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
@@ -4275,7 +4341,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_sec * $previous_duration / 1000 ))` 
 			start_frame="$(( $previous_frames - $frames  + 1 ))"
-			scroll "$direction" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame"  "$previous_frames" "."
+			scroll "$direction" "${image[$i-$previous_increment]}" "$normal_bg" "$previous_frames" "$start_frame"  "$previous_frames" "."
 #			for fr in `seq 1 $stepsize $frames`; do
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
@@ -4339,7 +4405,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 			direction="${effect1_params[$i+$increment]}"
 			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
-			scroll "$direction" "${image[$i+$increment]}" "$next_frames" 1 "$frames" "."
+			scroll "$direction" "${image[$i+$increment]}" "$normal_bg" "$next_frames" 1 "$frames" "."
 #			for fr in `seq 1 $stepsize $frames`; do
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
@@ -4418,7 +4484,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames )
 			fi
 		done
-		waitforfiles "$tmpdir/fade" $dj
+		waitforfiles "$tmpdir/fade" ppm $dj
 		encode_fade
 		finish_progressbar $fr $frames
 		rm "$tmpdir"/fade_????.ppm
@@ -4463,7 +4529,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_sec * $previous_duration / 1000 ))` 
 			start_frame="$(( $previous_frames - $frames  + 1 ))"
-			scroll "$direction" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame"  "$previous_frames" "."
+			scroll "$direction" "${image[$i-$previous_increment]}" "$normal_bg" "$previous_frames" "$start_frame"  "$previous_frames" "."
 #			for fr in `seq 1 $stepsize $frames`; do
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
@@ -4515,7 +4581,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/temp_slideshow_image.mpc" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames )
 			fi
 		done
-		waitforfiles "$tmpdir/fade" $dj
+		waitforfiles "$tmpdir/fade" ppm $dj
 		encode_fade
 		finish_progressbar $fr $frames '#'
 		rm "$tmpdir"/fade_????.ppm
@@ -4584,33 +4650,37 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 		elif [ "$previousslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering previous kenburns effect for wipe..."
 			# render end of last kenburns effect first:
-			[ -f "$tmpdir"/kb_0001.ppm ] && \rm "$tmpdir"/kb_????.ppm  # remove any old files
+			\rm "$tmpdir"/kb_????.png  # remove any old files
 			window_start=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $1";"$2}'`
 			window_end=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $3";"$4}'`
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_sec * $previous_duration / 1000 ))` 
 			## number of frames in kenburns effect:
 			start_frame="$(( $previous_frames - $frames  + 1 ))"
+echo "before kenburns"
 			kenburns "$window_start" "$window_end" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame" "$previous_frames" "$transparent_bg" "."
+echo "after kenburns"
 #			for fr in `seq 1 $stepsize $frames`; do
+echo "moving files"
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
 				kb_dj=`addzeros $(( $start_frame + $fr - 1 ))`
-				mv "$tmpdir/fade_$kb_dj.ppm" "$tmpdir/kb_prev_$dj.ppm"
+				mv "$tmpdir/fade_$kb_dj.png" "$tmpdir/kb_prev_$dj.png"
 			done
+echo "done moving files"
 		elif [ "$previousslide_effect" == 'scroll' ] ; then
 			myecho "[dvd-slideshow] Rendering previous scroll effect for wipe..."
-			[ -f "$tmpdir"/kb_0001.ppm ] && \rm "$tmpdir"/kb_????.ppm  # remove any old files
+			\rm "$tmpdir"/kb_????.png  # remove any old files
 			direction="${effect1_params[$i-$previous_increment]}"
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_sec * $previous_duration / 1000 ))` 
 			start_frame="$(( $previous_frames - $frames  + 1 ))"
-			scroll "$direction" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame"  "$previous_frames" "."
+			scroll "$direction" "${image[$i-$previous_increment]}" "$transparent_bg" "$previous_frames" "$start_frame"  "$previous_frames" "."
 #			for fr in `seq 1 $stepsize $frames`; do
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
 				kb_dj=`addzeros $(( $start_frame + $fr - 1 ))`
-				mv "$tmpdir/fade_$kb_dj.ppm" "$tmpdir/kb_prev_$dj.ppm"
+				mv "$tmpdir/fade_$kb_dj.png" "$tmpdir/kb_prev_$dj.png"
 			done
 		else # no manual cropping next picture and it's not a title
 			no_effects=1
@@ -4659,7 +4729,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$transparent_bg" "$next_outfile"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering next kenburns effect for wipe..."
-			[ -f "$tmpdir"/fade_0001.ppm ] && \rm "$tmpdir"/fade_????.ppm  # remove any old files
+			\rm "$tmpdir"/fade_????.png  # remove any old files
 			window_start=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			window_end=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $3";"$4}'`
 			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
@@ -4668,19 +4738,19 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 #			for fr in `seq 1 $stepsize $frames`; do
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
-				mv "$tmpdir/fade_$dj.ppm" "$tmpdir/kb_next_$dj.ppm"
+				mv "$tmpdir/fade_$dj.png" "$tmpdir/kb_next_$dj.png"
 			done
 		elif [ "$nextslide_effect" == 'scroll' ] ; then  # if next picture has scroll effect
 			myecho "[dvd-slideshow] Rendering next scroll effect for wipe..."
-			[ -f "$tmpdir"/fade_0001.ppm ] && \rm "$tmpdir"/fade_????.ppm  # remove any old files
+			\rm "$tmpdir"/fade_????.png  # remove any old files
 			direction="${effect1_params[$i+$increment]}"
 			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
-			scroll "$direction" "${image[$i+$increment]}" "$next_frames" 1 "$frames" "."
+			scroll "$direction" "${image[$i+$increment]}" "$transparent_bg" "$next_frames" 1 "$frames" "."
 #			for fr in `seq 1 $stepsize $frames`; do
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
-				mv "$tmpdir/fade_$dj.ppm" "$tmpdir/kb_next_$dj.ppm"
+				mv "$tmpdir/fade_$dj.png" "$tmpdir/kb_next_$dj.png"
 			done
 		elif [ "$nextslide" == 'background' ] && [ "${duration[$i+$increment]}" -ne 0 ] ; then
 			bg="$nextslide_effect"
@@ -4783,21 +4853,21 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 			## optionally prepare interp image:
 			if [ "$both" -eq 1 ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.ppm" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_nex_$dj.ppm" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm
 				else
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.ppm" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_nex_$dj.ppm" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm
 				fi
 			elif [ "$previousslide_effect" == 'kenburns' ] || [ "$previousslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.ppm" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm
 				else
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.ppm" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm
 				fi
 			elif [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.ppm" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm
 				else
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.ppm" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm
 				fi
 			else  # flat files.  Optionally do interp
 				if [ "$interp" -eq 1 ] && [ "$no_effects" -eq 2 ] ; then
@@ -4841,7 +4911,7 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 				fi # end of flat files
 			fi  # end of pre/post options
 		done
-		waitforfiles "$tmpdir/fade" $dj
+		waitforfiles "$tmpdir/fade" ppm $dj
 		encode_fade
 		finish_progressbar $fr $frames
 		rm "$tmpdir"/fade_????.ppm
@@ -4964,16 +5034,16 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
 		fi
 		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
-			scroll "$direction" "$file" "$frames" "$(( $previous_frames + 1 ))" "$(( $frames - $next_frames ))"
+			scroll "$direction" "$file" "$normal_bg" "$frames" "$(( $previous_frames + 1 ))" "$(( $frames - $next_frames ))"
 			rendered_frames=`div1000 $(( $frames_per_sec * ( ${duration[$i]} - $previous_duration - $next_duration ) / 1000 ))` # both duration and fps are in ms
 		elif [ "$previous_increment" -ne 0 ] ; then
-			scroll "$direction" "$file" "$frames" "$(( $previous_frames + 1 ))" "$frames" '#'
+			scroll "$direction" "$file" "$normal_bg" "$frames" "$(( $previous_frames + 1 ))" "$frames" '#'
 			rendered_frames=`div1000 $(( $frames_per_sec * ( ${duration[$i]} - $previous_duration ) / 1000 ))` # both duration and fps are in ms
 		elif [ "$next_increment" -ne 0 ] ; then
-			scroll "$direction" "$file" "$frames" 1 "$(( $frames - $next_frames ))" '#'
+			scroll "$direction" "$file" "$normal_bg" "$frames" 1 "$(( $frames - $next_frames ))" '#'
 			rendered_frames=`div1000 $(( $frames_per_sec * ( ${duration[$i]} - $next_duration ) / 1000 ))` # both duration and fps are in ms
 		else
-			scroll "$direction" "$file" "$frames" 1 "$frames" "#"
+			scroll "$direction" "$file" "$normal_bg" "$frames" 1 "$frames" "#"
 			rendered_frames="$frames"
 		fi
 		if [ "$rendered_frames" -le 0 ] ; then
@@ -5159,72 +5229,75 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 	## Subtitles ########################################################
 	## add the subtitle track if it exists:  SUBTITLE
 	if [ -n "${subtitle[$i]}" ] ; then
+		## move all the pixel-related stuff into a function, but keep timing stuff here...
 		has_subtitles=1
 #	echo "$i subtitle_rendered=${subtitle[$i]}"
-		## fix any special characters:
-		subtitle[$i]=`echo "${subtitle[$i]}" | sed -e 's/"/\\\\"/g' | sed -e 's/\!/\\\!/g' `
-		## check to see if we find any user-specified breaks \n
-		it=`echo "${subtitle[$i]}" | awk -F'\\' '{print $2}' | cut -c 1`
-		if [ "$it" == 'n' ] ; then
-			logecho "[dvd-slideshow] Found \\n in subtitle"
-			# user entered a \n to force line wraps
-			# break lines at line wraps
-			subtitle1=`echo "${subtitle[$i]}" | awk -F'\\' '{print $1}'`
-			subtitle2=`echo "${subtitle[$i]}" | awk -F'\\' '{print $2}' | cut -c 2-`
-		else	# no forced line wraps.  Check for long lines:	
-			## make the subtitle break up into up to 4 different lines?
-			font_width=15  # actually it's 14.4, but this should give us some margin
-	#		characters=`echo "${subtitle[$i]}" | wc -c`
-			characters="${#subtitle[$i]}"
-			line_width=$(( $font_width * $characters ))
-#			myecho "[dvd-slideshow] $i characters=$characters linewidth=$line_width"
-			if [ "$line_width" -gt "$dvd_width" ] ; then # $dvd_width=720
-				## need to split the line:
-				characters2=$(( $characters / 2 + 1))
-				# try cutting in the middle:
-				subtitle1="${subtitle[$i]:0:$characters2}"
-				subtitle2="${subtitle[$i]:$characters2:$characters2}" 
-				# now re-join a potential broken word:
-				if [ "${subtitle[$i]:$characters2:1}" != ' ' ] ; then	
-					# break occurred in the middle of a word. re-join the word:
-					wordend=`echo "$subtitle2" | awk '{print $1}'`
-					wordend_length=${#wordend}
-					subtitle1="$subtitle1$wordend"
-					subtitle2="${subtitle2:$wordend_length}"
-				fi
-				[ $debug -ge 1 ] && myecho "[dvd-slideshow] Splitting long subtitle... New values:"
-				[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle1"
-				[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle2"
-			else
-				subtitle1=""
-				subtitle2="${subtitle[$i]}"
-			fi
-		fi	
+		subtitle "${subtitle[$i]}"  # just creates the .png file for overlay
+#		## fix any special characters:
+#		subtitle[$i]=`echo "${subtitle[$i]}" | sed -e 's/"/\\\\"/g' | sed -e 's/\!/\\\!/g' `
+#		## check to see if we find any user-specified breaks \n
+#		it=`echo "${subtitle[$i]}" | awk -F'\\' '{print $2}' | cut -c 1`
+#		if [ "$it" == 'n' ] ; then
+#			logecho "[dvd-slideshow] Found \\n in subtitle"
+#			# user entered a \n to force line wraps
+#			# break lines at line wraps
+#			subtitle1=`echo "${subtitle[$i]}" | awk -F'\\' '{print $1}'`
+#			subtitle2=`echo "${subtitle[$i]}" | awk -F'\\' '{print $2}' | cut -c 2-`
+#		else	# no forced line wraps.  Check for long lines:	
+#			## make the subtitle break up into up to 4 different lines?
+#			font_width=15  # actually it's 14.4, but this should give us some margin
+#	#		characters=`echo "${subtitle[$i]}" | wc -c`
+#			characters="${#subtitle[$i]}"
+#			line_width=$(( $font_width * $characters ))
+##			myecho "[dvd-slideshow] $i characters=$characters linewidth=$line_width"
+#			if [ "$line_width" -gt "$dvd_width" ] ; then # $dvd_width=720
+#				## need to split the line:
+#				characters2=$(( $characters / 2 + 1))
+#				# try cutting in the middle:
+#				subtitle1="${subtitle[$i]:0:$characters2}"
+#				subtitle2="${subtitle[$i]:$characters2:$characters2}" 
+#				# now re-join a potential broken word:
+#				if [ "${subtitle[$i]:$characters2:1}" != ' ' ] ; then	
+#					# break occurred in the middle of a word. re-join the word:
+#					wordend=`echo "$subtitle2" | awk '{print $1}'`
+#					wordend_length=${#wordend}
+#					subtitle1="$subtitle1$wordend"
+#					subtitle2="${subtitle2:$wordend_length}"
+#				fi
+#				[ $debug -ge 1 ] && myecho "[dvd-slideshow] Splitting long subtitle... New values:"
+#				[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle1"
+#				[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle2"
+#			else
+#				subtitle1=""
+#				subtitle2="${subtitle[$i]}"
+#			fi
+#		fi	
 #		myecho "[dvd-slideshow] $i subtitle1=$subtitle1 subtitle2=$subtitle2"
-		
-		## render subtitles, if necessary:
+#		
+#		## render subtitles, if necessary:
 		if [ "$subtitle_type" == "srt" ] || [ "$subtitle_type" == "SRT" ] ; then
 			## let spumux render subtitles internally
 			## setup spumux fonts, etc?: (later)
 			subtitle_number=$(( $subtitle_number + 1 ))		
-		else
-			## let dvd-slideshow render its own subtitles:
-			subtitle1=`echo "$subtitle1" | sed -e 's/\\\!/\!/g' `
-			subtitle2=`echo "$subtitle2" | sed -e 's/\\\!/\!/g' `
-#			logecho "[dvd-slideshow]  Line1=$subtitle1"
-#			logecho "[dvd-slideshow]  Line2=$subtitle2"
-			transparent_color="ff0000"
-#			if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
-				f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
-#			else
-#				f_subtitle_font_size=$(( $subtitle_font_size ))
-#			fi
-	        	convert -size $dvd_width"x"$dvd_height xc:red -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
-			-gravity South -fill white -stroke black -strokewidth 3 -colors 3 +antialias \
-			-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
-			-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
-			-quality 100 "$tmpdir/subtitle_$i.png"
 		fi
+#		else
+#			## let dvd-slideshow render its own subtitles:
+#			subtitle1=`echo "$subtitle1" | sed -e 's/\\\!/\!/g' `
+#			subtitle2=`echo "$subtitle2" | sed -e 's/\\\!/\!/g' `
+##			logecho "[dvd-slideshow]  Line1=$subtitle1"
+##			logecho "[dvd-slideshow]  Line2=$subtitle2"
+#			transparent_color="ff0000"
+##			if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
+#				f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
+##			else
+##				f_subtitle_font_size=$(( $subtitle_font_size ))
+##			fi
+#	        	convert -size $dvd_width"x"$dvd_height xc:red -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
+#			-gravity South -fill white -stroke black -strokewidth 3 -colors 3 +antialias \
+#			-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+#			-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+#			-quality 100 "$tmpdir/subtitle_$i.png"
+#		fi
 	fi
 
 	## let's assume the subtitle stays on the whole duration of the slide?

@@ -2570,7 +2570,7 @@ scroll ()  # SCROLL
 	# now the image is scaled so the height is correct
 	image_width="`imagewidth_sq "$tmpdir/temp_slideshow_image_scaled.mpc"`" # already non-suqare pixels
 	image_height="`imageheight "$tmpdir/temp_slideshow_image_scaled.mpc"`"
-	[ "$debug" -ge 1 ] && myecho "[dvd-slideshow:scroll] Temp image_width=$image_width image_height=$image_height"
+	[ "$debug" -ge 2 ] && myecho "[dvd-slideshow:scroll] Temp image_width=$image_width image_height=$image_height"
 	## these are the crop parameters that will be used to crop the temp image:
 	if [ "$l_direction" == 'right' ] ; then
 #		myecho "[dvd-slideshow] Doing scroll right effect"
@@ -3569,7 +3569,7 @@ fi
 
 
 if [ "$output_format" == 'flv' ] ; then
-	video_bitrate=50
+	video_bitrate=100
 	video_suffix='flv'
 	framerate='15'  # is this needed for .flv?
 	frames_per_sec=15000  # in ms
@@ -4996,7 +4996,8 @@ for file in "${image[@]}"; do
 		encode_fade
 		## just in case we want to fade out or crossfade, we need to save the last image:
 		mv "$tmpdir/fade_$dj.ppm" "$tmpdir/slide_$i.ppm"
-		find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm
+		find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm  # remove old files
+		find "$tmpdir" -name "fade*.png" -type f -print0 | xargs -0 rm  # remove old files
 		end_frame_info $rendered_frames
 		[ $debug -ge 2 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		image_number=$(( $image_number + 1 ))
@@ -5040,7 +5041,8 @@ for file in "${image[@]}"; do
 #		finish_progressbar $fr $frames
 		## just in case we want to fade out or crossfade, we need to save the last image:
 		mv "$tmpdir/fade_$dj.ppm" "$tmpdir/slide_$i.ppm"
-#		find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm
+		find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm  # remove old files
+		find "$tmpdir" -name "fade*.png" -type f -print0 | xargs -0 rm  # remove old files
 		end_frame_info $rendered_frames
 		[ $debug -ge 2 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		image_number=$(( $image_number + 1 ))

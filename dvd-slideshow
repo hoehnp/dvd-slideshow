@@ -1605,7 +1605,7 @@ coordinates_in_dvd_aspect_ratio_frame ()
 #	y_dvd_coordinate=$(( $y_image_coordinate - $yi ))
 }
 
-parse_window ()
+parse_window ()  # PARSE_WINDOW
 # parse_window $
 {
 	# pass a string $1 (kenburns start or end arguments)
@@ -2126,11 +2126,11 @@ kenburns ()  # KENBURNS
 
 		s_width=$(( $xs1 - $xs0 )) ; s_height=$(( $ys1 - $ys0 ))
 		e_width=$(( $xe1 - $xe0 )) ; e_height=$(( $ye1 - $ye0 ))
-		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] Coordinate system is original image size buffered out to dvd aspect ratio"
-		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] and then rescaled to non-square pixels"
-		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] Start: width=$s_width height=$s_height  $xs0,$ys0 : $xs1,$ys1"
-		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] End:   width=$e_width height=$e_height  $xe0,$ye0 : $xe1,$ye1"
-		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] Image top left corner:   xi=$xi yi=$yi"
+		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Coordinate system is original image size buffered out to dvd aspect ratio"
+		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] and then rescaled to non-square pixels"
+		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Start: width=$s_width height=$s_height  $xs0,$ys0 : $xs1,$ys1"
+		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] End:   width=$e_width height=$e_height  $xe0,$ye0 : $xe1,$ye1"
+		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Image top left corner:   xi=$xi yi=$yi"
 
 		##################################################################
 		## so if we're using only 50% of the image, we can pre-crop the image before the
@@ -2193,11 +2193,8 @@ kenburns ()  # KENBURNS
 		fr2=$(( $l_frames - $fr1 ))
 		## start loop for kenburns effect: #################################
 		echo -n  "[dvd-slideshow]"
-echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 		for (( fr=l_startframe ; fr<=l_endframe ; fr=fr+stepsize )) ; do
 			dj=`addzeros $fr`
-#			echo "frame=$fr/$l_frames"
-#echo "s_height=$s_height e_height=$e_height"
 			if [ "$s_height" -eq "$e_height" ] ; then
 	#			logfactor=$(( 1000 * $fr / $l_frames ))
 				logfactor=$( echo "scale=3; 1000 * $fr / $l_frames" | bc )
@@ -2263,7 +2260,7 @@ echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 #			echo '$xc0,$yc0,$c_width,$c_height,$xci,$yci,$iwn,$ihn,$predicted_resized_width,$predicted_resized_height,$xc0_dec,$yc0_dec' >> kenburns_coordinates.csv
 #			echo "$xc0,$yc0,$c_width,$c_height,$xci,$yci,$predicted_resized_width,$predicted_resized_height" >> kenburns_coordinates.csv
 
-			[ $debug -ge 0 ] && myecho "[dvd-slideshow:kenburns] $fr xc0,yc0=$xc0_whole.$xc0_dec,$yc0_whole.$yc0_dec cw,ch=$c_width,$c_height xci,yci=$xci,$yci"
+			[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr xc0,yc0=$xc0_whole.$xc0_dec,$yc0_whole.$yc0_dec cw,ch=$c_width,$c_height xci,yci=$xci,$yci"
 #			[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr xc0,yc0=$xc0,$yc0 cw,ch=$c_width,$c_height xci,yci=$xci,$yci"
 #			i_width=$predicted_resized_width; i_height=$predicted_resized_height
 
@@ -2276,10 +2273,10 @@ echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 #				echo "[dvd-slideshow:kenburns: delta_width=$delta_width delta_height=$delta_height"
 				# force the output size to be exact:  no composite needed!
 				if [ "$smp" -eq 1 ] ; then
-					echo "deltawh<1 smp=1"
+#					echo "deltawh<1 smp=1"
 					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix"  & 
 				elif [ "$smp" -eq 0 ] ; then
-					echo "deltawh<1 smp=0"
+#					echo "deltawh<1 smp=0"
 					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix" 
 				fi
 #				i_width=$dvd_width; i_height=$dvd_height
@@ -2295,20 +2292,20 @@ echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 				top=$(( $yci + $frame_border )) ; bottom=$(( $delta_height - $top ))
 	                        [ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom"
 				if [ "$smp" -eq 1 ] ; then
-					echo "deltawh>1 bg=black smp=1"
+#					echo "deltawh>1 bg=black smp=1"
 					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"  & 
 #					composite -compose src-over -dissolve "$beta" "$tmpdir"/B_temp.ppm "$tmpdir"/A_temp.ppm -type TrueColor -depth 8 ppm:- | composite -compose src-over -dissolve "$gamma" "$tmpdir"/C_temp.ppm - -type TrueColor -depth 8 ppm:- | composite -compose src-over -dissolve "$delta" "$tmpdir"/D_temp.ppm - -type TrueColor -depth 8 ppm:- | convert - -resize "$frame_width"x"$frame_height" -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix"
 				else
-					echo "deltawh>1 bg=black smp=0"
+#					echo "deltawh>1 bg=black smp=0"
 					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"
 # works with imagemagick > 6.0.6  (convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+$xc0+$yc0 +repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
 				fi
 			else   # need to composite over background image:
 				if [ "$smp" -eq 1 ] ; then
-					echo "deltawh>1 bg=image smp=1"
+#					echo "deltawh>1 bg=image smp=1"
 					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix") & 
 				else
-					echo "deltawh>1 bg=image smp=0"
+#					echo "deltawh>1 bg=image smp=0"
 					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix") 
 #					(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+"$xc0"+"$yc0"\! +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite - -compose src-over -geometry "+$xci+$yci" -type TrueColor -depth 8 "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames )
 				fi
@@ -2318,9 +2315,7 @@ echo "startframe=$l_startframe endframe=$l_endframe stepsize=$stepsize"
 #			progressbar $(( $fr - $l_startframe +1 )) $l_frames "k"
 		done
 #		finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
-echo "waiting for files dj=$dj l_startframe=$l_startframe"
 		waitforfiles "$tmpdir/fade" $suffix $dj $l_startframe
-echo "done waiting for files"
 		finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 }
 
@@ -3578,7 +3573,7 @@ if [ "$output_format" == 'flv' ] ; then
 	video_suffix='flv'
 	framerate='15'  # is this needed for .flv?
 	frames_per_sec=15000  # in ms
-	sq_pixel_multiplier=$(( 1000 * 320 / 240 ))  # keep pixels square?
+	sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
 	ppmtoy4m_frc='15:1'  # 15 fps
 	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
@@ -3588,7 +3583,7 @@ elif [ "$output_format" == 'swf' ] ; then
 	video_suffix='swf'
 	framerate='15'  # is this needed for .swf?
 	frames_per_sec=15000  # in ms
-	sq_pixel_multiplier=$(( 1000 * 320 / 240 ))  # keep pixels square?
+	sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
 	ppmtoy4m_frc='15:1'  # 15 fps
 	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
@@ -4203,7 +4198,6 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i+$increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci frame_border=$frame_border"
 			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then  # if next picture has kenburns effect
 			myecho "[dvd-slideshow] Pre-rendering kenburns effect for fadein..."
@@ -4650,27 +4644,20 @@ echo "c_width=$c_width c_height=$c_height xc0=$xc0 yc0=$yc0 xci=$xci yci=$yci fr
 		elif [ "$previousslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering previous kenburns effect for wipe..."
 			# render end of last kenburns effect first:
-			\rm "$tmpdir"/kb_????.png  # remove any old files
 			window_start=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $1";"$2}'`
 			window_end=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $3";"$4}'`
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_sec * $previous_duration / 1000 ))` 
 			## number of frames in kenburns effect:
 			start_frame="$(( $previous_frames - $frames  + 1 ))"
-echo "before kenburns"
 			kenburns "$window_start" "$window_end" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame" "$previous_frames" "$transparent_bg" "."
-echo "after kenburns"
-#			for fr in `seq 1 $stepsize $frames`; do
-echo "moving files"
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
 				kb_dj=`addzeros $(( $start_frame + $fr - 1 ))`
 				mv "$tmpdir/fade_$kb_dj.png" "$tmpdir/kb_prev_$dj.png"
 			done
-echo "done moving files"
 		elif [ "$previousslide_effect" == 'scroll' ] ; then
 			myecho "[dvd-slideshow] Rendering previous scroll effect for wipe..."
-			\rm "$tmpdir"/kb_????.png  # remove any old files
 			direction="${effect1_params[$i-$previous_increment]}"
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_sec * $previous_duration / 1000 ))` 
@@ -4729,7 +4716,6 @@ echo "done moving files"
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$transparent_bg" "$next_outfile"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering next kenburns effect for wipe..."
-			\rm "$tmpdir"/fade_????.png  # remove any old files
 			window_start=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			window_end=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $3";"$4}'`
 			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
@@ -4742,7 +4728,6 @@ echo "done moving files"
 			done
 		elif [ "$nextslide_effect" == 'scroll' ] ; then  # if next picture has scroll effect
 			myecho "[dvd-slideshow] Rendering next scroll effect for wipe..."
-			\rm "$tmpdir"/fade_????.png  # remove any old files
 			direction="${effect1_params[$i+$increment]}"
 			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
@@ -4810,7 +4795,7 @@ echo "done moving files"
 			myecho "[dvd-slideshow] ERROR: bad effect parameters $direction"
 			cleanup; exit 1
 		fi
-		[ "$debug" -ge 1 ] && myecho "[dvd-slideshow] params=$xs1,$ys1 ; $xs2,$ys2 ; $xe1,$ye1 ; $xe2,$ye2"
+		[ "$debug" -ge 2 ] && myecho "[dvd-slideshow] params=$xs1,$ys1 ; $xs2,$ys2 ; $xe1,$ye1 ; $xe2,$ye2"
 		if [ "$low_quality" -eq 1 ] ; then
 			stepsize=3; interp=0
 		elif [ "$previousslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'kenburns' ] || [ "$previousslide_effect" == 'scroll' ] || [ "$nextslide_effect" == 'scroll' ] ; then
@@ -4828,9 +4813,9 @@ echo "done moving files"
 			myecho "[dvd-slideshow] Using interpolation. xVelocity=$xvelocity"
 		elif [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 5000 ] ; then
 			myecho "[dvd-slideshow] Using interpolation. yVelocity=$yvelocity"
-		else
+		elif [ "$interp" -eq 1 ] ; then
 			myecho "[dvd-slideshow] Using standard method, not extra-smooth mode. "
-			[ "$debug" -ge 1 ] && myecho "[dvd-slideshow] xVelocity=$xvelocity yVelocity=$yvelocity"
+			[ "$debug" -ge 2 ] && myecho "[dvd-slideshow] xVelocity=$xvelocity yVelocity=$yvelocity"
 			interp=0
 		fi
 #		end_frame_info $rendered_frames
@@ -4853,23 +4838,24 @@ echo "done moving files"
 			## optionally prepare interp image:
 			if [ "$both" -eq 1 ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm
+				(composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm ; rm "$tmpdir/kb_prev_$dj.png" "$tmpdir/kb_next_$dj.png") &
 				else
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm ; rm "$tmpdir/kb_prev_$dj.png" "$tmpdir/kb_next_$dj.png"
 				fi
 			elif [ "$previousslide_effect" == 'kenburns' ] || [ "$previousslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm
+				(composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm ; rm "$tmpdir/kb_prev_$dj.png") &
 				else
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm ; rm "$tmpdir/kb_prev_$dj.png"
 				fi
 			elif [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm
+				(composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm ; rm "$tmpdir/kb_next_$dj.png") &
 				else
-				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm
+				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm ; rm "$tmpdir/kb_next_$dj.png"
 				fi
 			else  # flat files.  Optionally do interp
+				interp=0
 				if [ "$interp" -eq 1 ] && [ "$no_effects" -eq 2 ] ; then
 					x1=$( echo "scale=3; $xs1 + ($xe0-$xs1)* $fr / $frames" | bc )
 					y1=$( echo "scale=3; $ys1 + ($ye0-$ys1)* $fr / $frames" | bc )
@@ -4949,7 +4935,7 @@ echo "done moving files"
 			window=`echo "${effect1_params[$i]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "$file"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			[ $debug -ge 1 ] && myecho "[dvd-slideshow] Crop $c_width"x"$c_height"+"$xc0"+"$yc0 composite" +"$xci"+$yci
+			[ $debug -ge 2 ] && myecho "[dvd-slideshow] Crop $c_width"x"$c_height"+"$xc0"+"$yc0 composite" +"$xci"+$yci
 			## now, do the actual crop:
 			convert "${file}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
 		fi
@@ -4987,8 +4973,6 @@ echo "done moving files"
 			next_duration=`seconds2ms ${duration[$i+$next_increment]}`  # duration in thousandths of sec
 			next_frames=`div1000 $(( $frames_per_sec * $next_duration / 1000 ))` 
 		fi
-		echo "previous_increment=$previous_increment next_increment=$next_increment"
-		echo "previous_frames=$previous_frames next_frames=$next_frames frames=$frames"
 		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
 			kenburns "$window_start" "$window_end" "$file" "$frames" "$(( $previous_frames + 1 ))" "$(( $frames - $next_frames ))" "$normal_bg"
 

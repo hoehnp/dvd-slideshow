@@ -16,7 +16,7 @@ copy=0 # copy all images into a directory in output dvd filesystem directory.
 autocrop=0 # make images that are very near the dvd aspect ratio fill the screen.
 #  Note that autocrop doesn't have an effect on portrait-orientation pictures.
 
-#font=/usr/share/fonts/msttcorefonts/comicbd.ttf  
+#title_font=/usr/share/fonts/msttcorefonts/comicbd.ttf  
 # NOTE that the font options are not nice now, so the syntax will probably
 # change to be more flexible.  E-mail me if you have suggestions.
 

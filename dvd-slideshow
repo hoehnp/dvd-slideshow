@@ -349,6 +349,9 @@ Options:
  [-theme <themefile>]
  	Use the given theme when setting variables/colors/etc.
 
+ [-border N]
+ 	Make a border of N pixels around each image.  
+
  [-sharpen]
  	Sharpen images
 
@@ -588,18 +591,6 @@ Options:
 	  bottomtitle_text_location_x=0
 	  bottomtitle_text_location_y=155
 '
-
-# -c      (pre-alpha do not use!)
-#	  Add chapter selection sub-menu. (when used with dvd-menu)
-#
-# -B     (pre-alpha do not use!)
-#	Add browsable slideshow in sub-menu. (when used with dvd-menu)
-#	When browsing through the pictures, there will be no audio. 
-#	99 slides maximum.
-#
-# -border N	(not implemented yet!)
-#	Add a border of N pixels around the image for better display
-#	on TV screens which always seem to crop some of the picture.'
 	echo '  '
 }
 
@@ -2741,7 +2732,7 @@ else
 fi
 }
 
-set_variables ()
+set_variables ()   # SET_VARIABLES
 {
 	## check for config variables:
 	config1=`echo "$1" | cut -d= -f1 | tr -d \[:blank:\]`
@@ -2766,7 +2757,7 @@ set_variables ()
 		bottomtitle_bar_height) bottomtitle_bar_height="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_bar_height=$bottomtitle_bar_height" ;;
 		bottomtitle_text_location_x) bottomtitle_text_location_x="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_text_location_x=$bottomtitle_text_location_x" ;;
 		bottomtitle_text_location_y) bottomtitle_text_location_y="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_text_location_y=$bottomtitle_text_location_y" ;;
-		border) border="$config2" ; [ "$noecho" -eq 0 ] && echo "border=$border" ;;
+		border) border="$config2" ; frame_border=$border ; frame_width=$(( $dvd_width - 2 * $frame_border )); frame_height=$(( $dvd_height - 2 * $frame_border )) ; [ "$noecho" -eq 0 ] && echo "border=$border" ;;
 		sharpen) sharpen="$config2" ; [ "$noecho" -eq 0 ] && echo "sharpen=$sharpen" ;;
 	esac
 }

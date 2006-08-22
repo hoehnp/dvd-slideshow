@@ -2265,10 +2265,10 @@ kenburns ()  # KENBURNS
 				# force the output size to be exact:  no composite needed!
 				if [ "$smp" -eq 1 ] ; then
 #					echo "deltawh<1 smp=1"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix"  & 
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames ) & 
 				elif [ "$smp" -eq 0 ] ; then
 #					echo "deltawh<1 smp=0"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix" 
+					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames 
 				fi
 #				i_width=$dvd_width; i_height=$dvd_height
 			elif [ $bgfile == 'black' ] ; then
@@ -2284,28 +2284,24 @@ kenburns ()  # KENBURNS
 	                        [ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom"
 				if [ "$smp" -eq 1 ] ; then
 #					echo "deltawh>1 bg=black smp=1"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"  & 
-#					composite -compose src-over -dissolve "$beta" "$tmpdir"/B_temp.ppm "$tmpdir"/A_temp.ppm -type TrueColor -depth 8 ppm:- | composite -compose src-over -dissolve "$gamma" "$tmpdir"/C_temp.ppm - -type TrueColor -depth 8 ppm:- | composite -compose src-over -dissolve "$delta" "$tmpdir"/D_temp.ppm - -type TrueColor -depth 8 ppm:- | convert - -resize "$frame_width"x"$frame_height" -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix"
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames )  & 
 				else
 #					echo "deltawh>1 bg=black smp=0"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"
+					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix ; extracopies $fr $l_frames "
 # works with imagemagick > 6.0.6  (convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+$xc0+$yc0 +repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
 				fi
 			else   # need to composite over background image:
 				if [ "$smp" -eq 1 ] ; then
 #					echo "deltawh>1 bg=image smp=1"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix") & 
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames ) & 
 				else
 #					echo "deltawh>1 bg=image smp=0"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix") 
-#					(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+"$xc0"+"$yc0"\! +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite - -compose src-over -geometry "+$xci+$yci" -type TrueColor -depth 8 "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames )
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames ) 
 				fi
 			fi
 #			[ $debug -ge 2 ] && echo "width=`imagewidth_sq $tmpdir/fade_$dj.ppm` height=`imageheight $tmpdir/fade_$dj.ppm`"
 			progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
-#			progressbar $(( $fr - $l_startframe +1 )) $l_frames "k"
 		done
-#		finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 		waitforfiles "$tmpdir/fade" $suffix $dj $l_startframe
 		finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 }

@@ -718,6 +718,7 @@ do
 	-border) shift; commandline_border="$1" ; shift ;;  # add border around image [in pixels]
 	-sharpen) commandline_sharpen="1" ; shift ;;  # Sharpen image
 	-s) shift; commandline_output_size="$1" ; shift ;;  # output size (over-rides defaults).  use something like 320x240
+	-F) shift; commandline_output_framerate="$1" ; shift ;;  # output framerate (over-rides defaults). use 15 or 10 or 20 (integers only now)  # DO NOT USE
 	-writechaps) shift; write_chaps=1 ;;  # Write out chapter times to $slideshow_name.chap
 #	-c) shift; chapmenu=1 ; submenu=1 ;;  # create a chapter select sub-menu (implies submenu)
 #	-B) shift; browsable=1 ; submenu=1 ;;  # create a browsable slideshow (not working)
@@ -2276,6 +2277,7 @@ kenburns ()  # KENBURNS
 #				delta_width=$(( $frame_width - $predicted_resized_width ))
 #				delta_height=$(( $frame_height - $predicted_resized_height ))
 #				deltax=$(( $frame_width - $i_width )) ; deltay=$(( $frame_height - $i_height ))
+				suffix='ppm'
 				# splice in black background if we can for better speed!
 				# split the difference between the two sides. If odd, add extra
 				# to bottom right?
@@ -2302,6 +2304,7 @@ kenburns ()  # KENBURNS
 #			[ $debug -ge 2 ] && echo "width=`imagewidth_sq $tmpdir/fade_$dj.ppm` height=`imageheight $tmpdir/fade_$dj.ppm`"
 			progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 		done
+		[ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] waiting for files suffix=$suffix end=$dj start=$l_startframe"
 		waitforfiles "$tmpdir/fade" $suffix $dj $l_startframe
 		finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 }
@@ -2992,6 +2995,7 @@ fi
 [ -n "$commandline_theme" ] && theme=$commandline_theme
 [ -n "$commandline_high_quality" ] && high_quality=$commandline_high_quality
 [ -n "$commandline_output_size" ] && output_size=$commandline_output_size
+[ -n "$commandline_output_framerate" ] && output_framerate=$commandline_output_framerate
 [ -n "$commandline_border" ] && border=$commandline_border
 [ -n "$commandline_sharpen" ] && sharpen=$commandline_sharpen
 
@@ -3595,6 +3599,7 @@ else
 fi
 
 
+## setup video parameters:
 if [ "$output_format" == 'flv' ] ; then
 	video_bitrate=100  # this works ok for 320x240. 
 	## video_bitrate will be scaled if user specifies -s 240x180, for example, by about 1/2
@@ -3687,6 +3692,15 @@ if [ -n "$output_size" ] ; then
 		video_bitrate=$(( $video_bitrate * ( $dvd_width * $dvd_height ) / ( $orig_dvd_width * $orig_dvd_height ) ))
 		myecho "[dvd-slideshow] Set new video bitrate to $video_bitrate kb/s"
 	fi
+fi
+
+if [ -n "$output_framerate" ] ; then
+	framerate="$output_framerate"
+	frames_per_sec=$( echo "$output_framerate * 1000" | bc )
+	frames_per_sec=$( printf %3.0f $frames_per_sec )
+	myecho "[dvd-slideshow] Frames per sec * 1000 = $frames_per_sec"
+	ppmtoy4m_frc="$framerate:1"  # fps  need to fix this to allow any option!
+	myecho "[dvd-slideshow] ppmtoy4m frc=$ppmtoy4m_frc"
 fi
 
 [ -n "$border" ] && frame_border=$border || frame_border=0

@@ -1380,21 +1380,21 @@ titlebarslide ()
 			composite -compose src-over -type TrueColor -depth 8 -dissolve 50 - \
 			"$bg" "$tmpdir/slide_$i.png"	
 		else
-			convert "$bg" "$tmpdir/slide_$i.png"
+			convert "$bg" -type TrueColor -depth 8 "$tmpdir/slide_$i.png"
 		fi
 		convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill "$toptitle_font_color" \
 		-pointsize "$f_toptitle_font_size" -gravity NorthWest -font "$title_font" \
 		-draw "text $f_toptitle_text_location_x,$f_toptitle_text_location_y \"${title1}\"" miff:- | \
 		composite -compose src-over -type TrueColor -depth 8 - \
 		"$tmpdir/slide_$i.png" "$tmpdir/title1.png"
-		convert "$tmpdir/title1.png" "$output_file"
+		convert "$tmpdir/title1.png" -type TrueColor -depth 8 "$output_file"
 	fi
 	if [ -n "$title2" ] ; then # title2 exists
 		if [ "$f_bottomtitle_bar_height" -ne 0 ] ; then
 			convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill white -quality 100\
-			-draw "Rectangle 0,$title2_bgtop,$dvd_width,$title2_bgbot" "$tmpdir/title_background.png"
+			-draw "Rectangle 0,$title2_bgtop,$dvd_width,$title2_bgbot" -type TrueColor -depth 8 "$tmpdir/title_background.png"
 		else
-			convert -size "$dvd_width"x"$dvd_height" xc:transparent "$tmpdir/title_background.png"
+			convert -size "$dvd_width"x"$dvd_height" xc:transparent -type TrueColor -depth 8 "$tmpdir/title_background.png"
 		fi
 		if [ -f "$tmpdir/title1.png" ] ; then # use title1 image
 			composite -compose src-over -type TrueColor -depth 8 -dissolve 50 -quality 100 "$tmpdir/title_background.png" "$tmpdir/title1.png" "$tmpdir/slide_$i.png"	
@@ -1403,7 +1403,7 @@ titlebarslide ()
 		fi
 		convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill "$bottomtitle_font_color" \
 			-pointsize "$f_bottomtitle_font_size" -gravity North -font "$title_font" \
-			-draw "text $f_bottomtitle_text_location_x,$f_bottomtitle_text_location_y \"${title2}\"" miff:- | \
+			-draw "text $f_bottomtitle_text_location_x,$f_bottomtitle_text_location_y \"${title2}\"" -type TrueColor -depth 8 miff:- | \
 		composite -compose src-over -type TrueColor -depth 8 - \
 			"$tmpdir/slide_$i.png" "$output_file"
 	fi
@@ -1452,11 +1452,11 @@ titleslide ()
 		title1=`echo "${title}" | awk -F'\\' '{print $1}'`
 		title2=`echo "${title}" | awk -F'\\' '{print $2}' | cut -c 2-`
 		convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill $title_font_color \
-		-pointsize $f_title_font_size -gravity Center -font "$title_font" -annotate 0 "$title1\n$title2" miff:- | \
+		-pointsize $f_title_font_size -gravity Center -font "$title_font" -annotate 0 "$title1\n$title2" -type TrueColor -depth 8 miff:- | \
 		composite -compose src-over -type TrueColor -depth 8 - "$bg" "$output_file"
 	else	# no forced line wraps.  Eventually Check for long lines
 		convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill $title_font_color \
-		-pointsize $f_title_font_size -gravity Center -font "$title_font" -draw "text 0,0 \"${title}\"" miff:- | \
+		-pointsize $f_title_font_size -gravity Center -font "$title_font" -draw "text 0,0 \"${title}\"" -type TrueColor -depth 8 miff:- | \
 		composite -compose src-over -type TrueColor -depth 8 - "$bg" "$output_file"
 	fi
 }
@@ -1481,18 +1481,18 @@ musictitleslide ()
 		check_rm "$output_file"
 		if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
 			f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
-			convert -depth 8 -size $dvd_width"x"$dvd_height xc:transparent \
+			convert -size $dvd_width"x"$dvd_height xc:transparent \
 			-pointsize "$f_subtitle_font_size" -gravity SouthWest -font "$title_font" \
 			-draw "fill white text 40,100 \"$Title\"" \
 			-draw "fill white text 40,75 \"$Artist\"" \
-			-draw "fill white text 40,50 \"$Album\"" -quality 100 "$tmpdir/mytitle.png"
+			-draw "fill white text 40,50 \"$Album\"" -quality 100 -type TrueColor -depth 8 "$tmpdir/mytitle.png"
 		else  # medium or high quality
 			f_subtitle_font_size=$(( $subtitle_font_size ))
-			convert -depth 8 -size $dvd_width"x"$dvd_height xc:transparent \
+			convert -size $dvd_width"x"$dvd_height xc:transparent \
 			-pointsize "$f_subtitle_font_size" -gravity SouthWest -font "$title_font" \
 			-draw "fill white text 80,200 \"$Title\"" \
 			-draw "fill white text 80,150 \"$Artist\"" \
-			-draw "fill white text 80,100 \"$Album\"" -quality 100 "$tmpdir/mytitle.png"
+			-draw "fill white text 80,100 \"$Album\"" -quality 100 -type TrueColor -depth 8 "$tmpdir/mytitle.png"
 		fi
 		composite -compose src-over -type TrueColor -depth 8 "$tmpdir/mytitle.png" "$bg" "$output_file"
 		check_rm "$tmpdir"/mytitle.png
@@ -1643,11 +1643,12 @@ parse_window ()  # PARSE_WINDOW
 		# image width greater than output width at same scale
 		new_image_width=$image_width
 		new_image_height=`div10 $(( 10* $frame_height * $image_width / $frame_width ))`
+		echo "1 frame_width=$frame_width frame_height=$frame_height image_width=$image_width image_height=$image_height sq_pixel_multip=$sq_pixel_multiplier "
 		xi=0  # will need to add frame border later...
 		yi=`div10 $(( 10*( $new_image_height - $image_height ) / 2 ))`
 	elif [ "$ratio" -le $out_ratio ] ; then
 		# image height greater than output height at same scale 
-		new_image_width=`div10 $(( 10* $frame_width * $image_height / $frame_height * ( $sq_pixel_multiplier / 1000 ) ))`
+		new_image_width=`div10 $(( 10* $frame_width * $image_height / $frame_height * $sq_pixel_multiplier / 1000 ))`
 		new_image_height=$image_height
 		yi=0 # will need to add frame border later...
 		xi=`div10 $(( 10*( $new_image_width - $image_width ) / 2 ))`
@@ -1703,7 +1704,7 @@ parse_window ()  # PARSE_WINDOW
 #			y0=`div10 $(( $ycenter - 10 * $yh / 2 ))`; y1=$(( $ycenter + $yh / 2 ))
 			x0=`div10 $(( $xcenter - 10 * $xw / 2 ))`; x1=$(( $x0 + $xw ))
 			y0=`div10 $(( $ycenter - 10 * $yh / 2 ))`; y1=$(( $y0 + $yh ))
-	[ $debug -ge 3 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
+			[ $debug -ge 3 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
 		elif [ "$loc" == 'topleft' ] ; then
 			x0=0; x1=$xw
 			y0=0; y1=$yh
@@ -2143,7 +2144,7 @@ kenburns ()  # KENBURNS
 		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Pan/zoom uses $c_width x $c_height of original $image_width x $image_height image"
 		did_resize=0
 
-		convert "$l_file" -resize "$sq_to_dvd_pixels" +repage $sharpen "$tmpdir"/temp_slideshow_image_scaled.mpc
+		convert "$l_file" -resize "$sq_to_dvd_pixels" +repage $sharpen -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc
 		############################ end crop/resize large images
 
 		## adjust step size: ##############################
@@ -2182,43 +2183,103 @@ kenburns ()  # KENBURNS
 		fi
 		
 		smoothing=0
-		fr1=$(( $l_frames * $kb_smoothing_time_percent / 100 ))
-		fr2=$(( $l_frames - $fr1 ))
+		## smooth start and end parameters:
+		F1=$(( $l_frames * 45 / 100 ))  # 20 percent smoothing
+		F2=$(( $l_frames - $F1 ))	
+		V0x=$( echo "scale=9; 2 * ( $xe0 - $xs0 ) / ( $l_frames + $F2 - $F1 )" | bc ) 
+		V0y=$( echo "scale=9; 2 * ( $ye0 - $ys0 ) / ( $l_frames + $F2 - $F1 )" | bc )
+		pi='3.14159265'
 		## start loop for kenburns effect: #################################
 		echo -n  "[dvd-slideshow]"
 		for (( fr=l_startframe ; fr<=l_endframe ; fr=fr+stepsize )) ; do
 			dj=`addzeros $fr`
-			if [ "$s_height" -eq "$e_height" ] ; then
-	#			logfactor=$(( 1000 * $fr / $l_frames ))
-				logfactor=$( echo "scale=3; 1000 * $fr / $l_frames" | bc )
+			if [ $fr -le $F1 ] && [ $smoothing -eq 1 ] ; then   # inputs are relatively simple:  make function?
+				# region 1
+				x0=$( echo "scale=3; $xs0 + $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				y0=$( echo "scale=3; $ys0 + $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				x1=$( echo "scale=3; $xs1 + $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				y1=$( echo "scale=3; $ys1 + $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:scroll] $fr x0=$x0 y0=$y0 region 1"
+				D1x0=$x0; D1y0=$y0; D1x1=$x1; D1y1=$y1 # distance gone so far
+				x0_dec=`printf %3.3f "$x0" | awk -F. '{print "0."$2}'`; 
+				y0_dec=`printf %3.3f "$y0" | awk -F. '{print "0."$2}'`;
+				x1_dec=`printf %3.3f "$x1" | awk -F. '{print "0."$2}'`; 
+				y1_dec=`printf %3.3f "$y1" | awk -F. '{print "0."$2}'`;
+				## Fix numbers without leading zeros:
+				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
+				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
+				it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1_whole=0 || x1_whole="$it"
+				it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1_whole=0 || y1_whole="$it"
+				x0=$x0_whole ; y0=$y0_whole
+				x1=$x1_whole ; y1=$y1_whole
+			elif [ $fr -ge $(( $F2 + 1 )) ] && [ $smoothing -eq 1 ] ; then
+				# region 3
+				x0=$( echo "scale=3; $D2x0 + $V0x/2 *( ($fr-$F2) + ($frames-$F2)/$pi*s(($fr-$F2)*$pi/($frames-$F2)) )" | bc -l )
+				y0=$( echo "scale=3; $D2y0 + $V0y/2 *( ($fr-$F2) + ($frames-$F2)/$pi*s(($fr-$F2)*$pi/($frames-$F2)) )" | bc -l )
+				x0=$( echo "scale=3; $D2x0 + $V0x/2 *( ($fr-$F2) + ($frames-$F2)/$pi*s(($fr-$F2)*$pi/($frames-$F2)) )" | bc -l )
+				y0=$( echo "scale=3; $D2y0 + $V0y/2 *( ($fr-$F2) + ($frames-$F2)/$pi*s(($fr-$F2)*$pi/($frames-$F2)) )" | bc -l )
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:scroll] $fr x0=$x0 y0=$y0 region 3"
+				x0_dec=`printf %3.3f $x0 | awk -F. '{print "0."$2}'`; 
+				y0_dec=`printf %3.3f $y0 | awk -F. '{print "0."$2}'`;
+				x1_dec=`printf %3.3f $x1 | awk -F. '{print "0."$2}'`; 
+				y1_dec=`printf %3.3f $y1 | awk -F. '{print "0."$2}'`;
+				## Fix numbers without leading zeros:
+				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
+				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
+				it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1_whole=0 || x1_whole="$it"
+				it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1_whole=0 || y1_whole="$it"
+				x0=$x0_whole ; y0=$y0_whole
+				x1=$x1_whole ; y1=$y1_whole
+			elif [ $smoothing -eq 1 ] ; then
+				# middle region 2
+				x0=$( echo "scale=3; $D1x0 + $V1x*($fr-$F1)" | bc )
+				y0=$( echo "scale=3; $D1y0 + $V1y*($fr-$F1)" | bc )
+				x1=$( echo "scale=3; $D1x0 + $V1x*($fr-$F1)" | bc )
+				y1=$( echo "scale=3; $D1y0 + $V1y*($fr-$F1)" | bc )
+				D2x0=$x0 ; D2y0=$y0 ; D2x1=$x1 ; D2y1=$y1  # distance gone so far
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:scroll] $fr x0=$x0 y0=$y0 region 2"
+				x0_dec=`printf %3.3f $x0 | awk -F. '{print "0."$2}'`; 
+				y0_dec=`printf %3.3f $y0 | awk -F. '{print "0."$2}'`;
+				x1_dec=`printf %3.3f $x1 | awk -F. '{print "0."$2}'`; 
+				y1_dec=`printf %3.3f $y1 | awk -F. '{print "0."$2}'`;
+				## Fix numbers without leading zeros:
+				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
+				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
+				it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1_whole=0 || x1_whole="$it"
+				it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1_whole=0 || y1_whole="$it"
+				x0=$x0_whole ; y0=$y0_whole
+				x1=$x1_whole ; y1=$y1_whole
 			else
-				if [ "$smoothing" -eq 1 ] ; then
-					if [ $fr -le $fr1 ] ; then
-						logfactor=$( echo "l( 1- $fr / $l_frames * ( 1 - $s_height / $e_height ) ) / l( $s_height / $e_height) * 1000  * ( $fr / $fr1 )" | bc -l )
-#						logfactor=$( echo "l( 1- $fr / $l_frames * ( 1 - $s_height / $e_height ) ) / l( $s_height / $e_height) * 1000  * ( $fr / $fr1 )^2" | bc -l )
-					elif [ $fr -ge $fr2 ] ; then
-						logfactor=$( echo "l( 1- $fr / $l_frames * ( 1 - $s_height / $e_height ) ) / l( $s_height / $e_height) * 1000  * ( $l_frames - $fr ) / ( $l_frames - $fr2 )" | bc -l )
-#						logfactor=$( echo "l( 1- $fr / $l_frames * ( 1 - $s_height / $e_height ) ) / l( $s_height / $e_height) * 1000  * ( $l_frames - $fr )^2 / ( $l_frames - $fr2 )^2" | bc -l )
-					else
-						logfactor=$( echo "l( 1- $fr / $l_frames * ( 1 - $s_height / $e_height ) ) / l( $s_height / $e_height) * 1000 " | bc -l )
-					fi
+				## old method:
+				if [ "$s_height" -eq "$e_height" ] ; then
+					logfactor=$( echo "scale=3; 1000 * $fr / $l_frames" | bc )
 				else
 					logfactor=$( echo "l( 1- $fr / $l_frames * ( 1 - $s_height / $e_height ) ) / l( $s_height / $e_height) * 1000 " | bc -l )
 				fi
+				[ -z `echo $logfactor | awk -F. '{print $1}'` ] && logfactor=0$logfactor
+	#			frl_frames_linear=$(( 1000 * $fr / $l_frames ))
+		                x0=$( echo "scale=3; 1000 * $xs0 + ($xe0-$xs0) * $logfactor" | bc )
+		                y0=$( echo "scale=3; 1000 * $ys0 + ($ye0-$ys0) * $logfactor" | bc )
+		                x1=$( echo "scale=3; 1000 * $xs1 + ($xe1-$xs1) * $logfactor" | bc )
+		                y1=$( echo "scale=3; 1000 * $ys1 + ($ye1-$ys1) * $logfactor" | bc )
+		                ## need to round the numbers for bash:
+		                ## these are the "whole" integer portion of the number:
+		                it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0=0 || x0="$it"
+		                it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0=0 || y0="$it"
+		                it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1=0 || x1="$it"
+		                it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1=0 || y1="$it"
 			fi
-			[ -z `echo $logfactor | awk -F. '{print $1}'` ] && logfactor=0$logfactor
-#			frl_frames_linear=$(( 1000 * $fr / $l_frames ))
-	                x0=$( echo "scale=3; 1000 * $xs0 + ($xe0-$xs0) * $logfactor" | bc )
-	                y0=$( echo "scale=3; 1000 * $ys0 + ($ye0-$ys0) * $logfactor" | bc )
-	                x1=$( echo "scale=3; 1000 * $xs1 + ($xe1-$xs1) * $logfactor" | bc )
-	                y1=$( echo "scale=3; 1000 * $ys1 + ($ye1-$ys1) * $logfactor" | bc )
-	                ## need to round the numbers for bash:
-	                ## these are the "whole" integer portion of the number:
-	                it=`echo "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0=0 || x0="$it"
-	                it=`echo "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0=0 || y0="$it"
-	                it=`echo "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1=0 || x1="$it"
-	                it=`echo "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1=0 || y1="$it"
+
+#			[ "$x1" -eq 0 ] && x1="+0"
+#			[ "$y1" -eq 0 ] && y1="+0"
+#			[ "$x1" -gt 0 ] && x1="+$x1"
+#			[ "$y1" -gt 0 ] && y1="+$y1"
+
+###########################
+
 #			myecho "x0=$x0 y0=$y0 x1=$x1 y1=$y1 logfactor=$logfactor"
+#			myecho "x0=$x0 y0=$y0 x1=$x1 y1=$y1 "
+			## now optionally do convolution if high-quality is enabled:
 			if [ "$interp" -eq 1 ] ; then
 				x0_d=$( echo "scale=3; $xs0 + ($xe0-$xs0) * $logfactor / 1000" | bc )
 				y0_d=$( echo "scale=3; $ys0 + ($ye0-$ys0) * $logfactor / 1000" | bc )
@@ -2243,7 +2304,7 @@ kenburns ()  # KENBURNS
 #	                        myecho "$fr Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor alpha=$alpha beta=$beta gamma=$gamma delta=$delta"
 	                        [ "$debug" -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor"
 			else
-				convolve=""
+				convolve="-filter cubic"
 			fi
 
 			crop_parameters # figure out final crop parameters  0.19s
@@ -2266,10 +2327,10 @@ kenburns ()  # KENBURNS
 #				echo "[dvd-slideshow:kenburns: delta_width=$delta_width delta_height=$delta_height"
 				# force the output size to be exact:  no composite needed!
 				if [ "$smp" -eq 1 ] ; then
-#					echo "deltawh<1 smp=1"
+					[ $debug -ge 3 ] && echo "deltawh<1 smp=1"
 					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames ) & 
 				elif [ "$smp" -eq 0 ] ; then
-#					echo "deltawh<1 smp=0"
+					[ $debug -ge 3 ] && echo "deltawh<1 smp=0"
 					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames 
 				fi
 #				i_width=$dvd_width; i_height=$dvd_height
@@ -2286,20 +2347,20 @@ kenburns ()  # KENBURNS
 				top=$(( $yci + $frame_border )) ; bottom=$(( $delta_height - $top ))
 	                        [ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom"
 				if [ "$smp" -eq 1 ] ; then
-#					echo "deltawh>1 bg=black smp=1"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames )  & 
+					[ $debug -ge 3 ] && echo "deltawh>1 bg=black smp=1"
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames )  & 
 				else
-#					echo "deltawh>1 bg=black smp=0"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix ; extracopies $fr $l_frames "
+					[ $debug -ge 3 ] && echo "deltawh>1 bg=black smp=0"
+					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames
 # works with imagemagick > 6.0.6  (convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+$xc0+$yc0 +repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
 				fi
 			else   # need to composite over background image:
 				if [ "$smp" -eq 1 ] ; then
-#					echo "deltawh>1 bg=image smp=1"
+					[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=1"
 					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames ) & 
 				else
-#					echo "deltawh>1 bg=image smp=0"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames ) 
+					[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=0"
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames ) 
 				fi
 			fi
 #			[ $debug -ge 2 ] && echo "width=`imagewidth_sq $tmpdir/fade_$dj.ppm` height=`imageheight $tmpdir/fade_$dj.ppm`"
@@ -2642,7 +2703,7 @@ scroll ()  # SCROLL
 				# region 1
 				x0=$( echo "scale=3; $xs0 + $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
 				y0=$( echo "scale=3; $ys0 + $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				[ $debug -ge 0 ] && myecho "[dvd-slideshow:scroll] $fr x0=$x0 y0=$y0 region 1"
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:scroll] $fr x0=$x0 y0=$y0 region 1"
 				D1x=$x0; D1y=$y0
 				x0_dec=`printf %3.3f $x0 | awk -F. '{print "0."$2}'`; 
 				y0_dec=`printf %3.3f $y0 | awk -F. '{print "0."$2}'`;
@@ -2893,7 +2954,7 @@ subtitle ()  # SUBTITLE
 	transparent_color="ff0000"
 	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
        	convert -size $dvd_width"x"$dvd_height xc:red -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
-	-gravity South -fill white -stroke black -strokewidth 3 -colors 3 +antialias \
+	-gravity South -fill white -stroke black -strokewidth 3 -colors 3 -depth 8 +antialias \
 	-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
 	-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
 	-quality 100 "$tmpdir/subtitle_$i.png"
@@ -4452,7 +4513,7 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i+$increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor miff:- | \
+			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering next kenburns effect for crossfade..."
@@ -4712,7 +4773,7 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i-$previous_increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			convert "${image[$i-$previous_increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor miff:- | \
+			convert "${image[$i-$previous_increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$transparent_bg" "$last_outfile"
 			no_effects=1
 		elif [ "$previousslide_effect" == 'kenburns' ] ; then
@@ -4786,7 +4847,7 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i+$increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor miff:- | \
+			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$transparent_bg" "$next_outfile"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering next kenburns effect for wipe..."
@@ -4886,9 +4947,9 @@ for file in "${image[@]}"; do
 	## smooth start and end parameters:
 	F1=$(( $frames * 45 / 100 ))  # 20 percent smoothing
 	F2=$(( $frames - $F1 ))	
-	V1x=$( echo "scale=9; 2 * ( $xe1 - $xs1 ) / ( $frames + $F2 - $F1 )" | bc )  # hack -2 to make it fit better?
+	V1x=$( echo "scale=9; 2 * ( $xe1 - $xs1 ) / ( $frames + $F2 - $F1 )" | bc ) 
 	V1y=$( echo "scale=9; 2 * ( $ye1 - $ys1 ) / ( $frames + $F2 - $F1 )" | bc )
-	V2x=$( echo "scale=9; 2 * ( $xe2 - $xs2 ) / ( $frames + $F2 - $F1 )" | bc )  # hack -2 to make it fit better?
+	V2x=$( echo "scale=9; 2 * ( $xe2 - $xs2 ) / ( $frames + $F2 - $F1 )" | bc )
 	V2y=$( echo "scale=9; 2 * ( $ye2 - $ys2 ) / ( $frames + $F2 - $F1 )" | bc )
 	pi='3.14159265'
 		echo -n "[dvd-slideshow]"
@@ -5052,7 +5113,7 @@ for file in "${image[@]}"; do
 			mycrop  # takes the parameters from <parse_window> and returns: 
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow] Crop $c_width"x"$c_height"+"$xc0"+"$yc0 composite" +"$xci"+$yci
 			## now, do the actual crop:
-			convert "${file}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
+			convert "${file}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
 		fi
 		encode "$tmpdir/slide_$i.ppm" $rendered_frames
 		image_number=$(( $image_number + 1 ))

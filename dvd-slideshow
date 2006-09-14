@@ -1643,13 +1643,15 @@ parse_window ()  # PARSE_WINDOW
 		# image width greater than output width at same scale
 		new_image_width=$image_width
 		new_image_height=`div10 $(( 10* $frame_height * $image_width / $frame_width ))`
-		echo "1 frame_width=$frame_width frame_height=$frame_height image_width=$image_width image_height=$image_height sq_pixel_multip=$sq_pixel_multiplier "
+#		echo "1 frame_width=$frame_width frame_height=$frame_height image_width=$image_width image_height=$image_height sq_pixel_multip=$sq_pixel_multiplier "
 		xi=0  # will need to add frame border later...
 		yi=`div10 $(( 10*( $new_image_height - $image_height ) / 2 ))`
 	elif [ "$ratio" -le $out_ratio ] ; then
 		# image height greater than output height at same scale 
-		new_image_width=`div10 $(( 10* $frame_width * $image_height / $frame_height * $sq_pixel_multiplier / 1000 ))`
+#		new_image_width=`div10 $(( 10* $frame_width * $image_height / $frame_height * $sq_pixel_multiplier / 1000 ))`
+		new_image_width=`div10 $(( 10* $frame_width * $image_height / $frame_height ))`
 		new_image_height=$image_height
+#		echo "2 frame_width=$frame_width frame_height=$frame_height image_width=$image_width image_height=$image_height sq_pixel_multip=$sq_pixel_multiplier "
 		yi=0 # will need to add frame border later...
 		xi=`div10 $(( 10*( $new_image_width - $image_width ) / 2 ))`
 	fi
@@ -1844,14 +1846,14 @@ div10 ()
 	echo $whole
 }
 
-imagewidth ()
+imagewidth ()  # IMAGEWIDTH
 {
 	it="`identify -format %w "$1"`"
 	it="$(( $it * $sq_pixel_multiplier / 1000 ))"
 	echo "$it"
 }
 
-imagewidth_sq ()
+imagewidth_sq ()  # IMAGEWIDTH_SQ
 {
 	it="`identify -format %w "$1"`"
 	echo "$it"
@@ -1864,7 +1866,7 @@ imageheight ()
 	echo "$it"
 }
 
-crop_parameters ()
+crop_parameters () # CROP_PARAMETERS
 {
 	# converts the crop parameters reference in the full dvd aspect ratio
 	# frame back to the actual crop parameters needed in the original 
@@ -1927,25 +1929,25 @@ crop_parameters ()
 
 	##############################################
 	## where to put the top left corner of the cropped image relative to the background?
-	deltax=$(( 1000 * 1000 * 1000 * $frame_width / $c_width )); deltay=$(( 1000* 1000 * 1000 * $frame_height / $c_height ))
+	deltax=$(( 1000 * 1000 * $frame_width / $c_width )); deltay=$(( 1000 * 1000 * $frame_height / $c_height ))
 	## rescale % will be the smaller of the two deltas: 
 	[ $deltax -lt $deltay ] && rescale=$deltax || rescale=$deltay # already x1000
-#myecho "[dvd-slideshow:cp] deltax=$deltax deltay=$deltay rescale=$rescale xi0=$xi0 yi0=$yi0"
+# myecho "[dvd-slideshow:crop_parameters] deltax=$deltax deltay=$deltay rescale=$rescale xi0=$xi0 yi0=$yi0"
 	if [ $xi0 -lt 0 ] ; then
 		## left of cropped image is in the middle of the dvd window
-		xci=`div1000 $(( $rescale * -1 * $xi0 / 1000 ))`
+		xci=`div1000 $(( $rescale * -1 * $xi0 ))`
 	else
 		## left of cropped image should be at x=0 afterward
 		xci=0
 	fi
 	if [ $yi0 -lt 0 ] ; then  ###*  rescale=deltax
 		## top of cropped image is in the middle of the dvd window
-		yci=`div1000 $(( $rescale * -1 * $yi0 / 1000))`
+		yci=`div1000 $(( $rescale * -1 * $yi0 ))`
 	else
 		## top of cropped image should be at y=0 afterward
 		yci=0
 	fi
-	[ $debug -ge 3 ] && myecho "[dvd-slideshow:crop_parameters] xci0,yci0=`todec000 $xci`,`todec000 $yci`  c_width,c_height=`todec000 $c_width`,`todec000 $c_height` (location of cropped image in dvd window)"
+	[ $debug -ge 3 ] && myecho "[dvd-slideshow:crop_parameters] xci,yci=`todec000 $xci`,`todec000 $yci`  c_width,c_height=`todec000 $c_width`,`todec000 $c_height` (location of cropped image in dvd window)"
 
 #		myecho "[dvd-slideshow:crop_parameters] predicted resized_width=$predicted_resized_width resized_height=$predicted_resized_height"
 #	fi 
@@ -2182,12 +2184,15 @@ kenburns ()  # KENBURNS
 			interp=0
 		fi
 		
-		smoothing=0
+		smoothing=1
 		## smooth start and end parameters:
-		F1=$(( $l_frames * 45 / 100 ))  # 20 percent smoothing
+		F1=$(( $l_frames * 25 / 100 ))  # 20 percent smoothing
+#		F1=$(( $l_frames * 1 / 100 ))  # 20 percent smoothing
+		F1t=2 #  number of seconds to zoom in
 		F2=$(( $l_frames - $F1 ))	
 		V0x=$( echo "scale=9; 2 * ( $xe0 - $xs0 ) / ( $l_frames + $F2 - $F1 )" | bc ) 
 		V0y=$( echo "scale=9; 2 * ( $ye0 - $ys0 ) / ( $l_frames + $F2 - $F1 )" | bc )
+#		echo "F1=$F1 F2=$F2 V0x=$V0x V0y=$V0y"
 		pi='3.14159265'
 		## start loop for kenburns effect: #################################
 		echo -n  "[dvd-slideshow]"
@@ -2195,34 +2200,35 @@ kenburns ()  # KENBURNS
 			dj=`addzeros $fr`
 			if [ $fr -le $F1 ] && [ $smoothing -eq 1 ] ; then   # inputs are relatively simple:  make function?
 				# region 1
-				x0=$( echo "scale=3; $xs0 + $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				y0=$( echo "scale=3; $ys0 + $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				x1=$( echo "scale=3; $xs1 + $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				y1=$( echo "scale=3; $ys1 + $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				[ $debug -ge 2 ] && myecho "[dvd-slideshow:scroll] $fr x0=$x0 y0=$y0 region 1"
+				x0=$( echo "scale=3; 1000* $xs0 + 1000* $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				y0=$( echo "scale=3; 1000* $ys0 + 1000* $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				x1=$( echo "scale=3; 1000* $xs1 + 1000* $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				y1=$( echo "scale=3; 1000* $ys1 + 1000* $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
 				D1x0=$x0; D1y0=$y0; D1x1=$x1; D1y1=$y1 # distance gone so far
-				x0_dec=`printf %3.3f "$x0" | awk -F. '{print "0."$2}'`; 
-				y0_dec=`printf %3.3f "$y0" | awk -F. '{print "0."$2}'`;
-				x1_dec=`printf %3.3f "$x1" | awk -F. '{print "0."$2}'`; 
-				y1_dec=`printf %3.3f "$y1" | awk -F. '{print "0."$2}'`;
 				## Fix numbers without leading zeros:
 				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
 				it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1_whole=0 || x1_whole="$it"
 				it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1_whole=0 || y1_whole="$it"
+				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
 				x0=$x0_whole ; y0=$y0_whole
 				x1=$x1_whole ; y1=$y1_whole
+				## now, round the results for normal mode:
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0_whole.$x0_dec y0=$y0_whole.$y0_dec x0=$x0 y0=$y0 region 1"
 			elif [ $fr -ge $(( $F2 + 1 )) ] && [ $smoothing -eq 1 ] ; then
 				# region 3
-				x0=$( echo "scale=3; $D2x0 + $V0x/2 *( ($fr-$F2) + ($frames-$F2)/$pi*s(($fr-$F2)*$pi/($frames-$F2)) )" | bc -l )
-				y0=$( echo "scale=3; $D2y0 + $V0y/2 *( ($fr-$F2) + ($frames-$F2)/$pi*s(($fr-$F2)*$pi/($frames-$F2)) )" | bc -l )
-				x0=$( echo "scale=3; $D2x0 + $V0x/2 *( ($fr-$F2) + ($frames-$F2)/$pi*s(($fr-$F2)*$pi/($frames-$F2)) )" | bc -l )
-				y0=$( echo "scale=3; $D2y0 + $V0y/2 *( ($fr-$F2) + ($frames-$F2)/$pi*s(($fr-$F2)*$pi/($frames-$F2)) )" | bc -l )
-				[ $debug -ge 2 ] && myecho "[dvd-slideshow:scroll] $fr x0=$x0 y0=$y0 region 3"
-				x0_dec=`printf %3.3f $x0 | awk -F. '{print "0."$2}'`; 
-				y0_dec=`printf %3.3f $y0 | awk -F. '{print "0."$2}'`;
-				x1_dec=`printf %3.3f $x1 | awk -F. '{print "0."$2}'`; 
-				y1_dec=`printf %3.3f $y1 | awk -F. '{print "0."$2}'`;
+				x0=$( echo "scale=3; $D2x0 + 1000* $V0x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				y0=$( echo "scale=3; $D2y0 + 1000* $V0y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				x1=$( echo "scale=3; $D2x1 + 1000* $V0x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				y1=$( echo "scale=3; $D2y1 + 1000* $V0y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0 y0=$y0 region 3"
+				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
 				## Fix numbers without leading zeros:
 				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
@@ -2232,16 +2238,17 @@ kenburns ()  # KENBURNS
 				x1=$x1_whole ; y1=$y1_whole
 			elif [ $smoothing -eq 1 ] ; then
 				# middle region 2
-				x0=$( echo "scale=3; $D1x0 + $V1x*($fr-$F1)" | bc )
-				y0=$( echo "scale=3; $D1y0 + $V1y*($fr-$F1)" | bc )
-				x1=$( echo "scale=3; $D1x0 + $V1x*($fr-$F1)" | bc )
-				y1=$( echo "scale=3; $D1y0 + $V1y*($fr-$F1)" | bc )
+				x0=$( echo "scale=3; $D1x0 + 1000* $V0x*($fr-$F1)" | bc )
+				y0=$( echo "scale=3; $D1y0 + 1000* $V0y*($fr-$F1)" | bc )
+				x1=$( echo "scale=3; $D1x1 + 1000* $V0x*($fr-$F1)" | bc )
+				y1=$( echo "scale=3; $D1y1 + 1000* $V0y*($fr-$F1)" | bc )
 				D2x0=$x0 ; D2y0=$y0 ; D2x1=$x1 ; D2y1=$y1  # distance gone so far
-				[ $debug -ge 2 ] && myecho "[dvd-slideshow:scroll] $fr x0=$x0 y0=$y0 region 2"
-				x0_dec=`printf %3.3f $x0 | awk -F. '{print "0."$2}'`; 
-				y0_dec=`printf %3.3f $y0 | awk -F. '{print "0."$2}'`;
-				x1_dec=`printf %3.3f $x1 | awk -F. '{print "0."$2}'`; 
-				y1_dec=`printf %3.3f $y1 | awk -F. '{print "0."$2}'`;
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0 y0=$y0 region 2"
+				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+
 				## Fix numbers without leading zeros:
 				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
@@ -2281,14 +2288,14 @@ kenburns ()  # KENBURNS
 #			myecho "x0=$x0 y0=$y0 x1=$x1 y1=$y1 "
 			## now optionally do convolution if high-quality is enabled:
 			if [ "$interp" -eq 1 ] ; then
-				x0_d=$( echo "scale=3; $xs0 + ($xe0-$xs0) * $logfactor / 1000" | bc )
-				y0_d=$( echo "scale=3; $ys0 + ($ye0-$ys0) * $logfactor / 1000" | bc )
-				x1_d=$( echo "scale=3; $xs1 + ($xe1-$xs1) * $logfactor / 1000" | bc )
-				y1_d=$( echo "scale=3; $ys1 + ($ye1-$ys1) * $logfactor / 1000" | bc )
-				x0_dec=`printf %3.3f $x0_d | awk -F. '{print "0."$2}'`; 
-				y0_dec=`printf %3.3f $y0_d | awk -F. '{print "0."$2}'`;
-				x1_dec=`printf %3.3f $x1_d | awk -F. '{print "0."$2}'`; 
-				y1_dec=`printf %3.3f $y1_d | awk -F. '{print "0."$2}'`;
+#				x0_d=$( echo "scale=3; $xs0 + ($xe0-$xs0) * $logfactor / 1000" | bc )
+#				y0_d=$( echo "scale=3; $ys0 + ($ye0-$ys0) * $logfactor / 1000" | bc )
+#				x1_d=$( echo "scale=3; $xs1 + ($xe1-$xs1) * $logfactor / 1000" | bc )
+#				y1_d=$( echo "scale=3; $ys1 + ($ye1-$ys1) * $logfactor / 1000" | bc )
+#				x0_dec=`printf %3.3f $x0_d | awk -F. '{print "0."$2}'`; 
+#				y0_dec=`printf %3.3f $y0_d | awk -F. '{print "0."$2}'`;
+#				x1_dec=`printf %3.3f $x1_d | awk -F. '{print "0."$2}'`; 
+#				y1_dec=`printf %3.3f $y1_d | awk -F. '{print "0."$2}'`;
 #				myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec logfactor=$logfactor"
 				## now, we're going to calculate the following parameters:
 				# calculate subpixel-averaging weights:
@@ -2309,6 +2316,7 @@ kenburns ()  # KENBURNS
 
 			crop_parameters # figure out final crop parameters  0.19s
 #			myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec logfactor=$logfactor"
+#			myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec "
 			# outputs correct predicted_resized_width and predicted_resized_height
 
 #			echo '$xc0,$yc0,$c_width,$c_height,$xci,$yci,$iwn,$ihn,$predicted_resized_width,$predicted_resized_height,$xc0_dec,$yc0_dec' >> kenburns_coordinates.csv

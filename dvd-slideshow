@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.0-pre6'
+version='0.8.0-pre7'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -29,9 +29,10 @@ echo "[dvd-slideshow]            "
 # binary rendering engine for much better speed
 # kenburns with rotation
 # explain difference between Low/Medium/High quality modes
+# fast preview mode for slcreator!
 # add hints for smoothest kenburns effects. (no zoom and pan)
 # do more complete error checking at start of script
-# fix "audio" duration keybowrd in audio example
+# fix "audio" duration keyword in audio example
 
 # test kenburns coorinates accuracy re: sq_pixel_multiplier
 
@@ -46,9 +47,10 @@ changes ()
 echo 'Changes:
 0.8.0	
     New features & Changes:	
+	Kenburns has smooth start and end now, but worse for very deep zooms.
 	Add option to sharpen images (-sharpen) with ImageMagicks unsharp mask.
 	*Now using ffmpeg to encode video.  Seems over 2x faster than mpeg2enc.
-	.flv and .mp4 output [alpha] use -flv for now, but his might change
+	.flv output [alpha] use -flv for now, but his might change
 	Specify output size other than default with -s 320x240 (alpha)
 	*Added -border option to add space between image and edge of screen.
 	*Added "wipe" transition between frames:
@@ -1935,14 +1937,18 @@ crop_parameters () # CROP_PARAMETERS
 # myecho "[dvd-slideshow:crop_parameters] deltax=$deltax deltay=$deltay rescale=$rescale xi0=$xi0 yi0=$yi0"
 	if [ $xi0 -lt 0 ] ; then
 		## left of cropped image is in the middle of the dvd window
-		xci=`div1000 $(( $rescale * -1 * $xi0 ))`
+#		xci=`div1000 $(( $rescale * -1 * $xi0 ))`
+		xci=$(( $rescale * -1 * $xi0 / 1000 ))
+		[ "$xci" -ge 1 ] && xci=$(( $xci - 1 ))
 	else
 		## left of cropped image should be at x=0 afterward
 		xci=0
 	fi
 	if [ $yi0 -lt 0 ] ; then  ###*  rescale=deltax
 		## top of cropped image is in the middle of the dvd window
-		yci=`div1000 $(( $rescale * -1 * $yi0 ))`
+#		yci=`div1000 $(( $rescale * -1 * $yi0 ))`
+		yci=$(( $rescale * -1 * $yi0 / 1000 ))
+		[ "$yci" -ge 1 ] && yci=$(( $yci - 1 ))
 	else
 		## top of cropped image should be at y=0 afterward
 		yci=0
@@ -2158,21 +2164,29 @@ kenburns ()  # KENBURNS
 			interp=1
 		else
 			stepsize=1
-			interp=0
+			interp=1  # fix this for now?
 		fi
 #		echo 'x0,y0,x1,y1,xcenter,ycenter,xwidth,yheight,xc0,yc0,c_width,c_height' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,iwn,ihn,predicted_resized_width,predicted_resized_height,xc0_dec,yc0_dec' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,predicted_resized_width,predicted_resized_height' > kenburns_coordinates.csv
-		if [ $xe0 -gt $xs0 ] ; then
-			xvelocity=$(( 1000 * ($xe0-$xs0) / $l_frames ))
-		else
-			xvelocity=$(( 1000 * ($xs0-$xe0) / $l_frames ))
-		fi
-		if [ $ye0 -gt $ys0 ] ; then
-			yvelocity=$(( 1000 * ($ye0-$ys0) / $l_frames ))
-		else
-			yvelocity=$(( 1000 * ($ys0-$ye0) / $l_frames ))
-		fi
+#echo "xs0=$xs0 xe0=$xe0    ys0=$ys0 ye0=$ye0"
+#echo "xs1=$xs1 xe1=$xe1    ys1=$ys1 ye1=$ye1"
+#		if [ $xe0 -gt $xs0 ] ; then
+			xvelocity0=$(( 1000 * ($xe0-$xs0)*($xe0-$xs0) / $l_frames ))
+			xvelocity1=$(( 1000 * ($xe1-$xs1)*($xe1-$xs1) / $l_frames ))
+			xvelocity=$(( ( $xvelocity0 + $xvelocity1 ) / 1000 ))
+#echo "xvelocity0=$xvelocity0  xvelocity1=$xvelocity1"
+#		else
+#			xvelocity=$(( 1000 * ($xs0-$xe0) / $l_frames ))
+#		fi
+#		if [ $ye0 -gt $ys0 ] ; then
+			yvelocity0=$(( 1000 * ($ye0-$ys0)*($ye0-$ys0) / $l_frames ))
+			yvelocity1=$(( 1000 * ($ye1-$ys1)*($ye1-$ys1) / $l_frames ))
+			yvelocity=$(( ( $yvelocity0 + $yvelocity1 ) / 1000 ))
+#echo "yvelocity0=$yvelocity0  yvelocity1=$yvelocity1"
+#		else
+#			yvelocity=$(( 1000 * ($ys0-$ye0) / $l_frames ))
+#		fi
 		if [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 4000 ] ; then
 			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
 		elif [ "$interp" -eq 1 ] && [ "$yvelocity" -eq 0 ] && [ "$xvelocity" -lt 4000 ] ; then
@@ -2186,12 +2200,18 @@ kenburns ()  # KENBURNS
 		
 		smoothing=1
 		## smooth start and end parameters:
-		F1=$(( $l_frames * 25 / 100 ))  # 20 percent smoothing
-#		F1=$(( $l_frames * 1 / 100 ))  # 20 percent smoothing
-		F1t=2 #  number of seconds to zoom in
+		F_time=2  # seconds for sinusoidal start
+		F1=$(( $F_time * $frames_per_sec / 1000 ))
+		if [ "$F1" -ge "$(( $l_frames / 2 ))" ] ; then
+			F1=$(( $l_frames / 2 ))
+		fi
+#		F1=$(( $l_frames * 25 / 100 ))  # 20 percent smoothing
+#		F1=$(( $l_frames * 1 / 100 ))  # 0 percent smoothing
 		F2=$(( $l_frames - $F1 ))	
 		V0x=$( echo "scale=9; 2 * ( $xe0 - $xs0 ) / ( $l_frames + $F2 - $F1 )" | bc ) 
 		V0y=$( echo "scale=9; 2 * ( $ye0 - $ys0 ) / ( $l_frames + $F2 - $F1 )" | bc )
+		V1x=$( echo "scale=9; 2 * ( $xe1 - $xs1 ) / ( $l_frames + $F2 - $F1 )" | bc ) 
+		V1y=$( echo "scale=9; 2 * ( $ye1 - $ys1 ) / ( $l_frames + $F2 - $F1 )" | bc )
 #		echo "F1=$F1 F2=$F2 V0x=$V0x V0y=$V0y"
 		pi='3.14159265'
 		## start loop for kenburns effect: #################################
@@ -2202,8 +2222,8 @@ kenburns ()  # KENBURNS
 				# region 1
 				x0=$( echo "scale=3; 1000* $xs0 + 1000* $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
 				y0=$( echo "scale=3; 1000* $ys0 + 1000* $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				x1=$( echo "scale=3; 1000* $xs1 + 1000* $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				y1=$( echo "scale=3; 1000* $ys1 + 1000* $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				x1=$( echo "scale=3; 1000* $xs1 + 1000* $V1x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				y1=$( echo "scale=3; 1000* $ys1 + 1000* $V1y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
 				D1x0=$x0; D1y0=$y0; D1x1=$x1; D1y1=$y1 # distance gone so far
 				## Fix numbers without leading zeros:
 				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
@@ -2222,8 +2242,8 @@ kenburns ()  # KENBURNS
 				# region 3
 				x0=$( echo "scale=3; $D2x0 + 1000* $V0x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
 				y0=$( echo "scale=3; $D2y0 + 1000* $V0y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
-				x1=$( echo "scale=3; $D2x1 + 1000* $V0x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
-				y1=$( echo "scale=3; $D2y1 + 1000* $V0y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				x1=$( echo "scale=3; $D2x1 + 1000* $V1x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				y1=$( echo "scale=3; $D2y1 + 1000* $V1y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
 				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0 y0=$y0 region 3"
 				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
 				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
@@ -2240,8 +2260,8 @@ kenburns ()  # KENBURNS
 				# middle region 2
 				x0=$( echo "scale=3; $D1x0 + 1000* $V0x*($fr-$F1)" | bc )
 				y0=$( echo "scale=3; $D1y0 + 1000* $V0y*($fr-$F1)" | bc )
-				x1=$( echo "scale=3; $D1x1 + 1000* $V0x*($fr-$F1)" | bc )
-				y1=$( echo "scale=3; $D1y1 + 1000* $V0y*($fr-$F1)" | bc )
+				x1=$( echo "scale=3; $D1x1 + 1000* $V1x*($fr-$F1)" | bc )
+				y1=$( echo "scale=3; $D1y1 + 1000* $V1y*($fr-$F1)" | bc )
 				D2x0=$x0 ; D2y0=$y0 ; D2x1=$x1 ; D2y1=$y1  # distance gone so far
 				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0 y0=$y0 region 2"
 				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
@@ -2288,14 +2308,6 @@ kenburns ()  # KENBURNS
 #			myecho "x0=$x0 y0=$y0 x1=$x1 y1=$y1 "
 			## now optionally do convolution if high-quality is enabled:
 			if [ "$interp" -eq 1 ] ; then
-#				x0_d=$( echo "scale=3; $xs0 + ($xe0-$xs0) * $logfactor / 1000" | bc )
-#				y0_d=$( echo "scale=3; $ys0 + ($ye0-$ys0) * $logfactor / 1000" | bc )
-#				x1_d=$( echo "scale=3; $xs1 + ($xe1-$xs1) * $logfactor / 1000" | bc )
-#				y1_d=$( echo "scale=3; $ys1 + ($ye1-$ys1) * $logfactor / 1000" | bc )
-#				x0_dec=`printf %3.3f $x0_d | awk -F. '{print "0."$2}'`; 
-#				y0_dec=`printf %3.3f $y0_d | awk -F. '{print "0."$2}'`;
-#				x1_dec=`printf %3.3f $x1_d | awk -F. '{print "0."$2}'`; 
-#				y1_dec=`printf %3.3f $y1_d | awk -F. '{print "0."$2}'`;
 #				myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec logfactor=$logfactor"
 				## now, we're going to calculate the following parameters:
 				# calculate subpixel-averaging weights:
@@ -2308,13 +2320,12 @@ kenburns ()  # KENBURNS
 	                        Cfactor=`printf %3.0f $Cfactor | tr -d \[:blank:\]`
 	                        Dfactor=`printf %3.0f $Dfactor | tr -d \[:blank:\]`
 				convolve="-convolve 0,0,0,0,$Afactor,$Bfactor,0,$Cfactor,$Dfactor"
-#	                        myecho "$fr Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor alpha=$alpha beta=$beta gamma=$gamma delta=$delta"
 	                        [ "$debug" -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor"
 			else
 				convolve="-filter cubic"
 			fi
 
-			crop_parameters # figure out final crop parameters  0.19s
+			crop_parameters # figure out final crop parameters  
 #			myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec logfactor=$logfactor"
 #			myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec "
 			# outputs correct predicted_resized_width and predicted_resized_height
@@ -2352,8 +2363,14 @@ kenburns ()  # KENBURNS
 				# split the difference between the two sides. If odd, add extra
 				# to bottom right?
 				left=$(( $xci + $frame_border )); right=$(( $delta_width - $left ))
+				[ "$right" -lt 0 ] && left=$(( $left + $right )) 
+				[ "$right" -lt 0 ] && right=0
 				top=$(( $yci + $frame_border )) ; bottom=$(( $delta_height - $top ))
-	                        [ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom"
+				[ "$bottom" -lt 0 ] && top=$(( $top + $bottom )) 
+				[ "$bottom" -lt 0 ] && bottom=0
+	                        [ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom delta_w=$delta_width delta_h=$delta_h"
+#				[ "$bottom" -lt 0 ] && bottom=0
+#				[ "$right" -lt 0 ] && right=0
 				if [ "$smp" -eq 1 ] ; then
 					[ $debug -ge 3 ] && echo "deltawh>1 bg=black smp=1"
 					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames )  & 
@@ -2371,7 +2388,7 @@ kenburns ()  # KENBURNS
 					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames ) 
 				fi
 			fi
-#			[ $debug -ge 2 ] && echo "width=`imagewidth_sq $tmpdir/fade_$dj.ppm` height=`imageheight $tmpdir/fade_$dj.ppm`"
+			[ $debug -ge 2 ] && echo "width=`imagewidth_sq "$tmpdir/fade_$dj.$suffix"` height=`imageheight "$tmpdir/fade_$dj.$suffix"`"
 			progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 		done
 		[ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] waiting for files suffix=$suffix end=$dj start=$l_startframe"
@@ -3135,19 +3152,27 @@ if [ -z "$it" ] ; then # no dvdauthor
 fi
 
 # ffmpeg
-if [ "$ac3" -eq 1 ] ; then
-	it=`which ffmpeg 2> /dev/null`
-       if [ -z "$it" ] ; then
-               # no ffmpeg!  use mp2 audio instead:
-               myecho "[dvd-slideshow] Warning:  no ffmpeg found for AC3 audio encoding."
-               myecho "[dvd-slideshow]           Using MP2 audio instead."
-               myecho "[dvd-slideshow]           MP2 audio is less compatible with DVD player hardware."
-	 	myecho "[dvd-slideshow]		http://ffmpeg.sourceforge.net"
-               ac3=0
+it=`which ffmpeg 2> /dev/null`
+      if [ -z "$it" ] ; then
+              # no ffmpeg!  use mp2 audio instead:
+              myecho "[dvd-slideshow] Warning:  no ffmpeg found for AC3 audio encoding."
+              myecho "[dvd-slideshow]           Using MP2 audio instead."
+              myecho "[dvd-slideshow]           MP2 audio is less compatible with DVD player hardware."
+ 		myecho "[dvd-slideshow]		http://ffmpeg.sourceforge.net"
+              ac3=0
+		mpeg_encoder='mpeg2enc'
+else
+	# found ffmpeg
+	logecho "`ffmpeg -version 2>&1`"
+	## check to see if we have mpeg2video output option:
+	it=`ffmpeg -f mpeg2video 2>&1 | grep 'Unknown input or output format: mpeg2video'`
+	if [ -z "$it" ] ; then
+		# mpeg2video should be ok
+		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='ffmpeg' 
 	else
-		# found ffmpeg
-		
-		logecho "`ffmpeg -version 2>&1`"
+		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='mpeg2enc' 
+		myecho "[dvd-slideshow] Warning:  ffmpeg is not compiled with the mpeg2video option"
+		myecho "[dvd-slideshow] 	  required for making dvds!  Using mpeg2enc instead."
 	fi
 fi
 ################################################## done finding programs

@@ -1173,10 +1173,14 @@ previouseffectincrement ()
 	## only to the previous image
 	local previousimage='0'
 	local increment=1
+	local image1='0' ; local dur1=0 ; local image_file1='0'
 	while [ $(( $i - $increment )) -ge 0 ] ; do
-		local image1="${image[$(($i-$increment))]}" ; local dur1="${duration[$(($i-$increment))]}" ; local image_file1=${image_file[$i-$increment]}
-		if [ $image_file1 -eq 1 ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
-			previousimage="0"  # i.e., not fadein
+		[ -n "${image[$i-$increment]}" ] && image1="${image[$(($i-$increment))]}" 
+		[ -n "${duration[$i-$increment]}" ] && dur1="${duration[$(($i-$increment))]}" 
+		[ -n "${image_file[$i-$increment]}" ] && image_file1=${image_file[$i-$increment]}
+#echo "i=$i increment=$increment image_file=${image_file[$i-$increment]}" 1>&2
+		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
+			previousimage="0"  #  i.e., not a fade
 			break
 		elif [ "$image1" == 'fadein' ] || [ "$image1" == 'crossfade' ] || [ "$image1" == 'wipe' ] ; then
 			previousimage="$increment"
@@ -1200,7 +1204,7 @@ nexteffectincrement ()
 		[ -n "${image[$i+$increment]}" ] && image1="${image[$(($i+$increment))]}" 
 		[ -n "${duration[$i+$increment]}" ] && dur1="${duration[$(($i+$increment))]}" 
 		[ -n "${image_file[$i+$increment]}" ] && image_file1=${image_file[$i+$increment]}
-		if [ "$image_file1" == 1 ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" != 0 ] ) ; then
+		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" != 0 ] ) ; then
 			nextimage="0"  # i.e., not fadein
 			break
 		elif [ "$image1" == 'fadeout' ] || [ "$image1" == 'crossfade' ] || [ "$image1" == 'wipe' ] ; then
@@ -3646,6 +3650,7 @@ do
 		duration[$i]=0
 		audiofiles=$(( $audiofiles + 1 ))
 	else
+		echo "else:  no image found"
 		image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
 		duration_ms=`seconds2ms ${duration[$i]}`
 		total_video_length="$(( $total_video_length + $duration_ms ))"
@@ -4823,6 +4828,12 @@ for file in "${image[@]}"; do
 		myecho "[dvd-slideshow] Doing fadeOUT to background...."
 		myecho "[dvd-slideshow] Applying Fadeout to previous image `hms ${duration[$i]}`"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Fadeout Subtitle= ${subtitle[$i]}"
+		previous_increment="`previousslideincrement`"
+		if [ -z "$previous_increment" ] ; then 
+			cleanup ; exit 0 
+		fi
+		previousslide_effect="${effect1[$i-$previous_increment]}"
+		previous_frames=0; 
 		next_effect_increment=`nexteffectincrement`
 		if [ "$next_effect_increment" != 0 ] && ([ "${image[$i+$next_effect_increment]}" == 'crossfade' ] || [ "${image[$i+$next_effect_increment]}" == 'fadeout' ]) ; then
 			myecho "[dvd-slideshow] ERROR: Cannot fadeout to a crossfade or another fadeout!"
@@ -4830,19 +4841,19 @@ for file in "${image[@]}"; do
 		fi
 		start_frame=1
 		# check if we're fading out from a kenburns or scroll effect:
-		previous_increment="`previouseffectincrement`"
 		if [ "$previous_increment" -ne 0 ] ; then
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 		fi
-		previousslide_effect="${effect1[$i-$previous_increment]}"
 		if [ "$previousslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering previous kenburns effect for fadeout..."
+			# render end of last kenburns effect first:
 			[ -f "$tmpdir"/kb_0001.ppm ] && \rm "$tmpdir"/kb_????.ppm  # remove any old files
 			window_start=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $1";"$2}'`
 			window_end=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $3";"$4}'`
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
+			## number of frames in kenburns effect:
 			start_frame="$(( $previous_frames - $frames  + 1 ))"
 			kenburns "$window_start" "$window_end" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame" "$previous_frames" "$normal_bg" "."
 #			for fr in `seq 1 $stepsize $frames`; do
@@ -4852,7 +4863,7 @@ for file in "${image[@]}"; do
 				mv "$tmpdir/fade_$kb_dj.ppm" "$tmpdir/kb_prev_$dj.ppm"
 			done
 		elif [ "$previousslide_effect" == 'scroll' ] ; then
-			myecho "[dvd-slideshow] Rendering previous scroll effect for fadein..."
+			myecho "[dvd-slideshow] Rendering previous scroll effect for crossfade..."
 			[ -f "$tmpdir"/kb_0001.ppm ] && \rm "$tmpdir"/kb_????.ppm  # remove any old files
 			direction="${effect1_params[$i-$previous_increment]}"
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
@@ -4888,11 +4899,9 @@ for file in "${image[@]}"; do
 			stepsize=1
 		fi
 		set_end_frame_time ${duration[$i]}
-#		end_frame_info $rendered_frames
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		echo -n "[dvd-slideshow]"
 		lastbar=0 # required for progressbar
-#		for fr in `seq 1 $stepsize $frames`; do
 		for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 			kb_dj=`addzeros $(( $fr + $start_frame - 1 ))`
 			dj=`addzeros $fr`
@@ -5056,9 +5065,7 @@ for file in "${image[@]}"; do
 			window_end=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $3";"$4}'`
 			next_duration=`seconds2ms ${duration[$i+$increment]}`  # duration in thousandths of sec
 			next_frames=$( duration2frames $next_duration )
-			echo kenburns "$window_start" "$window_end" "${image[$i+$increment]}" "$next_frames" 1 "$frames" "$transparent_bg" '.'
 			kenburns "$window_start" "$window_end" "${image[$i+$increment]}" "$next_frames" 1 "$frames" "$transparent_bg" '.'
-echo "after kenburns"
 			for (( fr=1 ; fr<=frames ; fr=fr+stepsize )) ; do
 				dj=`addzeros $fr`
 				mv "$tmpdir/fade_$dj.png" "$tmpdir/kb_next_$dj.png"

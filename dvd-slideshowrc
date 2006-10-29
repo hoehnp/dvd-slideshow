@@ -86,6 +86,9 @@ bottomtitle_bar_height=55  # 0 for no 50% white behind text
 bottomtitle_text_location_x=0
 bottomtitle_text_location_y=155
 
+kenburns_acceleration=2  # seconds of slow acceleration for kenburns
+# use 0 for no acceleration, or, use a percent of the effect time:
+# kenburns_acceleration=25%  # will accelerate for the first 25% of the effect.
 
 #######################################################################
 # dvd-menu config variables:

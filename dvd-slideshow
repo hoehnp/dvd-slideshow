@@ -3083,11 +3083,19 @@ subtitle ()  # SUBTITLE
 #	logecho "[dvd-slideshow]  Line2=$subtitle2"
 	transparent_color="ff0000"
 	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
-       	convert -size $dvd_width"x"$dvd_height xc:$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
-	-gravity South -fill white -stroke black -strokewidth 3 -colors 3 -depth 8 +antialias \
-	-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
-	-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
-	-quality 100 "$tmpdir/subtitle_$i.png"
+	if [ "$subtitle_type" == 'render' ] ; then
+	       	convert -size $dvd_width"x"$dvd_height xc:$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
+		-gravity South -fill white -stroke black -strokewidth 3 -depth 8 \
+		-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+		-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+		-quality 100 "$tmpdir/subtitle_$i.png"
+	else
+       		convert -size $dvd_width"x"$dvd_height xc:$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
+		-gravity South -fill white -stroke black -strokewidth 3 -colors 3 -depth 8 +antialias \
+		-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+		-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+		-quality 100 "$tmpdir/subtitle_$i.png"
+	fi
 }
 
 ############################################# End of functions

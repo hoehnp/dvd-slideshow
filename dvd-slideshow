@@ -2211,13 +2211,13 @@ kenburns ()  # KENBURNS
 #			yvelocity=$(( 1000 * ($ys0-$ye0) / $l_frames ))
 #		fi
 		if [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 4000 ] ; then
-			[ $debug -ge 2 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
+			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
 		elif [ "$interp" -eq 1 ] && [ "$yvelocity" -eq 0 ] && [ "$xvelocity" -lt 4000 ] ; then
-			[ $debug -ge 2 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
+			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
 		elif [ "$interp" -eq 1 ] && [ "$xvelocity" -lt 5000 -a "$yvelocity" -lt 4000 ] ; then
-			[ $debug -ge 2 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
+			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
 		elif [ "$interp" -eq 1 ] ; then
-			[ $debug -ge 2 ] && echo "[dvd-slideshow:kenburns] Disabling high-quality mode for fast effect. Velocity=$xvelocity $yvelocity"
+			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Disabling high-quality mode for fast effect. Velocity=$xvelocity $yvelocity"
 			interp=0
 		fi
 		
@@ -2229,7 +2229,7 @@ kenburns ()  # KENBURNS
 			F1=1
 			D1x0=0; D1y0=0; D1x1=0; D1y1=0 # distance gone so far
 		elif [ $( echo "$kenburns_acceleration" | awk -F% '{print NF}' ) -gt 1 ] ; then
-			echo "using kb percent syntax"
+#			myecho "using kb percent syntax"
 			kb_acceleration_percent=$( echo "$kenburns_acceleration" | awk -F% '{print $1}' )
 			F1=$(( $l_frames * $kb_acceleration_percent / 100 ))
 		else
@@ -2403,14 +2403,11 @@ kenburns ()  # KENBURNS
 				[ "$bottom" -lt 0 ] && top=$(( $top + $bottom )) 
 				[ "$bottom" -lt 0 ] && bottom=0
 	                        [ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom delta_w=$delta_width delta_h=$delta_height"
-				if [ "$smp" -eq 1 ] ; then
-					[ $debug -ge 3 ] && echo "deltawh>1 bg=black smp=1"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) 
-				else
-					[ $debug -ge 3 ] && echo "deltawh>1 bg=black smp=0"
-					#convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height"  -background black -splice "$right"x"$bottom"+$predicted_resized_width+$predicted_resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix
+#				if [ "$smp" -eq 1 ] ; then
+					[ $debug -ge 3 ] && echo "deltawh>1 bg=black"
 					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" "$tmpdir"/mytemp.$suffix 
 					# now, get size of resized image because of roundoff errors:
+					# need to get this correct in the future so we can run this in smp mode!
 					resized_width=$( imagewidth_sq "$tmpdir"/mytemp.$suffix )
 					resized_height=$( imageheight "$tmpdir"/mytemp.$suffix )
 #					if [ "$resized_width" != "$predicted_resized_width" ] || [ "$resized_height" != "$predicted_resized_height" ] ; then
@@ -2426,10 +2423,10 @@ kenburns ()  # KENBURNS
 					[ "$bottom" -lt 0 ] && top=$(( $top + $bottom )) 
 					[ "$bottom" -lt 0 ] && bottom=0
 	                        	[ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom delta_w=$delta_width delta_h=$delta_height"
-					convert "$tmpdir"/mytemp.$suffix -background black -splice "$right"x"$bottom"+$resized_width+$resized_height -splice "$left"x"$top" "$tmpdir/fade_$dj.$suffix" ; rm "$tmpdir"/mytemp.$suffix ; extracopies $fr $l_frames $suffix
+					convert "$tmpdir"/mytemp.$suffix -background black -splice "$right"x"$bottom"+$resized_width+$resized_height -splice "$left"x"$top" +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix" ; rm "$tmpdir"/mytemp.$suffix ; extracopies $fr $l_frames $suffix
 
 					# works with imagemagick > 6.0.6  (convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+$xc0+$yc0 +repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
-				fi
+#				fi
 			else   # need to composite over background image:
 				if [ "$smp" -eq 1 ] ; then
 					[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=1"

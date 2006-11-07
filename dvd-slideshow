@@ -1468,14 +1468,18 @@ titleslide ()
 #		if [ "$it" == 'n' ] ; then
 	## check to see if we find any user-specified breaks \n
 	it=`echo "$title" | awk -F'\\' '{print $2}' | cut -c 1`
+echo "title=$title"
 	if [ "$it" == 'n' ] ; then
 		logecho "[dvd-slideshow] Found \\n in title"
 		# user entered a \n to force line wraps
 		# break lines at line wraps
 		title1=`echo "${title}" | awk -F'\\' '{print $1}'`
 		title2=`echo "${title}" | awk -F'\\' '{print $2}' | cut -c 2-`
+		title3=`echo "${title}" | awk -F'\\' '{print $3}' | cut -c 2-`
+		title4=`echo "${title}" | awk -F'\\' '{print $4}' | cut -c 2-`
+
 		convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill $title_font_color \
-		-pointsize $f_title_font_size -gravity Center -font "$title_font" -annotate 0 "$title1\n$title2" -type TrueColor -depth 8 miff:- | \
+		-pointsize $f_title_font_size -gravity Center -font "$title_font" -annotate 0 "$title1\n$title2\n$title3\n$title4" -type TrueColor -depth 8 miff:- | \
 		composite -compose src-over -type TrueColor -depth 8 - "$bg" "$output_file"
 	else	# no forced line wraps.  Eventually Check for long lines
 		convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill $title_font_color \
@@ -3030,9 +3034,9 @@ subtitle ()  # SUBTITLE
 	# $2 = color
 	# output is $tmpdir/subtitle_$i.png
 	## fix any special characters:
-	transparent_color="ff0000"
+	transparent_color="ff0101"
 	if [ -z "$2" ] ; then	
-		local bg_color='red'
+		local bg_color="$transparent_color"
 	else
 		local bg_color="transparent"
 	fi
@@ -3081,7 +3085,6 @@ subtitle ()  # SUBTITLE
 	subtitle2=`echo "$subtitle2" | sed -e 's/\\\!/\!/g' `
 #	logecho "[dvd-slideshow]  Line1=$subtitle1"
 #	logecho "[dvd-slideshow]  Line2=$subtitle2"
-	transparent_color="ff0000"
 	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 	if [ "$subtitle_type" == 'render' ] ; then
 	       	convert -size $dvd_width"x"$dvd_height xc:$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \

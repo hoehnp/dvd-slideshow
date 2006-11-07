@@ -775,10 +775,8 @@ panel_width=288
 button_font_size=21
 button_font_color="black"
 button_hilight_color="red"
-button_text_location=$(( $panel_height/2 + $button_font_size/2 ))
 menu_panel_location_x=360
 menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
-menu_button_location_y=$(( $menu_panel_location_y + $button_font_size/2 ))  # y-location of first button
 title_font_size=40
 title_font_color="black"
 title_white_height=125
@@ -952,6 +950,9 @@ fi
 
 ## now, read the theme file if it was passed on the commandline:
 [ -n "$theme" ] && read_theme "$theme" 0
+
+button_text_location=$(( $panel_height/2 + $button_font_size/2 ))
+menu_button_location_y=$(( $menu_panel_location_y + $button_font_size/2 ))  # y-location of first button
 
 if [ "$vcd" -eq 1 ] ; then
 	# setup audio parameters

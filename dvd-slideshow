@@ -695,6 +695,7 @@ browsable=0
 yuvpid=0                    # pid of child mpeg2enc process
 yuvfirstfile=1              # tells when to strip yuv headers
 write_last_subtitle=0
+write_last_subtitle2=0
 commandline_audiofiles=0
 nocleanup=0 
 function_error=0
@@ -3046,7 +3047,7 @@ subtitle ()  # SUBTITLE
 	# $2 = color
 	# output is $tmpdir/subtitle_$i.png
 	## fix any special characters:
-	transparent_color="#ff0101"
+	transparent_color="ff0101"
 	if [ -z "$2" ] ; then	
 		local bg_color="$transparent_color"
 	else
@@ -3095,8 +3096,8 @@ subtitle ()  # SUBTITLE
 	## let dvd-slideshow render its own subtitles:
 	subtitle_line1=`echo "$subtitle_line1" | sed -e 's/\\\!/\!/g' `
 	subtitle_line2=`echo "$subtitle_line2" | sed -e 's/\\\!/\!/g' `
-#	logecho "[dvd-slideshow]  Line1=$subtitle_line1"
-#	logecho "[dvd-slideshow]  Line2=$subtitle_line2"
+#	echo "[dvd-slideshow]  Line1=$subtitle_line1"
+#	echo "[dvd-slideshow]  Line2=$subtitle_line2"
 	if [ "$subtitle_location" == 'top' ] ; then
 		gravity="North"
 	elif [ "$subtitle_location" == 'bottom' ] ; then
@@ -3106,17 +3107,13 @@ subtitle ()  # SUBTITLE
 	fi
 	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 	if [ "$subtitle_type" == 'render' ] ; then
-	       	convert -size $dvd_width"x"$dvd_height xc:$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
-		-gravity $gravity -fill $subtitle_color -stroke $subtitle_outline_color -strokewidth 3 -depth 8 \
+	       	convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
+		-gravity $gravity -fill $subtitle_color -stroke $subtitle_outline_color -strokewidth 3\
 		-draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
 		-stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
 		-quality 100 "$tmpdir/subtitle_$i.png"
 	else
-       		convert -size $dvd_width"x"$dvd_height xc:$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
-		-gravity $gravity -fill $subtitle_color -stroke $subtitle_outline_color -strokewidth 3 -colors 3 -depth 8 +antialias \
-		-draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
-		-stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
-		-quality 100 "$tmpdir/subtitle_$i.png"
+       		convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill $subtitle_color -stroke $subtitle_outline_color -strokewidth 3 -colors 3 +antialias -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$i.png"
 	fi
 }
 
@@ -5701,14 +5698,16 @@ echo "next=1"
 		# look for semicolon, indicating multiple subtitle tracks:
 		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 		subtitle2[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $2}' )"
-		if [ -n "$subtitle2[$i]" ] ; then
+#		echo "subtitle1=${subtitle1[$i]}"
+#		echo "subtitle2=${subtitle2[$i]}"
+		if [ -n "${subtitle2[$i]}" ] ; then
 			has_subtitles2=1
-			subtitle "$subtitle2[$i]"  # just creates the .png file for overlay
+			subtitle "${subtitle2[$i]}"  # just creates the .png file for overlay
 			mv "$tmpdir"/subtitle_$i.png "$tmpdir"/subtitle2_$i.png
 		fi
-		if [ -n "$subtitle1[$i]" ] ; then
+		if [ -n "${subtitle1[$i]}" ] ; then
 			has_subtitles=1
-			subtitle "$subtitle1[$i]"  # just creates the .png file for overlay
+			subtitle "${subtitle1[$i]}"  # just creates the .png file for overlay
 #		else
 #			cp "$transparent_bg" "$tmpdir"/subtitle_$i.png
 		fi

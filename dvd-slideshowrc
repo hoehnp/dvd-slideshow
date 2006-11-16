@@ -60,11 +60,17 @@ autocrop=0
 
 high_quality=0  # high quality enabled by default (not a good idea now)
 
-subtitle_type=render
-#subtitle_type=srt   # use srt subtitles instead of adding the text mask
+border=0  # add border of N pixels around images (filled by background image or color)
+sharpen=0  # change to 1 to enable image sharpening
 
+subtitle_type=dvd   # use dvd subtitle track for subtitles
+#subtitle_type=render # force subtitles to be rendered in video
+#subtitle_type=srt   # use srt subtitles instead of adding the text mask
 subtitle_font_size=24
 #subtitle_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+subtitle_color="white"
+subtitle_outline_color="black"
+subtitle_location="bottom"  # or, use "top"
 
 ## Title:
 title_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
@@ -77,7 +83,6 @@ toptitle_font_color='black' # or use hex "#RRGGBB"
 toptitle_bar_height=125  # 0 for no 50% white behind text
 toptitle_text_location_x=80
 toptitle_text_location_y=50
-
 # bottom title:
 bottomtitle_font_size=36
 bottomtitle_font_color="black"  # or use hex "#RRGGBB"

@@ -17,7 +17,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.0-pre5'
+version='0.8.0-pre9'
 
 changes () 
 {
@@ -91,6 +91,9 @@ Options:
 	  Add default subtitle "subtitle_text" to every slide
 	  Use "-s filename" to display filename as subtitle.
 	  Use "-s path" to display filename&path as subtitle.
+
+ [-s2 "subtitle text"]
+	  Same as -s option, but adds subtitles to subtitle track 2
  		
  [-b background.jpg]
 	  Use background.jpg as background image. Default is black.
@@ -228,6 +231,7 @@ do
         -t) shift; commandline_duration="$1"; shift ;; 
         -T) sortmethod="taken_date"; shift ;; 
         -M) sortmethod="modified_date"; shift ;; 
+        -S) sortmethod="normal"; shift ;; 
         -c) shift; commandline_crossfade="$1"; shift ;; 
         -theme) shift; theme="$1"; shift ;; 
         -a) shift; commandline_audio_list="$1"; shift ;; 
@@ -260,19 +264,13 @@ if [ -n "$theme" ] ; then
 		fi
 	fi
 	echo "[dir2slideshow] Reading theme file..."
-#	total_lines=`wc -l "$themefile" | awk '{print $1}'`
-#	total_lines=$(( $total_lines + 1 ))
-#	line=1
-#	while [ $line -ne $total_lines -a $total_lines -ne 0 ];
 	while read thisline
 	do
-#	  thisline=`sed -n "$line"p "$themefile"`
 	  set_variables "${thisline}" 1
 	  it=`set_variables "${thisline}" 0`
 	  if [ -n "$it" ] ; then
 		echo "[dir2slideshow] Set variable $it"
 	  fi
-#  	  line=$(( $line + 1 ))
 	done < "$themefile"	
 fi
 			

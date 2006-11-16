@@ -1,64 +1,52 @@
 # simple example with fades
-
 # instead of specifying the background image on the command-line
 # it's often easier to do it in this text file:
 # background:duration:subtitle:image
 # a duration of 0 means to set the image, but don't display it.
 background:0::../images/background.jpg
-
 # Titles are put in the center:
-title:5:Simple Example
-background:1
-
+title:5:Simple Example:
+background:1:
 # The titlebar type of title has two titles, one on top and one lower:
 titlebar:5:My top title:My lower title
-background:1
-
+background:1:
 #  there are simple transitions that you can use:
 # fadein, fadeout, and crossfade. Fadein and Fadeout will
-# fade to/from whatever background you're using.  Syntax is:  
+# fade to/from whatever background you're using.  Syntax is:
 # fadein:duration:subtitle
-
 # One confusing part (new in 0.8.0) is that the transitions will
-# be applied to the previous or next image, but they do not add 
+# be applied to the previous or next image, but they do not add
 # additional time to the slideshow.  Examples:
-# fadein:1   # this will be applied to the next real image
-# fadeout:1  # this will be applied to teh previous real image
+# fadein:1 # this will be applied to the next real image
+# fadeout:1 # this will be applied to teh previous real image
 # crossfade:1 	# this will overlap the last and next images by 1 second.
-
 # You can add a subtitle during the transition, but it's optional
-# use a backslash to escape a colon ':' in the subtitles.
+# use a backslash to escape a colon ':in the subtitles.
 # use '\n' to force a newline (only two subtitle lines supported now).
-fadein:1
-../images/picture1.jpg:5:Picture 1 is so cool\:\nI can't believe how cool it really is.
-
+fadein:1:
+../images/picture1.jpg:5:Picture 1 is so cool\
 # fadeout is similar:
 # fadeout:duration:subtitle
-fadeout:1:Fading out
-
+fadeout:1:Fading out:
 # it's possible to specify a new title slide in the middle of the slideshow:
-fadein:1
-titlebar:5::Panoramas  # note this just has the bottom title specified.
-
+fadein:1:
+titlebar:5::Panoramas # note this just has the bottom title specified.
 # crossfade works similar to fadein/fadeout
 # crossfade:duration:subtitle
-crossfade:1
+crossfade:1:
 ../images/pano.jpg:5:Cool panorama picture
-
 # now let's change the background color:
 # syntax is background:duration:subtitle:image
 # where you can use "black" or "white"  or "#RRGGBB
 # as the image name also.
-background:2.5::#11a004 
+background:2.5::#11a004
 # or
 background:2.5::black
-
 ../images/picture1.jpg:5:Picture 1 is so cool.  I can't believe how cool it really is.
-crossfade:1
-../images/picture2.jpg:5
-
-# it often looks nice to end the slideshow with a fadeout to the 
+crossfade:1:
+../images/picture2.jpg:5:
+# it often looks nice to end the slideshow with a fadeout to the
 # background instead of just stopping the video quickly:
-fadeout:1
-background:5:This is the background
+fadeout:1:
+background:5:This is the background:
 # note that the background is black now...

@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.0-pre8'
+version='0.8.0-pre9'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -47,6 +47,10 @@ changes ()
 echo 'Changes:
 0.8.0	
     New features & Changes:	
+	pre9:
+	Allow multiple \n in titles (up to 4)
+	Added variables subtitle_color, subtitle_outline_color, and subtitle_location
+	Remove option for srt subtitles since we can force render them now.
 	pre8:
 	Use variable subtitle_type=render to force subtitles to be rendered in frames.
 	Updated audio timing to be more accurate for long slideshows
@@ -570,6 +574,8 @@ Options:
 	  copy=0        # add copies of original images to the output directory
 	  autocrop=1    # autocrop images to fill full screen
   	  high_quality=0	# set high-quality mode
+	  border=0	# change to number of pixels around the image that is filled in with background
+	  sharpen=0	# change to 1 to enable image sharpening
 
 #	  font_dir="/usr/share/fonts"
 #	  font_name='n019004l.pfb' # helvetica bold URW font is default
@@ -579,7 +585,11 @@ Options:
 #	  font=/usr/share/fonts/default/Type1/n0220041.pfb # Courier Bold
 
 	  ## Subtitle:
+	  subtitle_type="dvd"  # use "render" to force rendering of text.
 	  subtitle_font_size=24
+	  subtitle_color="white"
+	  subtitle_outline_color="black"
+	  subtitle_location="bottom"
 
 	  ## Title:
 	  title_font_size=48
@@ -600,6 +610,7 @@ Options:
 	  bottomtitle_text_location_x=0
 	  bottomtitle_text_location_y=155
 	  
+	  # kenburns:
 	  kenburns_acceleration=1 # in seconds, or:
 	  kenburns_acceleration=25%  # as a percentage of the total kenburns effect time
 '
@@ -631,7 +642,6 @@ widescreen=0
 border=0  
 sharpen=''
 #subtitle_type="render"	# force subtitles to be rendered as graphics on the images.
-#subtitle_type="srt"	# format of subtitles. other values make dvd-slideshow render them internally.
 subtitle_type="dvd"	# or, use empty for default.
 font_dir="/usr/share/fonts/"
 font_dir2="/usr/X11R6/lib/X11/fonts/"
@@ -640,6 +650,9 @@ default_fontname1='n019004l.pfb' # helvetica bold URW fonts
 default_fontname2='helb____.ttf' # helvetica bold truetype
 	  ## Subtitle:
 	  subtitle_font_size=24
+	  subtitle_color="white"
+	  subtitle_outline_color="black"
+	  subtitle_location="bottom" # or "top"
 
 	  ## Title:
 	  title_font_size=48
@@ -681,7 +694,6 @@ chapmenu=0
 browsable=0
 yuvpid=0                    # pid of child mpeg2enc process
 yuvfirstfile=1              # tells when to strip yuv headers
-subtitle_file="subtitles.srt"
 write_last_subtitle=0
 commandline_audiofiles=0
 nocleanup=0 
@@ -816,9 +828,7 @@ if [ "$nocleanup" -eq 0 ] ; then
 	check_rm "$tmpdir/slideshow_background.mpc"
 	check_rm "$tmpdir/slideshow_background.cache"
 	check_rm "$tmpdir/title_background.png"
-#	check_rm "$tmpdir/${slideshow_name}.chap"
-	check_rm "$tmpdir/${slideshow_name}".spumux
-#	check_rm "$tmpdir/"
+	check_rm "$tmpdir"/"$slideshow_name".spumux
 	check_rm "$tmpdir/trash.txt"
 	check_rm "$tmpdir/browse.spumux"
 	check_rm "$tmpdir/$subtitle_file"
@@ -1468,7 +1478,6 @@ titleslide ()
 #		if [ "$it" == 'n' ] ; then
 	## check to see if we find any user-specified breaks \n
 	it=`echo "$title" | awk -F'\\' '{print $2}' | cut -c 1`
-echo "title=$title"
 	if [ "$it" == 'n' ] ; then
 		logecho "[dvd-slideshow] Found \\n in title"
 		# user entered a \n to force line wraps
@@ -2600,8 +2609,6 @@ set_system_variables ()
 		title_font) title_font="$config2" ; [ "$noecho" -eq 0 ] && echo "title_font=$title_font" ;; 
 		# subtitle
 		subtitle_type) subtitle_type="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_type=$subtitle_type" ;;
-		subtitle_font) subtitle_font="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_font=$subtitle_font" ;;
-		subtitle_font_size) subtitle_font_size="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_font_size=$subtitle_font_size" ;;
 		theme) theme="$config2" ; [ "$noecho" -eq 0 ] && echo "theme=$theme" ;; 
 		high_quality) high_quality="$config2" ; [ "$noecho" -eq 0 ] && echo "high_quality=$high_quality" ;;  #
 	esac
@@ -2946,6 +2953,11 @@ set_variables ()   # SET_VARIABLES
 		border) border="$config2" ; frame_border=$border ; frame_width=$(( $dvd_width - 2 * $frame_border )); frame_height=$(( $dvd_height - 2 * $frame_border )) ; [ "$noecho" -eq 0 ] && echo "border=$border" ;;
 		sharpen) sharpen="$config2" ; [ "$noecho" -eq 0 ] && echo "sharpen=$sharpen" ;;
 		kenburns_acceleration) kenburns_acceleration="$config2" ; [ "$noecho" -eq 0 ] && echo "kenburns_acceleration=$kenburns_acceleration" ;;
+		subtitle_font) subtitle_font="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_font=$subtitle_font" ;;
+		subtitle_font_size) subtitle_font_size="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_font_size=$subtitle_font_size" ;;
+		subtitle_color) subtitle_color="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_color=$subtitle_color" ;;
+		subtitle_outline_color) subtitle_outline_color="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_outline_color=$subtitle_outline_color" ;;
+		subtitle_location) subtitle_location="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_location=$subtitle_location" ;;
 	esac
 }
 
@@ -3034,7 +3046,7 @@ subtitle ()  # SUBTITLE
 	# $2 = color
 	# output is $tmpdir/subtitle_$i.png
 	## fix any special characters:
-	transparent_color="ff0101"
+	transparent_color="#ff0101"
 	if [ -z "$2" ] ; then	
 		local bg_color="$transparent_color"
 	else
@@ -3047,8 +3059,8 @@ subtitle ()  # SUBTITLE
 		logecho "[dvd-slideshow] Found \\n in subtitle"
 		# user entered a \n to force line wraps
 		# break lines at line wraps
-		subtitle1=`echo "$mysubtitle" | awk -F'\\' '{print $1}'`
-		subtitle2=`echo "$mysubtitle" | awk -F'\\' '{print $2}' | cut -c 2-`
+		subtitle_line1=`echo "$mysubtitle" | awk -F'\\' '{print $1}'`
+		subtitle_line2=`echo "$mysubtitle" | awk -F'\\' '{print $2}' | cut -c 2-`
 	else	# no forced line wraps.  Check for long lines:	
 		## make the subtitle break up into up to 4 different lines?
 		font_width=15  # actually it's 14.4, but this should give us some margin
@@ -3059,44 +3071,51 @@ subtitle ()  # SUBTITLE
 			## need to split the line:
 			characters2=$(( $characters / 2 + 1))
 			# try cutting in the middle:
-			subtitle1="${mysubtitle:0:$characters2}"
-			subtitle2="${mysubtitle:$characters2:$characters2}" 
+			subtitle_line1="${mysubtitle:0:$characters2}"
+			subtitle_line2="${mysubtitle:$characters2:$characters2}" 
 			# now re-join a potential broken word:
 			if [ "${mysubtitle:$characters2:1}" != ' ' ] ; then	
 				# break occurred in the middle of a word. re-join the word:
-				wordend=`echo "$subtitle2" | awk '{print $1}'`
+				wordend=`echo "$subtitle_line2" | awk '{print $1}'`
 				wordend_length=${#wordend}
-				subtitle1="$subtitle1$wordend"
-				subtitle2="${subtitle2:$wordend_length}"
+				subtitle_line1="$subtitle_line1$wordend"
+				subtitle_line2="${subtitle_line2:$wordend_length}"
 			fi
 			[ $debug -ge 1 ] && myecho "[dvd-slideshow] Splitting long subtitle... New values:"
-			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle1"
-			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle2"
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle_line1"
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle_line2"
 		else
-			subtitle1=""
-			subtitle2="$mysubtitle"
+			subtitle_line1=""
+			subtitle_line2="$mysubtitle"
 		fi
 	fi	
-#	myecho "[dvd-slideshow] $i subtitle1=$subtitle1 subtitle2=$subtitle2"
+#	myecho "[dvd-slideshow] $i subtitle_line1=$subtitle_line1 subtitle_line2=$subtitle_line2"
 	
 	## render subtitles, if necessary:
 	## let dvd-slideshow render its own subtitles:
-	subtitle1=`echo "$subtitle1" | sed -e 's/\\\!/\!/g' `
-	subtitle2=`echo "$subtitle2" | sed -e 's/\\\!/\!/g' `
-#	logecho "[dvd-slideshow]  Line1=$subtitle1"
-#	logecho "[dvd-slideshow]  Line2=$subtitle2"
+	subtitle_line1=`echo "$subtitle_line1" | sed -e 's/\\\!/\!/g' `
+	subtitle_line2=`echo "$subtitle_line2" | sed -e 's/\\\!/\!/g' `
+#	logecho "[dvd-slideshow]  Line1=$subtitle_line1"
+#	logecho "[dvd-slideshow]  Line2=$subtitle_line2"
+	if [ "$subtitle_location" == 'top' ] ; then
+		gravity="North"
+	elif [ "$subtitle_location" == 'bottom' ] ; then
+		gravity="South"
+	else 
+		gravity="South"
+	fi
 	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 	if [ "$subtitle_type" == 'render' ] ; then
 	       	convert -size $dvd_width"x"$dvd_height xc:$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
-		-gravity South -fill white -stroke black -strokewidth 3 -depth 8 \
-		-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
-		-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+		-gravity $gravity -fill $subtitle_color -stroke $subtitle_outline_color -strokewidth 3 -depth 8 \
+		-draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
+		-stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
 		-quality 100 "$tmpdir/subtitle_$i.png"
 	else
        		convert -size $dvd_width"x"$dvd_height xc:$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
-		-gravity South -fill white -stroke black -strokewidth 3 -colors 3 -depth 8 +antialias \
-		-draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
-		-stroke none -draw "text 0,105 \"$subtitle1\"" -draw "text 0,75 \"$subtitle2\"" \
+		-gravity $gravity -fill $subtitle_color -stroke $subtitle_outline_color -strokewidth 3 -colors 3 -depth 8 +antialias \
+		-draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
+		-stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
 		-quality 100 "$tmpdir/subtitle_$i.png"
 	fi
 }
@@ -3292,7 +3311,7 @@ else
 fi
 ################################################## done finding programs
 
-if [ -f "$tmpdir/slide_1.ppm" ] || [ -f "$tmpdir/slideshow_background.ppm" ] || [ -f "$tmpdir/subtitles.srt" ] || [ -f "$tmpdir/fade_0001.ppm" ] ; then
+if [ -f "$tmpdir/slide_1.ppm" ] || [ -f "$tmpdir/slideshow_background.ppm" ] || [ -f "$tmpdir/fade_0001.ppm" ] ; then
 	myecho "[dvd-slideshow] Found old files in output directory.  Removing them..."
 	cleanup
 fi
@@ -3784,28 +3803,6 @@ fi
 
 
 #############################################################################
-# verity fonts exist at ~/.spumux/ for spumux:
-if [ "$subtitle_type" == 'srt' ] || [ "$subtitle_type" == "SRT" ] ; then
-	if [ ! -f ~/.spumux/arial.ttf ] ; then
-		# look for fonts in $font_dir/msttcorefonts	
-		# if yours is somewhere else, let me know so I can add it to the search path.
-		if [ -f $font_dir/msttcorefonts/arial.ttf ] ; then
-			myecho "[dvd-slideshow] Copying $font_dir/msttcorefonts/arial.ttf to $HOME/.spumux/arial.ttf"
-			mkdir -p "$HOME/.spumux"	
-			cp "$font_dir/msttcorefonts/arial.ttf" "$HOME/.spumux"
-		else
-			myecho "[dvd-slideshow] ERROR: cannot find $HOME/.spumux/arial.ttf"
-			myecho "[dvd-slideshow] You need some fonts in the ~/.spumux directory"
-			myecho "[dvd-slideshow] in order to use .srt files rendered by spumux."
-			myecho "[dvd-slideshow] Try downloading truetype fonts, and copy"
-			myecho "[dvd-slideshow] arial.ttf into the ~/.spumux directory"
-			myecho "[dvd-slideshow] "
-			myecho "[dvd-slideshow] Rendering subtitles using dvd-slideshow instead."
-			subtitle_type="dvd"
-		fi
-	fi
-	echo "" >> "$tmpdir/$subtitle_file"
-fi
 
 ## summarize scan of .txt file:
 if [ -n "$themefile" ] ; then
@@ -4080,6 +4077,7 @@ elif [ "$vcd" -eq 1 ] ; then
 	myecho "[dvd-slideshow] Using vcd mode.  "
 fi
 has_subtitles=0
+has_subtitles2=0
 frame_time=0
 total_slideshow_frames=0
 
@@ -5322,7 +5320,6 @@ echo "next=1"
 				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm ; extracopies $fr $frames
 				fi
 			else  # flat files.  Optionally do interp
-echo "no special effects"
 				if [ "$smp" -eq 1 ] ; then
 					(composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm ; extracopies $fr $frames ) &
 				else
@@ -5330,7 +5327,6 @@ echo "no special effects"
 				fi
 			fi  # end of pre/post options
 		done
-#	waitforfiles "$tmpdir/fade" $suffix $dj $l_startframe
 		waitforfiles "$tmpdir/fade" ppm $dj
 		encode_fade
 		finish_progressbar $fr $frames
@@ -5693,83 +5689,93 @@ echo "no special effects"
 		echo '<subpictures>' > "$tmpdir/$slideshow_name".spumux
 		echo '	<stream>' >> "$tmpdir/$slideshow_name".spumux
 		continuous_subtitle_flag=0
+		echo '<subpictures>' > "$tmpdir/$slideshow_name".spumux2
+		echo '	<stream>' >> "$tmpdir/$slideshow_name".spumux2
 	fi	
 
 	## Subtitles ########################################################
 	## add the subtitle track if it exists:  SUBTITLE
 	if [ -n "${subtitle[$i]}" ] && [ "$subtitle_type" != 'render' ] ; then
 		## move all the pixel-related stuff into a function, but keep timing stuff here...
-		has_subtitles=1
 #		echo "$i subtitle_rendered=${subtitle[$i]}"
-		subtitle "${subtitle[$i]}"  # just creates the .png file for overlay
-#		myecho "[dvd-slideshow] $i subtitle1=$subtitle1 subtitle2=$subtitle2"
-#		
-#		## render subtitles, if necessary:
-		if [ "$subtitle_type" == "srt" ] || [ "$subtitle_type" == "SRT" ] ; then
-			## let spumux render subtitles internally
-			## setup spumux fonts, etc?: (later)
-			subtitle_number=$(( $subtitle_number + 1 ))		
+		# look for semicolon, indicating multiple subtitle tracks:
+		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
+		subtitle2[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $2}' )"
+		if [ -n "$subtitle2[$i]" ] ; then
+			has_subtitles2=1
+			subtitle "$subtitle2[$i]"  # just creates the .png file for overlay
+			mv "$tmpdir"/subtitle_$i.png "$tmpdir"/subtitle2_$i.png
+		fi
+		if [ -n "$subtitle1[$i]" ] ; then
+			has_subtitles=1
+			subtitle "$subtitle1[$i]"  # just creates the .png file for overlay
+#		else
+#			cp "$transparent_bg" "$tmpdir"/subtitle_$i.png
 		fi
 	fi
 
 	## let's assume the subtitle stays on the whole duration of the slide?
 	subtitle_start=`hms "$slide_start_time"`
 	subtitle_end=`hms "$slide_end_time"`
-	subtitle_start_srt="`echo ${slide_start_hms} | tr '.' ','`"
-	subtitle_end_srt="`echo ${slide_end_hms} | tr '.' ','`"
 
         ### Fix by AW.  Check to see if last subtitle was the same as this one!
 	## if so, then display it continuously:
 	if [ "$i" -gt 0 ] ; then
-	        if [ "${subtitle[$i]}" != "${subtitle[$(($i-1))]}" ] ; then
+		# subtitle track 1:
+	        if [ "${subtitle1[$i]}" != "${subtitle1[$(($i-1))]}" ] ; then
 			## subtitles different:
-#			myecho "subtitles different i=${subtitle[$i]} i-1=${subtitle[$(($i-1))]}"
-			# update times:
+#			myecho "subtitles different i=${subtitle1[$i]} i-1=${subtitle1[$(($i-1))]}"
 			## so, we have three cases here:  
-		        if [ -n "${subtitle[$i]}" -a -z "${subtitle[$(($i-1))]}" ] ; then
+		        if [ -n "${subtitle1[$i]}" -a -z "${subtitle1[$(($i-1))]}" ] ; then
 				# Current subtitle is nonzero, and previous subtitle is empty:
 				# Just update values, don't write out yet!
 				write_last_subtitle=1
 			else	## need to write out subtitle in all other cases:
-#				myecho "Writing subtitle $continuous_subtitle_start --> $continuous_subtitle_end $previous_subtitle1 $previous_subtitle2 subtitle_$i.png"
 				write_last_subtitle=0
-				if [ "$subtitle_type" == "srt" ] || [ "$subtitle_type" == "SRT" ] ; then
-#					myecho "writing srt subtitle"
-					echo "$(( $subtitle_number - 1 ))" >> "$outdir/$subtitle_file"
-					echo "$continuous_subtitle_start_srt"' --> '"$continuous_subtitle_end_srt" >> "$outdir/$subtitle_file"
-					if [ -n "$previous_subtitle1" ] ; then
-						# remove any backslashes
-						previous_subtitle1=`echo "$previous_subtitle1" | sed -e 's/\\\!/\!/g' `
-						echo "$previous_subtitle1" >> "$outdir/$subtitle_file"
-					fi
-					if [ -n "$previous_subtitle2" ] ; then
-						previous_subtitle2=`echo "$previous_subtitle2" | sed -e 's/\\\!/\!/g' `
-						echo "$previous_subtitle2" >> "$outdir/$subtitle_file"
-					fi
-					echo "" >> "$outdir/$subtitle_file"
-#					echo "$subtitle_number $subtitle_start_srt --> $subtitle_end_srt $subtitle1 $subtitle2"
-				else  ## let dvd-slideshow render its own subtitles:
-					echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
-					echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
-					echo '		' >> "$tmpdir/$slideshow_name".spumux
-				fi
+				echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
+				echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
+				echo '		' >> "$tmpdir/$slideshow_name".spumux
 			fi
 			# set new subtitle starting point:
 			continuous_subtitle_start="$subtitle_start"
-			continuous_subtitle_start_srt="$subtitle_start_srt"
-			previous_subtitle1="$subtitle1"
-			previous_subtitle2="$subtitle2"
 		else
 			# subtitles are the same.  Don't write it out yet!
 			# save the continuous_subtitle_end variable until done...
-			if [ -n "${subtitle[$i]}" ] ; then
+			if [ -n "${subtitle1[$i]}" ] ; then
 				write_last_subtitle=1
 				# subtitles are the same AND the current one is not empty
 			fi
 		fi
 		continuous_subtitle_end="$subtitle_end"  # update end point every time
-		continuous_subtitle_end_srt="$subtitle_end_srt"  
+
+		# subtitle track 2:
+	        if [ "${subtitle2[$i]}" != "${subtitle2[$(($i-1))]}" ] ; then
+			## subtitles different:
+#			myecho "subtitles different i=${subtitle2[$i]} i-1=${subtitle2[$(($i-1))]}"
+			## so, we have three cases here:  
+		        if [ -n "${subtitle2[$i]}" -a -z "${subtitle2[$(($i-1))]}" ] ; then
+				# Current subtitle is nonzero, and previous subtitle is empty:
+				# Just update values, don't write out yet!
+				write_last_subtitle2=1
+			else	## need to write out subtitle in all other cases:
+				write_last_subtitle2=0
+				echo '		<spu start="'$continuous_subtitle_start2'" end="'$continuous_subtitle_end2'" transparent="'$transparent_color'" image="'$tmpdir/subtitle2_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux2
+				echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux2
+				echo '		' >> "$tmpdir/$slideshow_name".spumux2
+			fi
+			# set new subtitle starting point:
+			continuous_subtitle_start2="$subtitle_start"
+		else
+			# subtitles are the same.  Don't write it out yet!
+			# save the continuous_subtitle_end variable until done...
+			if [ -n "${subtitle2[$i]}" ] ; then
+				write_last_subtitle2=1
+				# subtitles are the same AND the current one is not empty
+			fi
+		fi
+		continuous_subtitle_end2="$subtitle_end"  # update end point every time
 	fi
+
 	let i=$i+1
 done
 
@@ -5779,33 +5785,24 @@ done
 if [ -f "$tmpdir/$slideshow_name".spumux ] && [ "$subtitle_type" != 'render' ] ; then
 	if [ "$write_last_subtitle" -eq 1 ] ; then
 		# write out last subtitle:
-#		myecho "Writing subtitle $continuous_subtitle_start --> $continuous_subtitle_end $previous_subtitle1 $previous_subtitle2"
-		if [ "$subtitle_type" == "srt" ] || [ "$subtitle_type" == "SRT" ] ; then
-			echo "$(( $subtitle_number - 1 ))" >> "$outdir/$subtitle_file"
-			echo "$continuous_subtitle_start_srt --> $continuous_subtitle_end_srt" >> "$outdir/$subtitle_file"
-			if [ -n "$previous_subtitle1" ] ; then
-				previous_subtitle1=`echo "$previous_subtitle1" | sed -e 's/\\//g'`
-				echo "$previous_subtitle1" >> "$outdir/$subtitle_file"
-			fi
-			if [ -n "$previous_subtitle2" ] ; then
-				previous_subtitle2=`echo "$previous_subtitle2" | sed -e 's/\\//g'`
-				echo "$previous_subtitle2" >> "$outdir/$subtitle_file"
-			fi
-			echo "" >> "$outdir/$subtitle_file"
-		else  ## let dvd-slideshow render its own subtitles:
-			echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
-			echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
-			echo '		' >> "$tmpdir/$slideshow_name".spumux
-		fi
-	fi
-	if [ "$subtitle_type" == "srt" ] || [ "$subtitle_type" == "SRT" ] ; then
-		## write out bottom of .srt file:
-		echo '		<textsub filename="'$outdir/$subtitle_file'" font="arial.ttf" horizontal-alignment="center" vertical-alignment="bottom" bottom-margin="30" movie-width="'$dvd_width'" movie-height="'$dvd_height'"' >> "$tmpdir/$slideshow_name".spumux
-		echo '		/>' >> "$tmpdir/$slideshow_name".spumux
+		echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
+		echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
+		echo '		' >> "$tmpdir/$slideshow_name".spumux
 	fi
 	## write the bottom of the subpictures file:
-	echo '	</stream>' >> "$tmpdir/${slideshow_name}".spumux
-	echo '</subpictures>' >> "$tmpdir/${slideshow_name}".spumux
+	echo '	</stream>' >> "$tmpdir"/"$slideshow_name".spumux
+	echo '</subpictures>' >> "$tmpdir"/"$slideshow_name".spumux
+fi
+if [ -f "$tmpdir/$slideshow_name".spumux2 ] && [ "$subtitle_type" != 'render' ] ; then
+	if [ "$write_last_subtitle2" -eq 1 ] ; then
+		# write out last subtitle:
+		echo '		<spu start="'$continuous_subtitle_start2'" end="'$continuous_subtitle_end2'" transparent="'$transparent_color'" image="'$tmpdir/subtitle2_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux2
+		echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux2
+		echo '		' >> "$tmpdir/$slideshow_name".spumux2
+	fi
+	## write the bottom of the subpictures file:
+	echo '	</stream>' >> "$tmpdir"/"$slideshow_name".spumux2
+	echo '</subpictures>' >> "$tmpdir"/"$slideshow_name".spumux2
 fi
 
 ############################### Wait for mpeg2enc to finish
@@ -6399,9 +6396,9 @@ elif [ -n "${audio_2[0]}" ] && [ "$vcd" -eq 0 -a "$svcd" -eq 0 ] ; then
 	## two audio tracks!
 	echo "[dvd-slidehsow] two audio tracks found"
 	if [ "$ac3" -eq 1 ] ; then
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir/${slideshow_name}.vob" "$tmpdir/video.mpg" "$tmpdir"/audio1.ac3 "$tmpdir"/audio2.ac3 2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.ac3 "$tmpdir"/audio2.ac3 2>> "$outdir/$logfile"
 	else
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir/${slideshow_name}.vob" "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2 "$tmpdir"/audio2.mp2 2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2 "$tmpdir"/audio2.mp2 2>> "$outdir/$logfile"
 	fi
 else  # default mpeg2 video for dvd/vcd
 	if [ "$ac3" -eq 1 ] ; then
@@ -6410,14 +6407,14 @@ else  # default mpeg2 video for dvd/vcd
 			myecho "[dvd-slideshow] Must be some error with your input audio"
 			myecho "[dvd-slideshow] or the ac3 encoder"
 		fi
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir/${slideshow_name}.vob" "$tmpdir/video.mpg" "$tmpdir"/audio1.ac3 2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.ac3 2>> "$outdir/$logfile"
 	else
 		if [ ! -f "$tmpdir/audio1.mp2" ] ; then
 			myecho "[dvd-slideshow] ERROR: no output .mp2 file found!"
 			myecho "[dvd-slideshow] Must be some error with your input audio"
 			myecho "[dvd-slideshow] or the mp2 audio encoder"
 		fi
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir/${slideshow_name}.vob" "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2  2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2  2>> "$outdir/$logfile"
 	fi
 	if [ $? -ne 0 ] ; then
 		## mplex errored
@@ -6432,21 +6429,30 @@ myecho "[dvd-slideshow]#########################################################
 verbosity=0
 ## now run spumux only if the png was generated:
 if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
-	echo "[dvd-slideshow] VCD mode: not running spumux"
+	myecho "[dvd-slideshow] VCD mode: not running spumux"
 elif [ "$output_format" == "flv" ] || [ "$output_format" == "mp4" ] || [ "$output_format" == 'swf' ] ; then
-	echo "[dvd-slideshow] FLV mode: not running spumux"
-elif [ "$has_subtitles" -eq 1 ] && [ "$subtitle_type" != 'render' ] ; then   # dvd
-	spumux -m dvd -v $verbosity -s 0 -P "$tmpdir/${slideshow_name}".spumux < "$outdir/${slideshow_name}.vob" > "$outdir/tmp.vob"  2>> "$outdir/$logfile"
-	if [ $? -ne 0 ] ; then
-		## spumux errored
-		myecho "[dvd-slideshow] ERROR during spumux execution!"
-		myecho "[dvd-slideshow] see $outdir/$logfile for details"
-		cleanup; exit 1
+	myecho "[dvd-slideshow] FLV mode: not running spumux"
+elif [ "$subtitle_type" != 'render' ] ; then   # dvd
+	if [ "$has_subtitles" -eq 1 ] ; then
+		spumux -m dvd -v $verbosity -s 0 -P "$tmpdir"/"$slideshow_name".spumux < "$outdir"/"$slideshow_name".vob > "$outdir/tmp.vob"  2>> "$outdir/$logfile"
+		if [ $? -ne 0 ] ; then
+			## spumux errored
+			myecho "[dvd-slideshow] ERROR during spumux execution!"
+			myecho "[dvd-slideshow] see $outdir/$logfile for details"
+			cleanup; exit 1
+		fi
+		mv "$outdir/tmp.vob" "$outdir"/"$slideshow_name".vob
 	fi
-	mv "$outdir/tmp.vob" "$outdir/${slideshow_name}.vob"
-else #dvd
-#	rm "$tmpdir/${slideshow_name}".spumux
-	myecho "[dvd-slideshow] No subtitles... removing .spumux file"
+	if [ "$has_subtitles2" -eq 1 ] ; then
+		spumux -m dvd -v $verbosity -s 1 -P "$tmpdir"/"$slideshow_name".spumux2 < "$outdir"/"$slideshow_name".vob > "$outdir/tmp.vob"  2>> "$outdir/$logfile"
+		if [ $? -ne 0 ] ; then
+			## spumux errored
+			myecho "[dvd-slideshow] ERROR during spumux execution!"
+			myecho "[dvd-slideshow] see $outdir/$logfile for details"
+			cleanup; exit 1
+		fi
+		mv "$outdir/tmp.vob" "$outdir"/"$slideshow_name".vob
+	fi
 fi
 
 ## build the chapters string for passing to dvdauthor:
@@ -6492,10 +6498,10 @@ myecho "[dvd-slideshow] chapter markers at $chaps_string"
 myecho "[dvd-slideshow]############################################################"
 
 if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
-	mv "$outdir/${slideshow_name}.vob" "$outdir/${slideshow_name}".mpg
-	echo "$outdir/${slideshow_name}.mpg" > "$outdir/${slideshow_name}".xml
+	mv "$outdir"/"$slideshow_name".vob "$outdir"/"$slideshow_name".mpg
+	echo "$outdir"/"$slideshow_name".mpg > "$outdir"/"$slideshow_name".xml
 else
-	echo '		<vob chapters="'$chaps_string'" file="'$outdir/${slideshow_name}.vob'"  />' > "$outdir/${slideshow_name}".xml
+	echo '		<vob chapters="'$chaps_string'" file="'$outdir/$slideshow_name.vob'"  />' > "$outdir/$slideshow_name".xml
 fi
 
 cleanup

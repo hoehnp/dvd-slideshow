@@ -724,7 +724,7 @@ else
 	smp=1
 fi
 
-kenburns_acceleration=1 # in seconds
+kenburns_acceleration=2 # in seconds
 
 theargs="$*"
 ## command-line settings:

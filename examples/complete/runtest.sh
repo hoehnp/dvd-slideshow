@@ -24,9 +24,9 @@ rm -rf dvd_fs_complete  # from the older examples
 
 ## first, generate an input file for dvd-slideshow using dir2slideshow:
 echo "[runtest.sh] Executing command:"
-echo "[runtest.sh] dir2slideshow -n 'Complete example' -t 5 -c 1 -a 'strojovna_07-TEXEMPO-30s.ogg' $* my_pictures"
+echo "[runtest.sh] dir2slideshow -n 'Complete example' -t 5 -c 1 -a '../audio/strojovna_07-TEXEMPO-30s.ogg' $* my_pictures"
 echo " "
-dir2slideshow -n 'Complete example' -t 5 -c 1 $* my_pictures
+dir2slideshow -n 'Complete example' -t 5 -s Scott -s2 filename -c 1 -a '../audio/strojovna_07-TEXEMPO-30s.ogg' $* my_pictures
 
 if [ ! -f "Complete_example.txt" ] ; then
         echo "[runtest.sh] ERROR: No output files found from dir2slideshow!"
@@ -39,7 +39,7 @@ fi
 echo "[runtest.sh] Executing command:"
 echo "[runtest.sh] dvd-slideshow -n 'test complete' -f Complete_example.txt $*"
 echo " "
-dvd-slideshow -n 'test complete' -f Complete_example.txt -a 'strojovna_07-TEXEMPO-30s.ogg' $*
+dvd-slideshow -n 'test complete' -f Complete_example.txt $*
 
 if [ ! -f "test_complete.xml" ] ; then
         echo "[runtest.sh] ERROR: No output files found from dvd-slideshow!"
@@ -62,7 +62,7 @@ fi
 
 # copy the pictures onto the dvd filesystem.  This works great for archiving!  AND, the dvd still plays
 # fine in your player since the hardware ignores the directory.
-cp -a my_pictures "dvd_fs"
+#cp -r my_pictures "dvd_fs"
 
 #xine -g -u 0 dvd:"`pwd`/dvd_fs/"  &
 

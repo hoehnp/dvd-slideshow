@@ -22,7 +22,10 @@ version='0.8.0-pre9'
 changes () 
 {
 echo 'Changes:
-0.8.0 	Add random kenburns effect (-k)
+0.8.0 	
+	Allow wipe effect as default between images -w duration
+	Allow two different subtitles -s or -s2
+	Add random kenburns effect (-k)
 	Output file is copied to screen while running
 	Full paths are specified to images in output .txt file.
 	Start of themes being implemented. See theme documentation.
@@ -78,13 +81,14 @@ Options:
  [-c duration]
 	  Add a crossfade between every picture for duration seconds.
  		
- [-T]
-	  Sort by the JPEG header picture taken date, then the file
+ [-w duration]
+	  Add a wipe effect between every picture for duration seconds.
+ 		
+ [-T]	 Sort by the JPEG header picture taken date, then the file
 	  modified date, and then the filename. Default sorts by 
 	  name only
 
- [-M]
-	  Sort by the the file modified date, and then the filename.
+ [-M]	 Sort by the the file modified date, and then the filename.
 	  Default sorts by name only.
  		
  [-s "subtitle text"]
@@ -98,19 +102,18 @@ Options:
  [-b background.jpg]
 	  Use background.jpg as background image. Default is black.
  		
- [-notitle]
-	  Do not create a title slide.
+ [-notitle]	 Do not create a title slide.
  		
- [-r]
-	  Recursively search directories for images, 
+ [-r]	 Recursively search directories for images, 
 	  creating one output file.
  		
  [-R]  (not working yet)
 	  Recursively search directories for images, 
 	  creating one output file for each directory.
  		
- [-k]
-	  Apply random kenburns effects to each slide
+ [-k]	 Apply random kenburns effects to each slide
+
+ [-p]	 Use PAL output video format instead of NTSC
  		
  [-theme themefile.theme]  BETA
 	  Use theme themefile.theme for consistent look & feel
@@ -160,12 +163,14 @@ set_variables ()
 		background) background="$config2" ; [ "$noecho" -eq 0 ] && echo "background=$background" ;;
 		title_background) title_background="$config2" ; [ "$noecho" -eq 0 ] && echo "title_background=$title_background" ;;
 		crossfade) crossfade="$config2" ; [ "$noecho" -eq 0 ] && echo "crossfade=$crossfade" ;;
+		wipe) wipe="$config2" ; [ "$noecho" -eq 0 ] && echo "wipe=$wipe" ;;
 		kenburns) kenburns="$config2" ; [ "$noecho" -eq 0 ] && echo "kenburns=$kenburns" ;;
 		pal) pal="$config2" ; [ "$noecho" -eq 0 ] && echo "pal=$pal" ;;
 		slide_duration) slide_duration="$config2" ; [ "$noecho" -eq 0 ] && echo "slide_duration=$slide_duration" ;;
 		title_type) title_type="$config2" ; [ "$noecho" -eq 0 ] && echo "title_type=$title_type" ;;
 		slideshow_audio) audio_list="$config2" ; [ "$noecho" -eq 0 ] && echo "audio_list=$audio_list" ;;
 		subtitle) subtitle="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle=$subtitle" ;;
+		subtitle2) subtitle2="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle2=$subtitle2" ;;
 	esac
 }
 
@@ -192,8 +197,10 @@ fi
 echo "[dir2slideshow] dir2slideshow version $version"
 
 ## setup initial variables:
+LANG=C
 debug=0  # 1 or 0
 crossfade=0
+wipe=0
 slide_duration=5
 output_dir="."
 input_dir=""
@@ -217,6 +224,7 @@ do
 	-i) shift; input_dir="$1" ; shift ;;
 	-n) shift; commandline_name="$1" ; shift ;;
 	-s) shift; commandline_subtitle="$1" ; shift ;;
+	-s2) shift; commandline_subtitle2="$1" ; shift ;;
 	-b) shift; commandline_background="$1" ; shift ;;
 	-tb) shift; commandline_title_background="$1" ; shift ;;
 	-notitle) commandline_title=0 ; shift ;;
@@ -233,6 +241,7 @@ do
         -M) sortmethod="modified_date"; shift ;; 
         -S) sortmethod="normal"; shift ;; 
         -c) shift; commandline_crossfade="$1"; shift ;; 
+        -w) shift; commandline_wipe="$1"; shift ;; 
         -theme) shift; theme="$1"; shift ;; 
         -a) shift; commandline_audio_list="$1"; shift ;; 
 	-h) help ; exit 0 ; shift ;;
@@ -277,6 +286,7 @@ fi
 ## over-ride theme file with command-line options:
 [ -n "$commandline_name" ] && name="$commandline_name"
 [ -n "$commandline_subtitle" ] && subtitle="$commandline_subtitle"
+[ -n "$commandline_subtitle2" ] && subtitle2="$commandline_subtitle2"
 [ -n "$commandline_background" ] && background="$commandline_background"
 [ -n "$commandline_title_background" ] && title_background="$commandline_title_background"
 [ -n "$commandline_title" ] && title="$commandline_title"
@@ -284,6 +294,7 @@ fi
 [ -n "$commandline_pal" ] && pal="$commandline_pal"
 [ -n "$commandline_duration" ] && slide_duration="$commandline_duration"
 [ -n "$commandline_crossfade" ] && crossfade="$commandline_crossfade"
+[ -n "$commandline_wipe" ] && wipe="$commandline_wipe"
 [ -n "$commandline_audio_list" ] && audio_list="$commandline_audio_list"
 [ -n "$commandline_recursive_single" ] && recursive_single="$commandline_recursive_single"
 [ -n "$commandline_recursive_multiple" ] && recursive_multiple="$commandline_recursive_multiple"
@@ -407,9 +418,6 @@ fi
 if [ "$pal" -eq 1 ] ; then
         framerate='25'
         frames_per_sec=25000  # in ms
-        sq_to_dvd_pixels='93.75x100%' # i.e., make the horizontal smaller
-        sq_pixel_multiplier=$(( 1000 * 540 / 576 ))
-                # see http://www.uwasa.fi/~f76998/video/conversion
         if [ "$vcd" -eq 1 ] ; then
                 dvd_width='352' ; dvd_height='288'
                 resolution='352x288'
@@ -423,9 +431,6 @@ if [ "$pal" -eq 1 ] ; then
 else  ## NTSC
         framerate='29.97'
         frames_per_sec=29970  # in ms
-        sq_to_dvd_pixels='112.5x100%' # i.e., make the horizontal 12% larger
-        sq_pixel_multiplier=$(( 1000 * 540 / 480 ))
-                # see http://www.uwasa.fi/~f76998/video/conversion
         if [ "$vcd" -eq 1 ] ; then
                 dvd_width='352' ; dvd_height='240'
                 resolution='352x240'
@@ -437,6 +442,10 @@ else  ## NTSC
                 resolution='720x480'
         fi
 fi
+aspect_ratio="4:3"
+resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}'`
+sq_to_dvd_pixels="${resize_factor}x100%"
+sq_pixel_multiplier=$( printf %5.0f $( echo "scale=0; 10 * $resize_factor" | bc ) )
 
 
 # sanity checking 
@@ -480,6 +489,7 @@ echo "[dir2slideshow] Output file = $outfile"
 ## now, summarize settings:
 if [ 1 ] ; then
 	echo [dir2slideshow] subtitle="$subtitle"
+	echo [dir2slideshow] subtitle2="$subtitle2"
 	echo [dir2slideshow] background="$background"
 	echo [dir2slideshow] title_background="$title_background"
 	echo [dir2slideshow] title="$title"
@@ -489,6 +499,7 @@ if [ 1 ] ; then
 	echo [dir2slideshow] slide_duration="$slide_duration"
 	echo [dir2slideshow] sortmethod="$sortmethod"
 	echo [dir2slideshow] crossfade="$crossfade"
+	echo [dir2slideshow] wipe="$wipe"
 	echo [dir2slideshow] title_type="$title_type"
 	echo [dir2slideshow] themefile="$themefile"
 	echo [dir2slideshow] audio_list="$audio_list"
@@ -526,6 +537,12 @@ else
 	ls -1 "$input_dir"/*.jpg "$input_dir"/*.JPG "$input_dir"/*.jpeg "$input_dir"/*.png "$input_dir"/*.PNG > "$output_dir"/filelist.txt 2>/dev/null
 	pictures=`wc -l "$output_dir"/filelist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
+fi
+
+# make sure we found some images:
+if [ "$pictures" -eq 0 ] ; then
+	echo "[dir2slideshow] ERROR: No pictures found.  Check your settings and try again."
+	exit 1
 fi
 
 ## sort the pictures:
@@ -599,6 +616,9 @@ elif [ -n "$title_background" ] ; then # either color local file
 fi
 
 check_rm "$outfile"
+if [ "$pal" -eq 1 ] ; then
+	fileecho "pal=1"
+fi
 if [ -n "$themefile" ] ; then
 	fileecho "theme=$themefile"
 fi
@@ -729,23 +749,45 @@ for (( i=1 ; i<=pictures ; i++ )) ; do
 	if [ -n "$subtitle" ] ; then
 		if [ "$subtitle" == 'filename' ] ; then
 			# use name as the subtitle
-			subtitle="$( basename "$file" )"
+			subtitle_text="$( basename "$file" )"
 		elif [ "$subtitle" == 'path' ] ; then
 			# use full filename and path as subtitle (truncate?)
-			subtitle="$file"
+			subtitle_text="$file"
+		else
+			subtitle_text="$subtitle"
 		fi
+	else
+		subtitle_text=''
 	fi	
-	if [ -n "$subtitle" ] && [ -n "$kenburns_args" ] ; then
-		fileecho "$file:$slide_duration:$subtitle:$kenburns_args"
-	elif [ -z "$subtitle" ] && [ -n "$kenburns_args" ] ; then
-		fileecho "$file:$slide_duration::$kenburns_args"
-	elif [ -n "$subtitle" ] && [ -z "$kenburns_args" ] ; then
+
+	if [ -n "$subtitle2" ] ; then
+		if [ "$subtitle2" == 'filename' ] ; then
+			# use name as the subtitle2
+			subtitle2_text="$( basename "$file" )"
+		elif [ "$subtitle2" == 'path' ] ; then
+			# use full filename and path as subtitle2 (truncate?)
+			subtitle2_text="$file"
+		else
+			subtitle2_text="$subtitle2"
+		fi
+	else
+		subtitle2_text=''
+	fi	
+	if [ -n "$subtitle2_text" ] && [ -n "$kenburns_args" ] ; then
+		fileecho "$file:$slide_duration:$subtitle_text"';'"$subtitle2_text:$kenburns_args"
+	elif [ -z "$subtitle2_text" ] && [ -n "$kenburns_args" ] ; then
+		fileecho "$file:$slide_duration:$subtitle_text:$kenburns_args"
+	elif [ -n "$subtitle_text" ] && [ -z "$subtitle2_text" ] && [ -z "$kenburns_args" ] ; then
 		fileecho "$file:$slide_duration:$subtitle"
+	elif [ -n "$subtitle2_text" ] && [ -z "$kenburns_args" ] ; then
+		fileecho "$file:$slide_duration:$subtitle_text"';'"$subtitle2_text"
 	else
 		fileecho "$file:$slide_duration"
 	fi
 	if [ "$crossfade" != "0" ] && [ "$i" -lt "$pictures" ] ; then
 		fileecho "crossfade:$crossfade"
+	elif [ "$wipe" != "0" ] && [ "$i" -lt "$pictures" ] ; then
+		fileecho "wipe:$wipe"
 	fi
 	let j=$j+1
 done

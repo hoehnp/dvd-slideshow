@@ -42,6 +42,8 @@ echo "[dvd-slideshow]            "
 #  convert image.jpg -bordercolor black -border 0 "$tmpdir/fade_$dj.ppm" works for transparent .png images
 # in ImageMagick > 6.0.6, but not in 6.0.6 for some reason.  (black output).  
 
+LANG=C
+
 changes ()
 {
 echo 'Changes:
@@ -509,6 +511,12 @@ Options:
 		image.jpg:dur:sub:kenburns:50%;topleft;50%;bottomright
 		image.jpg:dur:sub:kenburns:100%;left;0,0;720,480
 		image.jpg:dur:sub:kenburns:100%;left;imageheight;left
+		kenburns note:  if you find yourself using a lot of lines like:
+		crop, kenburns, crop
+		where the crop coordinates are the same as the start & end
+		of the kenburns, you can use a duration like 1,5,1 for one
+		second of crop, followed by a 5 second kenburns, followed by
+		another one second of crop (times are adjustable).  (alpha)
 	    scroll:
 	    	image.jpg:dur:sub:scroll:[left|right|up|down]
 		This is most useful for displaying panorama-style
@@ -522,6 +530,8 @@ Options:
 	    effects after the subtitle field, be sure to include 
 	    all the colons :: in order for the parser to get the
 	    correct info.
+	    Two subtitle tracks are possible (alpha).  Separate them
+	    using a semicolon ;. 
 
 	    When passing a picture, you can optionally use the
 	    keyword "audio" instead of the integer duration in 
@@ -714,7 +724,7 @@ else
 	smp=1
 fi
 
-kenburns_acceleration=2 # in seconds
+kenburns_acceleration=1 # in seconds
 
 theargs="$*"
 ## command-line settings:
@@ -755,7 +765,7 @@ do
 	-swf) shift; output_format='swf' ;; # force using mpeg2enc instead of ffmpeg
 	-w) shift; widescreen=1 ;;  # use 16:9 instead of 4:3 aspect ratio
 	-L) shift; low_quality=1 ;;  # use low-quality mode
-	-M) shift; high_quality=0 ; low_quality=0 ;;  # use medium-quality mode (this is the default)
+	-M) shift; commandline_high_quality=0 ; low_quality=0 ;;  # use medium-quality mode (this is the default)
 	-H) shift; commandline_high_quality=1 ;;  # ALPHA.  use high-quality mode (This might take much longer to process in the future)
 	-smp) shift; smp=1 ;;  # use multi-threaded mode (might crash on low-memory machines?)
 	-nosmp) shift; smp=0 ;;  # use multi-threaded mode (might crash on low-memory machines?)
@@ -4661,7 +4671,7 @@ for file in "${image[@]}"; do
 			read_next_variables
 			create_slide "${image[$i+$increment]}" "$tmpdir/slide_$(($i+$increment)).ppm"
 			subtitle1[$i+$increment]="$( echo "${subtitle[$i+$increment]}" | awk -F';' '{print $1}' )"
-			echo "subtitle1=${subtitle1[$i+$increment]}"
+#			echo "subtitle1=${subtitle1[$i+$increment]}"
 			if [ -n "${subtitle1[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i+$increment]}" "$(( $i + $increment))" transparent # creates subtitle_$(($i+$increment)).png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$(($i+$increment))".png "$tmpdir"/slide_"$(($i+$increment))".ppm "$tmpdir"/slide_"$(($i+$increment))".ppm
@@ -4844,7 +4854,7 @@ for file in "${image[@]}"; do
 			read_next_variables
 			create_slide "$nextslide" "$tmpdir/slide_$(($i+$increment)).ppm"
 			subtitle1[$i+$increment]="$( echo "${subtitle[$i+$increment]}" | awk -F';' '{print $1}' )"
-			echo "subtitle1=${subtitle1[$i+$increment]}"
+#			echo "subtitle1=${subtitle1[$i+$increment]}"
 			if [ -n "${subtitle1[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i+$increment]}" "$(( $i + $increment))" transparent # creates subtitle_$(($i+$increment)).png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$(($i+$increment))".png "$tmpdir"/slide_"$(($i+$increment))".ppm "$tmpdir"/slide_"$(($i+$increment))".ppm
@@ -5346,7 +5356,6 @@ for file in "${image[@]}"; do
 				composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$tmpdir/kb_prev_$dj.png" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm ; extracopies $fr $frames 
 				fi
 			elif [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
-echo "next=1"
 				if [ "$smp" -eq 1 ] ; then
 				(composite -compose src-over -geometry "$x1""$y1" -type TrueColor -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColor -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm ; extracopies $fr $frames ) &
 				else
@@ -5428,7 +5437,7 @@ echo "next=1"
 			## now, do the actual crop:
 			convert "${file}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
 			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
-			echo "subtitle1=${subtitle1[$i]}"
+#			echo "subtitle1=${subtitle1[$i]}"
 			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i]}" $i transparent # creates subtitle_$i.png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
@@ -5588,7 +5597,7 @@ echo "next=1"
 				myecho "[dvd-slideshow] Subtitle=${subtitle[$i]}"
 			fi
 			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
-			echo "subtitle1=${subtitle1[$i]}"
+#			echo "subtitle1=${subtitle1[$i]}"
 			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i]}" $i transparent # creates subtitle_$i.png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm

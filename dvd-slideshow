@@ -1236,7 +1236,7 @@ nexteffectincrement ()
 	echo "$nextimage"
 }
 
-nextslidename ()
+nextslidename ()  # NEXTSLIDENAME
 {
 	## get next slide:
 	nextimage=''
@@ -1336,6 +1336,36 @@ previousslideppm ()
 		function_error=1
 	fi
 	echo "$previousimage"
+}
+
+read_next_variables ()  # READ_NEXT_VARIABLES
+{
+	## get next slide:
+	local nextimage=''
+	local increment=1
+	while [ $(( $i + $increment )) -le ${#image[@]} ] ; do
+		local image1="${image[$(($i+$increment))]}" ; local dur1="${duration[$(($i+$increment))]}" ; local image_file1=${image_file[$i+$increment]}
+		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
+			nextimage="$image1"
+			break
+		else 
+			## next line is not an image!
+			# read variable if it exists:
+			set_variables "$image1" 1
+#			it=`set_variables "$image1" 0`
+#			if [ -n "$it" ] ; then
+#				myecho "[dvd-slideshow] Set future variable $it"
+#			fi
+			increment=$(( $increment + 1 ))	
+		fi
+	done
+	if [ -z "$nextimage" ] ; then
+		echo "" 1>&2
+		echo '[dvd-slideshow] ERROR: Could not find a valid next slide' 1>&2
+		echo '[dvd-slideshow]        This happens when a fade cannot locate a future image in your .txt file' 1>&2
+		echo '[dvd-slideshow]	     Fix this in your input file and re-run dvd-slideshow.' 1>&2
+		function_error=1
+	fi
 }
 
 titlebarslide ()
@@ -3044,11 +3074,13 @@ fi
 subtitle ()  # SUBTITLE
 {
 	# $1 = the subtitle passed
-	# $2 = color
+	# $2 = index to append to subtitle_$i.png
+	# $3 = color
 	# output is $tmpdir/subtitle_$i.png
 	## fix any special characters:
+	local index="$2"
 	transparent_color="ff0101"
-	if [ -z "$2" ] ; then	
+	if [ -z "$3" ] ; then	
 		local bg_color="$transparent_color"
 	else
 		local bg_color="transparent"
@@ -3067,7 +3099,6 @@ subtitle ()  # SUBTITLE
 		font_width=15  # actually it's 14.4, but this should give us some margin
 		characters="${#mysubtitle}"
 		line_width=$(( $font_width * $characters ))
-#		myecho "[dvd-slideshow] $i characters=$characters linewidth=$line_width"
 		if [ "$line_width" -gt "$dvd_width" ] ; then # $dvd_width=720
 			## need to split the line:
 			characters2=$(( $characters / 2 + 1))
@@ -3090,7 +3121,7 @@ subtitle ()  # SUBTITLE
 			subtitle_line2="$mysubtitle"
 		fi
 	fi	
-#	myecho "[dvd-slideshow] $i subtitle_line1=$subtitle_line1 subtitle_line2=$subtitle_line2"
+#	myecho "[dvd-slideshow] $index subtitle_line1=$subtitle_line1 subtitle_line2=$subtitle_line2"
 	
 	## render subtitles, if necessary:
 	## let dvd-slideshow render its own subtitles:
@@ -3107,13 +3138,10 @@ subtitle ()  # SUBTITLE
 	fi
 	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 	if [ "$subtitle_type" == 'render' ] ; then
-	       	convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" \
-		-gravity $gravity -fill $subtitle_color -stroke $subtitle_outline_color -strokewidth 3\
-		-draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
-		-stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" \
-		-quality 100 "$tmpdir/subtitle_$i.png"
+#	       	echo convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
+	       	convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
 	else
-       		convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill $subtitle_color -stroke $subtitle_outline_color -strokewidth 3 -colors 3 +antialias -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$i.png"
+       		convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -colors 3 +antialias -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
 	fi
 }
 
@@ -4536,8 +4564,9 @@ for file in "${image[@]}"; do
 		if [ ! -f "$tmpdir/slide_$i.ppm" ] ; then 
 			create_slide "$file" "$tmpdir/slide_$i.ppm"
 		fi
-		if [ -n "${subtitle[$i]}" -a "$subtitle_type" == 'render' ] ; then
-			subtitle "${subtitle[$i]}" transparent  # creates subtitle_$i.png
+		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
+		if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
+			subtitle "${subtitle1[$i]}" $i transparent # just creates the .png file for overlay
 			composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
 		fi
 		if [ "$frames_to_render" -ge 1 ] ; then
@@ -4628,9 +4657,13 @@ for file in "${image[@]}"; do
 				cleanup; exit 1
 			fi
 		else # no manual cropping next picture and it's not a title or background
+			# need to read next variables BEFORE making next slide!
+			read_next_variables
 			create_slide "${image[$i+$increment]}" "$tmpdir/slide_$(($i+$increment)).ppm"
-			if [ -n "${subtitle[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
-				subtitle "${subtitle[$i+$increment]}" transparent # creates subtitle_$i.png
+			subtitle1[$i+$increment]="$( echo "${subtitle[$i+$increment]}" | awk -F';' '{print $1}' )"
+			echo "subtitle1=${subtitle1[$i+$increment]}"
+			if [ -n "${subtitle1[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
+				subtitle "${subtitle1[$i+$increment]}" "$(( $i + $increment))" transparent # creates subtitle_$(($i+$increment)).png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$(($i+$increment))".png "$tmpdir"/slide_"$(($i+$increment))".ppm "$tmpdir"/slide_"$(($i+$increment))".ppm
 			fi
 		fi
@@ -4808,9 +4841,12 @@ for file in "${image[@]}"; do
 			background "$bg"   # calls the background image subroutine
 			cp "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
 		else # no manual cropping next picture and it's not a title
+			read_next_variables
 			create_slide "$nextslide" "$tmpdir/slide_$(($i+$increment)).ppm"
-			if [ -n "${subtitle[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
-				subtitle "${subtitle[$i+$increment]}" transparent # creates subtitle_$i.png
+			subtitle1[$i+$increment]="$( echo "${subtitle[$i+$increment]}" | awk -F';' '{print $1}' )"
+			echo "subtitle1=${subtitle1[$i+$increment]}"
+			if [ -n "${subtitle1[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
+				subtitle "${subtitle1[$i+$increment]}" "$(( $i + $increment))" transparent # creates subtitle_$(($i+$increment)).png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$(($i+$increment))".png "$tmpdir"/slide_"$(($i+$increment))".ppm "$tmpdir"/slide_"$(($i+$increment))".ppm
 			fi
 		fi	
@@ -5391,8 +5427,10 @@ echo "next=1"
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow] Crop $c_width"x"$c_height"+"$xc0"+"$yc0 composite" +"$xci"+$yci
 			## now, do the actual crop:
 			convert "${file}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
-			if [ -n "${subtitle[$i]}" -a "$subtitle_type" == 'render' ] ; then
-				subtitle "${subtitle[$i]}" transparent # creates subtitle_$i.png
+			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
+			echo "subtitle1=${subtitle1[$i]}"
+			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
+				subtitle "${subtitle1[$i]}" $i transparent # creates subtitle_$i.png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
 			fi
 		fi
@@ -5549,8 +5587,10 @@ echo "next=1"
 			elif [ -n "${subtitle[$i]}" ] ; then
 				myecho "[dvd-slideshow] Subtitle=${subtitle[$i]}"
 			fi
-			if [ -n "${subtitle[$i]}" -a "$subtitle_type" == 'render' ] ; then
-				subtitle "${subtitle[$i]}" transparent # creates subtitle_$i.png
+			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
+			echo "subtitle1=${subtitle1[$i]}"
+			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
+				subtitle "${subtitle1[$i]}" $i transparent # creates subtitle_$i.png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
 			fi
 			encode "$tmpdir/slide_$i.ppm" "$frames"
@@ -5702,12 +5742,12 @@ echo "next=1"
 #		echo "subtitle2=${subtitle2[$i]}"
 		if [ -n "${subtitle2[$i]}" ] ; then
 			has_subtitles2=1
-			subtitle "${subtitle2[$i]}"  # just creates the .png file for overlay
+			subtitle "${subtitle2[$i]}" $i  # just creates the .png file for overlay
 			mv "$tmpdir"/subtitle_$i.png "$tmpdir"/subtitle2_$i.png
 		fi
 		if [ -n "${subtitle1[$i]}" ] ; then
 			has_subtitles=1
-			subtitle "${subtitle1[$i]}"  # just creates the .png file for overlay
+			subtitle "${subtitle1[$i]}" $i  # just creates the .png file for overlay
 #		else
 #			cp "$transparent_bg" "$tmpdir"/subtitle_$i.png
 		fi

@@ -160,7 +160,7 @@ set_variables ()
 		bottomtitle_text_location_x) bottomtitle_text_location_x="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_text_location_x=$bottomtitle_text_location_x" ;;
 		bottomtitle_text_location_y) bottomtitle_text_location_y="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_text_location_y=$bottomtitle_text_location_y" ;;
 		## dir2slideshow options:
-		background) background="$config2" ; [ "$noecho" -eq 0 ] && echo "background=$background" ;;
+		slideshow_background) background="$config2" ; [ "$noecho" -eq 0 ] && echo "background=$background" ;;
 		title_background) title_background="$config2" ; [ "$noecho" -eq 0 ] && echo "title_background=$title_background" ;;
 		crossfade) crossfade="$config2" ; [ "$noecho" -eq 0 ] && echo "crossfade=$crossfade" ;;
 		wipe) wipe="$config2" ; [ "$noecho" -eq 0 ] && echo "wipe=$wipe" ;;
@@ -171,6 +171,7 @@ set_variables ()
 		slideshow_audio) audio_list="$config2" ; [ "$noecho" -eq 0 ] && echo "audio_list=$audio_list" ;;
 		subtitle) subtitle="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle=$subtitle" ;;
 		subtitle2) subtitle2="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle2=$subtitle2" ;;
+		slideshow_end) slideshow_end[$end]="$config2" ; [ "$noecho" -eq 0 ] && echo "slideshow_end[$end]=${slideshow_end[$end]}"; end=$(($end+1)) ;;
 	esac
 }
 
@@ -207,16 +208,17 @@ input_dir=""
 name=''
 sortmethod=''
 title=1
-background='black'
+background=''
 title_background=''
 kenburns=0
 vcd=0; svcd=0
 theme=''
-themedir='/home/scott/bin/dvd_project/themes'
+themedir='/opt/dvd-slideshow/themes' # LSB/FHS compliant. see http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
 title_type='title'
 audio_list=''
 recursive_single=0
 recursive_multiple=0
+end=1
 
 for arg
 do
@@ -255,8 +257,14 @@ if [ -n "$theme" ] ; then
 	# check if directory
 	if [ -d "$theme" ] ; then
 		themedir="$theme"
-		themefile="`ls -1 "$theme"/*.theme | tail -n 1`"
-		echo "[dir2slideshow] setting theme file to $theme"
+		themefile="`ls -1 "$theme"/*.theme 2> /dev/null | tail -n 1`"
+		if [ -z "$themefile" ] ; then
+			echo "[dir2slideshow] Found theme directory: $themedir"
+			echo "[dir2slideshow] ERROR: theme directory does not contain a .theme file!"
+			exit 1
+		else
+			echo "[dir2slideshow] setting theme file to $theme"
+		fi
 	elif [ -f "$theme" ] ; then
 		themefile="`full_path "$theme"`"
 		themedir="`dirname "$theme"`"
@@ -265,8 +273,14 @@ if [ -n "$theme" ] ; then
 		# check in default theme directory:
 		if [ -d "$themedir"/"$theme" ] ; then
 			themedir="$themedir"/"$theme"
-			themefile="`ls -1 "$themedir"/*.theme | tail -n 1`"
-			echo "[dir2slideshow] setting theme file to $themefile"
+			themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
+			if [ -z "$themefile" ] ; then
+				echo "[dir2slideshow] Found theme directory: $themedir"
+				echo "[dir2slideshow] ERROR: theme directory does not contain a .theme file!"
+				exit 1
+			else
+				echo "[dir2slideshow] setting theme file to $themefile"
+			fi
 		else
 			echo "[dir2slideshow] ERROR!  Bad theme name (not found)"
 			exit 1
@@ -456,8 +470,10 @@ if [ ! -d "$input_dir" ]; then
         exit 1;
 fi
 if [ -z "$name" ]; then
-        echo "[dir2slideshow] ERROR: You must enter a name for the slideshow using -n <name>"
-        exit 1;
+        echo "[dir2slideshow] WARNING: No slideshow name specified using -n <name>"
+	name="$( dirname "$input_dir"/. )"
+	name="$( echo $name | awk -F/ '{print $NF}')"
+	echo "[dir2slideshow] Using slideshow name= $name"
 fi
 
 # make sure $input_dir has no trailing slash
@@ -606,6 +622,8 @@ elif [ -n "$background" ] ; then # either color local file
 	if [ -f "$themedir/$background" ] ; then
 		background="$themedir/$background"
 	fi
+elif [ -z "$background" ] ; then
+	background=black
 fi
 if [ -n "$title_background" ] && [ -f "$title_background" ] ; then
 	title_background="`full_path "$title_background"`"
@@ -637,6 +655,7 @@ fi
 #[ -n "$title_font" ] && fileecho "title_font=$title_font"
 #[ -n "$subtitle_font" ] && fileecho "subtitle_font=$subtitle_font"
 
+name_converted="$( echo $name | sed -e 's/_/ /g' )"
 ## if title is wanted:
 if [ "$title" -eq 1 ] ; then
 	[ -n "$title_font_color" ] && fileecho "toptitle_font_color=$title_font_color"
@@ -645,9 +664,9 @@ if [ "$title" -eq 1 ] ; then
 	fileecho "fadein:1"
 	if [ "$title_type" == 'titlebar' ] ; then
 		fileecho "bottomtitle_bar_height=0" # no bottom title for now
-		fileecho "titlebar:$slide_duration:$name"
+		fileecho "titlebar:$slide_duration:$name_converted"
 	else
-		fileecho "title:$slide_duration:$name"
+		fileecho "title:$slide_duration:$name_converted"
 	fi
 	fileecho "background:0::$background" 
 	fileecho "fadeout:1"
@@ -745,7 +764,6 @@ for (( i=1 ; i<=pictures ; i++ )) ; do
 	else
 		kenburns_args=""
 	fi
-
 	if [ -n "$subtitle" ] ; then
 		if [ "$subtitle" == 'filename' ] ; then
 			# use name as the subtitle
@@ -778,7 +796,7 @@ for (( i=1 ; i<=pictures ; i++ )) ; do
 	elif [ -z "$subtitle2_text" ] && [ -n "$kenburns_args" ] ; then
 		fileecho "$file:$slide_duration:$subtitle_text:$kenburns_args"
 	elif [ -n "$subtitle_text" ] && [ -z "$subtitle2_text" ] && [ -z "$kenburns_args" ] ; then
-		fileecho "$file:$slide_duration:$subtitle"
+		fileecho "$file:$slide_duration:$subtitle_text"
 	elif [ -n "$subtitle2_text" ] && [ -z "$kenburns_args" ] ; then
 		fileecho "$file:$slide_duration:$subtitle_text"';'"$subtitle2_text"
 	else
@@ -795,13 +813,14 @@ done
 ## fade out at end
 fileecho "fadeout:1"
 fileecho "background:2"
-if [ "$title" -eq 1 ] && [ -n "$title_background" ] ; then
-	# if we use a title, then fade back in to title_background?
-	fileecho "fadein:1"
-	fileecho "$title_background":3
-fi
+#if [ "$title" -eq 1 ] && [ -n "$title_background" ] ; then
+#	# if we use a title, then fade back in to title_background?
+#	fileecho "fadein:1"
+#	fileecho "$title_background":3
+#fi
 echo "#########################################"
 
 cleanup
 
+echo "[dir2slideshow] Output file is $outfile"
 echo

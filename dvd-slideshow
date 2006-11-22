@@ -684,7 +684,7 @@ default_fontname2='helb____.ttf' # helvetica bold truetype
 	  bottomtitle_text_location_y=155
 
 logfile='dvd-slideshow.log'
-themedir='/home/scott/bin/dvd_project/themes'
+themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant.  see: http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
 
 ##################################################################################
 ## not user configurable:
@@ -1148,7 +1148,7 @@ waitforfiles ()  # WAITFORFILES
 		di_tmp=`addzeros $i_tmp`
 		newfile_tmp="$1"_$di_tmp.$ext
 		[ $debug -ge 2 ] && logecho "waiting for file $newfile_tmp"
-		while [ ! -f "$newfile_tmp" ] 
+		while [ ! -e "$newfile_tmp" ] 
 		do
 			sleep 0.1s
 		done
@@ -2224,11 +2224,11 @@ kenburns ()  # KENBURNS
 		[ $xc1 -gt $(( $xi + $image_width )) ] && xc1=$image_width || xc1=$(( $xc1 - $xi ))
 		[ $yc1 -gt $(( $yi + $image_height )) ] && yc1=$image_height || yc1=$(( $yc1 - $yi ))
 		c_width=$(( $xc1 - $xc0 )) ; c_height=$(( $yc1 - $yc0 ))
-                [ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Smallest window during kenburns is $min_width x $min_height"
-		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Pan/zoom uses $c_width x $c_height of original $image_width x $image_height image"
+                [ $debug -ge 0 ] && myecho "[dvd-slideshow:kenburns] Smallest window during kenburns is $min_width x $min_height"
+		[ $debug -ge 0 ] && myecho "[dvd-slideshow:kenburns] Pan/zoom uses $c_width x $c_height of original $image_width x $image_height image"
 		did_resize=0
 
-		convert "$l_file" -resize "$sq_to_dvd_pixels" +repage $sharpen -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc
+		convert "$l_file" -resize "$sq_to_dvd_pixels" +repage -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc
 
 		############################ end crop/resize large images
 
@@ -2272,7 +2272,7 @@ kenburns ()  # KENBURNS
 			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
 		elif [ "$interp" -eq 1 ] ; then
 			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Disabling high-quality mode for fast effect. Velocity=$xvelocity $yvelocity"
-			interp=0
+			interp=1
 		fi
 		
 		## smooth start and end parameters:
@@ -2440,12 +2440,13 @@ kenburns ()  # KENBURNS
 				# force the output size to be exact:  no composite needed!
 				if [ "$smp" -eq 1 ] ; then
 					[ $debug -ge 3 ] && echo "deltawh<1 smp=1"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir"/fade_"$dj.$suffix"  ; extracopies $fr $l_frames $suffix ) &
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen "$tmpdir"/fade_"$dj.$suffix"  ; extracopies $fr $l_frames $suffix ) &
 				elif [ "$smp" -eq 0 ] ; then
 					[ $debug -ge 3 ] && echo "deltawh<1 smp=0"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames $suffix
+					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames $suffix
 				fi
-			elif [ $bgfile == 'black' ] ; then
+			elif [ 0 == 1 ] ; then
+#			elif [ $bgfile == 'black' ] ; then
 				# calculate border size for possible speed improvement:
 				# splice in black background if we can for better speed!
 				# split the difference between the two sides. If odd, add extra
@@ -2458,7 +2459,7 @@ kenburns ()  # KENBURNS
 				[ "$bottom" -lt 0 ] && bottom=0
 	                        [ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom delta_w=$delta_width delta_h=$delta_height"
 #				if [ "$smp" -eq 1 ] ; then
-					[ $debug -ge 3 ] && echo "deltawh>1 bg=black"
+					[ $debug -ge 1 ] && echo "deltawh>1 bg=black"
 					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" "$tmpdir"/mytemp.$suffix 
 					# now, get size of resized image because of roundoff errors:
 					# need to get this correct in the future so we can run this in smp mode!
@@ -2477,17 +2478,17 @@ kenburns ()  # KENBURNS
 					[ "$bottom" -lt 0 ] && top=$(( $top + $bottom )) 
 					[ "$bottom" -lt 0 ] && bottom=0
 	                        	[ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom delta_w=$delta_width delta_h=$delta_height"
-					convert "$tmpdir"/mytemp.$suffix -background black -splice "$right"x"$bottom"+$resized_width+$resized_height -splice "$left"x"$top" +repage -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix" ; rm "$tmpdir"/mytemp.$suffix ; extracopies $fr $l_frames $suffix
+					convert "$tmpdir"/mytemp.$suffix -background black -splice "$right"x"$bottom"+$resized_width+$resized_height -splice "$left"x"$top" +repage $sharpen -type TrueColor -depth 8 "$tmpdir/fade_$dj.$suffix" ; rm "$tmpdir"/mytemp.$suffix ; extracopies $fr $l_frames $suffix
 
 					# works with imagemagick > 6.0.6  (convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+$xc0+$yc0 +repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColor -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
 #				fi
 			else   # need to composite over background image:
 				if [ "$smp" -eq 1 ] ; then
 					[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=1"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) & 
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) & 
 				else
 					[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=0"
-					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) 
+					(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColor -depth 8 $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) 
 				fi
 			fi
 # this next line only works for non-smp! (since file must exist first)
@@ -2495,7 +2496,9 @@ kenburns ()  # KENBURNS
 			progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 		done
 		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] waiting for files suffix=$suffix end=$dj start=$l_startframe"
+#		echo "waiting for files $suffix $dj $l_startframe"
 		waitforfiles "$tmpdir/fade" $suffix $dj $l_startframe
+#		echo "all files present $suffix $dj $l_startframe"
 		finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 }
 
@@ -2651,6 +2654,7 @@ set_system_variables ()
 		# subtitle
 		subtitle_type) subtitle_type="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_type=$subtitle_type" ;;
 		theme) theme="$config2" ; [ "$noecho" -eq 0 ] && echo "theme=$theme" ;; 
+		theme_designed_for) theme_designed_for="$config2" ; [ "$noecho" -eq 0 ] && echo "theme_designed_for=$theme_designed_for" ;; 
 		high_quality) high_quality="$config2" ; [ "$noecho" -eq 0 ] && echo "high_quality=$high_quality" ;;  #
 	esac
 }
@@ -2754,13 +2758,21 @@ create_slide ()
 		local bg="$tmpdir"/slideshow_background.ppm
 	fi
 	check_rm "$output_file"
+	# postprocessing options:
+	image_postprocess='shadow'
+	# add sepia, black_and_white, old, etc...
+	if [ "$image_postprocess" == 'shadow' ] ; then
+		postprocess='( +clone  -background black  -shadow 80x3+5+5 ) +swap -background none -mosaic'
+	else
+		postprocess=''
+	fi
 	checkforautocrop "$file"	
 	if [ "$do_autocrop_h" -eq 1 ] ; then
-		convert "$file" -resize "$sq_to_dvd_pixels" -resize "$frame_width"x -type TrueColor -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen +repage miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
+		convert "$file" -resize "$sq_to_dvd_pixels" -resize "$frame_width"x -type TrueColor -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen $postprocess +repage miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
 	elif [ "$do_autocrop_w" -eq 1 ] ; then
-		convert "$file" -resize "$sq_to_dvd_pixels" -resize x"$frame_height" -type TrueColor -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen +repage miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
+		convert "$file" -resize "$sq_to_dvd_pixels" -resize x"$frame_height" -type TrueColor -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen $postprocess +repage miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
 	else
-		convert "$file" -resize "$sq_to_dvd_pixels" -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 $sharpen miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
+		convert "$file" -resize "$sq_to_dvd_pixels" -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 $sharpen $postprocess miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
 	fi
 }
 
@@ -3006,9 +3018,9 @@ print_themes ()  # print the names of the built-in themes and quit
 {
 # check in default theme directory:
 if [ -d "$themedir" ] ; then
-#	find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm
+	echo "[dvd-slideshow] Using themes directory $themedir"
 	echo "[dvd-slideshow] Found built-in themes:"
-	find "$themedir" -maxdepth 2 -name "*.theme" -type f -print0 | xargs -0 ls
+	find "$themedir"/ -maxdepth 2 -name "*.theme" -type f -print0 | xargs -0 ls
 #	echo "[dvd-slideshow] $themes"
         exit 0
 else
@@ -3149,7 +3161,7 @@ subtitle ()  # SUBTITLE
 	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 	if [ "$subtitle_type" == 'render' ] ; then
 #	       	echo convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
-	       	convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
+	       	convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -blur 0x2 -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
 	else
        		convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -colors 3 +antialias -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
 	fi
@@ -3659,7 +3671,11 @@ do
                 duration_ms=`seconds2ms ${duration[$i]}`
                 total_video_length="$(( $total_video_length + $duration_ms ))"
                 titles=$(( $titles + 1 ))
-	elif [ "${image[$i]}" == 'chapter' ] || [ "${image[$i]}" == 'Chapter' ] || [ "${image[$i]}" == 'CHAPTER' ] ; then
+        elif [ "${image[$i]}" == 'musictitle' ] ; then
+		image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
+		duration_ms=`seconds2ms ${duration[$i]}`
+		total_video_length="$(( $total_video_length + $duration_ms ))"
+	elif [ "`echo $file | tr -d \[:blank:\]`" == 'chapter' ] ; then   # CHAPTER
 		image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
 		duration[$i]=0;
 		duration_ms=`seconds2ms ${duration[$i]}`
@@ -3758,6 +3774,7 @@ do
 		audiofiles=$(( $audiofiles + 1 ))
 	else
 		echo "else:  no image found"
+		echo "line=${image[$i]}".
 		image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
 		duration_ms=`seconds2ms ${duration[$i]}`
 		total_video_length="$(( $total_video_length + $duration_ms ))"
@@ -5840,6 +5857,16 @@ if [ -f "$tmpdir/$slideshow_name".spumux ] && [ "$subtitle_type" != 'render' ] ;
 	## write the bottom of the subpictures file:
 	echo '	</stream>' >> "$tmpdir"/"$slideshow_name".spumux
 	echo '</subpictures>' >> "$tmpdir"/"$slideshow_name".spumux
+	# write out palette.rgb file:
+#	echo '000000' > "$outdir"/palette.rgb
+#	mycolor=$( echo $subtitle_color | awk -F'#' '{print $2}' )
+#	if [ "${#mycolor}" -ne 6 ] ; then
+#		# not a hex triple.  Use default white
+#		echo "[dvd-slideshow] Using white subtitle color..."
+#		echo "ffffff" >> "$outdir"/palette.rgb
+#	else
+#		echo "$mycolor" >> "$outdir"/palette.rgb
+#	fi
 fi
 if [ -f "$tmpdir/$slideshow_name".spumux2 ] && [ "$subtitle_type" != 'render' ] ; then
 	if [ "$write_last_subtitle2" -eq 1 ] ; then

@@ -3,7 +3,7 @@
 # use "title" in the image field to create a title slide.
 # title:duration:description
 # The "description" string gets put on the title slide.
-title:5:Very Simple Example:
+title:5:Very Simple Example
 # each picture gets put on a separate line.  The format is:
 # full_path_to_file.jpg:Duration:Subtitle
 # duration is how long the picture will be visible in seconds.
@@ -19,4 +19,4 @@ background:2:This is a black frame:black
 #background:2:This is a background image:background.jpg
 # You can also use the "background" keyword to display the current
 # background image (black or some passed image) for a given time:
-background:2:This is the background:
+background:2:This is the background

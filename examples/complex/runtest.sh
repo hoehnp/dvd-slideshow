@@ -37,7 +37,7 @@ fi
 
 echo "[runtest.sh] Executing command:"
 echo "[runtest.sh] dvd-menu -b background.jpg -t 'Test complex' -f complex.xml -n 'Complex DVD' $*"
-dvd-menu -b background.jpg -t 'Test complex' -f complex.xml -n 'Complex DVD' $*
+dvd-menu -b ../images/background.jpg -t 'Test complex' -f complex.xml -n 'Complex DVD' $*
 
 if [ ! -f "vmgm.xml" ] ; then
         echo "[runtest.sh] ERROR: No output files found from dvd-menu!"

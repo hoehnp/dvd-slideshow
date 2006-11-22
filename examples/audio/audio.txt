@@ -18,14 +18,14 @@ title:5:My music DVD
 strojovna_07 TEXEMPO-5s.ogg:1
 # this starts the audio track at the same time the next picture starts.
 
-picture1.jpg:3:Picture 1
-picture2.jpg:5:Picture 2
+../images/picture1.jpg:3:Picture 1
+../images/picture2.jpg:5:Picture 2
 # note that since the audio track is only 5 seconds long, and the two
 # pictures are 7 seconds long, the audio gets buffered out with silence
 # for 2 seconds.
 
 strojovna_07 TEXEMPO-5s.ogg:1
-picture1.jpg:3:Picture 1
+../images/picture1.jpg:3:Picture 1
 # note that even though each audio track is 5 seconds long in this example,
 # the last audio track will be cropped after 3 seconds since you're
 # about to pass a new audio track.
@@ -71,7 +71,7 @@ strojovna_07 TEXEMPO-5s.ogg:1:fadein:1:fadeout:1
 strojovna_07 TEXEMPO-5s.ogg:1:fadein:1:fadeout:1
 # and then they will all be concatenated as one audio file
 # for the rest of the slideshow...
-picture1.jpg:8:Picture 1
-picture2.jpg:8:Picture 2
+../images/picture1.jpg:8:Picture 1
+../images/picture2.jpg:8:Picture 2
 
 # you get the idea?

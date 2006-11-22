@@ -24,7 +24,7 @@ background:1::
 # use a backslash to escape a colon ':in the subtitles.
 # use '\n' to force a newline (only two subtitle lines supported now).
 fadein:1::
-../images/picture1.jpg:5:Picture 1 is so cool\:kenburns:57%;37%,40%;88%;49%,49%
+../images/picture1.jpg:5:Picture 1 is so cool\nreally it is:kenburns:57%;37%,40%;88%;49%,49%
 # fadeout is similar:
 # fadeout:duration:subtitle
 fadeout:1:Fading out:

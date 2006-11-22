@@ -106,7 +106,6 @@ menu_fadeout=0
 #menu_fadeout=1	# fade out from menu after a button is pressed.
 
 menu_fade_to_black=0	# if fadeout=1, fades out to background
-menu_fade_to_black=1	# if fadeout=1, fades out to black frame
 
 menu_background=steelblue  # or, use hex #RRGGBB
 #menu_background="#882211"	# use a hex RGB color if you wish

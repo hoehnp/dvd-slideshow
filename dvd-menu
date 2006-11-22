@@ -223,11 +223,12 @@ Variables:
 	menu_title_white_height=125
 	menu_title_location_x=80
 	menu_title_location_y=50
-	menu_panel_height=28
-	menu_panel_width=288
+	menu_panel_height=28  # height of each button.  Default is slightly bigger than font size
+	menu_panel_width=400  # goes all the way to the right of the screen
 	menu_panel_location_x=360
 	menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
 	menu_button_font_size=21
+	menu_title_justify=center
 
  '
 }
@@ -288,6 +289,7 @@ if [ "$nocleanup" -eq 0 ] ; then
 	check_rm "$tmpdir/button_mask.png"
 	check_rm "$tmpdir/menu.ppm"
 	check_rm "$tmpdir/fadein.mpg"
+	check_rm "$tmpdir/bg_fade.ppm"
 	check_rm "$tmpdir/fadeout.mpg"
 	check_rm "$tmpdir/menu.mpg"
 	check_rm "$tmpdir/menu.spumux"
@@ -379,58 +381,51 @@ hms ()
 
 white_title_mask ()
 {
-	convert -size "$dvd_width"x$menuh -quality 100 xc:transparent -depth 8 -fill white -draw "Rectangle 0,0,$dvd_width,$title_white_height" -blur 0x4 -crop $resolution-0-0 "$1"
+	convert -size "$dvd_width"x600 -quality 100 xc:transparent -depth 8 -fill white -draw "Rectangle 0,0,$dvd_width,$title_white_height" -background none -blur 0x4 -crop $resolution-0-0 "$1"
 }
 
 white_button_mask ()
 {
 	# white_button_mask outfile
 #	convert -size "$dvd_width"x$menuh -quality 100 xc:transparent -depth 8 -fill white -draw "roundRectangle $menu_panel_location_x,$menu_panel_location_y,$menuright,$menubottom $radius,$radius" -draw "Rectangle 0,0,$dvd_width,$title_white_height" -crop $resolution-0-0 "$1"
-	convert -size "$dvd_width"x$menuh -quality 100 xc:transparent -depth 8 -fill white -draw "roundRectangle $menu_panel_location_x,$menu_panel_location_y,$menuright,$menubottom $radius,$radius" -blur 0x4 -crop $resolution-0-0 "$1"
+	convert -size "$dvd_width"x$menuh -quality 100 xc:transparent -depth 8 -fill white -draw "roundRectangle $menu_panel_location_x,$menu_panel_location_y,$menuright,$menubottom $radius,$radius" -background none -blur 0x4 -crop $resolution-0-0 "$1"
 }
 
 title_text ()
 {
 	# title_text outfile
+	[ "$title_justify" == 'left' ] && title_justify=NorthWest
+	[ "$title_justify" == 'right' ] && title_justify=NorthEast
+	[ "$title_justify" == 'center' ] && title_justify=North
 	convert -depth 8 -size $resolution xc:transparent -fill "$title_font_color" \
-	-pointsize $title_font_size -gravity NorthWest -font "$title_font" \
+	-pointsize $title_font_size -gravity $title_justify -font "$title_font" \
 	-draw "text $title_location_x,$title_location_y \"${dvd_title}\"" "$1" 
 }
 
-imagewidth ()
+imagewidth ()  # IMAGEWIDTH
 {
-	it="`identify "$1" | awk -F'JPEG ' '{print $2}' | cut -d 'x' -f 1`"
-	if [ -z $it ] ; then
-		it="`identify "$1" | awk -F'PNM ' '{print $2}' | cut -d 'x' -f 1`"
-	fi
-	if [ -z $it ] ; then
-		it="`identify "$1" | awk -F'PNG ' '{print $2}' | cut -d 'x' -f 1`"
-	fi
-	if [ -z $it ] ; then
-		it="`identify "$1" | awk -F'MPC ' '{print $2}' | cut -d 'x' -f 1`"
-	fi
-	it="$(( $it * $sq_pixel_multiplier / 1000 ))"
-	echo "$it"
+        it="`identify -format %w "$1"`"
+        it="$(( $it * $sq_pixel_multiplier / 1000 ))"
+        echo "$it"
 }
+
+imagewidth_sq ()  # IMAGEWIDTH_SQ
+{
+        it="`identify -format %w "$1"`"
+        echo "$it"
+}
+
 
 imageheight ()
 {
-	it="`identify "$1" | awk -F'JPEG ' '{print $2}'  | cut -d 'x' -f 2 | cut -d ' ' -f 1`"
-	if [ -z $it ] ; then
-		it="`identify "$1" | awk -F'PNM ' '{print $2}'  | cut -d 'x' -f 2 | cut -d ' ' -f 1`"
-	fi
-	if [ -z $it ] ; then
-		it="`identify "$1" | awk -F'PNG ' '{print $2}'  | cut -d 'x' -f 2 | cut -d ' ' -f 1`"
-	fi
-	if [ -z $it ] ; then
-		it="`identify "$1" | awk -F'MPC ' '{print $2}'  | cut -d 'x' -f 2 | cut -d ' ' -f 1`"
-	fi
-	echo "$it"
+        it="`identify -format %h "$1"`"
+        echo "$it"
 }
+
 
 checkforautocrop ()
 {
-	if [ "$autocrop" -eq 1 ] ; then
+	if [ "$autocrop" == 1 ] ; then
 		# figure out whether to autocrop the image or not
 	        image_width=`imagewidth "$1"`
 	        image_height=`imageheight "$1"`
@@ -454,39 +449,44 @@ background ()
 		## input is:  $1 = effect/image
 		# output is written to "$tmpdir"/slideshow_background.ppm 
 		bg="$1"
+		if [ -z "$2" ] ; then
+			local outfile_bg="$tmpdir"/slideshow_background.ppm
+		else
+			local outfile_bg="$2"
+		fi
 		if [ -f "$bg" ] ; then # if effect is a background file
 			myecho "[dvd-menu] Creating background image $( truncate_filename "$bg")"
 			checkforautocrop "$bg"
                        if [ "$do_autocrop_w" -eq 1 ]; then   
                                # autocrop background image width (width too large)
                                convert "${bg}" -resize "$sq_to_dvd_pixels" -resize x"$dvd_height" \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColor -depth 8 "$tmpdir"/slideshow_background.ppm
+                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColor -depth 8 "$outfile_bg"
                        elif [ "$do_autocrop_h" -eq 1 ]; then
                                # autocrop background image height (height too large)
                                convert "${bg}" -resize "$sq_to_dvd_pixels" -resize "$dvd_width"x \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!'  -type TrueColor -depth 8 "$tmpdir"/slideshow_background.ppm
+                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!'  -type TrueColor -depth 8 "$outfile_bg"
                        else
+echo "no autocrop background"
                                #don't autorop
                                convert "${bg}" -resize "$sq_to_dvd_pixels" -resize x"$dvd_height" -bordercolor black -border "$dvd_width"x240 \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColor -depth 8 "$tmpdir"/slideshow_background.ppm
+                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColor -depth 8 "$outfile_bg"
                        fi
 			bgfile="$bg"
 		elif [ "$bg" == 'black' ] ; then  # I guess we could add other types of backgrounds here!
 			## use plain black background with no picture
 			myecho "[dvd-menu] Creating black background"
-			convert -size "$dvd_width"'x'"$dvd_height" xc:black -type TrueColor -depth 8 "$tmpdir"/slideshow_background.ppm
+			convert -size "$dvd_width"'x'"$dvd_height" xc:black -type TrueColor -depth 8 "$outfile_bg"
 			bgfile="black"
 		elif [ "$bg" == 'white' ] ; then  # I guess we could add other types of backgrounds here!
 			## use plain white background with no picture
 			myecho "[dvd-menu] Creating white background"
-			convert -size "$dvd_width"'x'"$dvd_height" xc:white -type TrueColor -depth 8 "$tmpdir"/slideshow_background.ppm
+			convert -size "$dvd_width"'x'"$dvd_height" xc:white -type TrueColor -depth 8 "$outfile_bg"
 			bgfile="white"
 		elif [ "${bg:0:1}" == '#' ] ; then  # user passed a #RRGGBB hex color
 			myecho "[dvd-menu] Creating $bg color background"
-			convert -size "$dvd_width"'x'"$dvd_height" xc:"$bg" -type TrueColor -depth 8 "$tmpdir"/slideshow_background.ppm
+			convert -size "$dvd_width"'x'"$dvd_height" xc:"$bg" -type TrueColor -depth 8 "$outfile_bg"
 			bgfile="hex"
 		fi
-#		convert "$tmpdir/slideshow_background.ppm" -type TrueColor -depth 8 "$tmpdir/slideshow_background.mpc"
 }
 
 set_variables ()
@@ -501,7 +501,7 @@ set_variables ()
                 debug) debug="$config2" ; [ "$noecho" -eq 0 ] && echo "debug=$debug" ;;
                 pal) pal="$config2" ; [ "$noecho" -eq 0 ] && echo "pal=$pal" ;;
                 ac3) ac3="$config2" ; [ "$noecho" -eq 0 ] && echo "ac3=$ac3" ;;
-                autocrop) autocrop="$config2" ; [ "$noecho" -eq 0 ] && echo "autocrop=$autocrop" ;;
+# menus always autocrop?                 autocrop) autocrop="$config2" ; [ "$noecho" -eq 0 ] && echo "autocrop=$autocrop" ;;
                 font) font="$config2" ; [ "$noecho" -eq 0 ] && echo "font=$font" ;;  #global font
                 menu_font) font="$config2" ; [ "$noecho" -eq 0 ] && echo "font=$font" ;;  #global font
                 # title
@@ -521,13 +521,16 @@ set_variables ()
                 menu_title_white_height) title_white_height="$config2" ; [ "$noecho" -eq 0 ] && echo "title_white_height=$title_white_height" ;;
                 menu_title_location_x) title_location_x="$config2" ; [ "$noecho" -eq 0 ] && echo "title_location_x=$title_location_x" ;;
                 menu_title_location_y) title_location_y="$config2" ; [ "$noecho" -eq 0 ] && echo "title_location_y=$title_location_y" ;;
+                menu_title_justify) title_justify="$config2" ; [ "$noecho" -eq 0 ] && echo "title_justify=$title_justify" ;;
 		theme) theme="$config2" ; [ "$noecho" -eq 0 ] && echo "theme=$theme" ;;  
-#                menu_type) menu_type="$config2" ; [ "$noecho" -eq 0 ] && echo "menu_type=$menu_type" ;;
+		theme_designed_for) theme_designed_for="$config2" ; [ "$noecho" -eq 0 ] && echo "theme_designed_for=$theme_designed_for" ;;
+                menu_type) menu_type="$config2" ; [ "$noecho" -eq 0 ] && echo "menu_type=$menu_type" ;;
                 menu_audio) audiofile="$config2" ; [ "$noecho" -eq 0 ] && echo "audiofile=$audiofile" ;;
                 menu_continuous_play) continuous="$config2"; continuous_method="$config2" ; [ "$noecho" -eq 0 ] && echo "continuous=$continuous" ;;
                 menu_fadein) fadein="$config2" ; [ "$noecho" -eq 0 ] && echo "menu_fadein=$menu_fadein" ;;
                 menu_fadeout) fadeout="$config2" ; [ "$noecho" -eq 0 ] && echo "menu_fadeout=$menu_fadeout" ;;
-                menu_fade_to_black) fade_to_black="$config2" ; [ "$noecho" -eq 0 ] && echo "fade_to_black=$fade_to_black" ;;
+                menu_fade_to_image) fade_to_image="$config2" ; [ "$noecho" -eq 0 ] && echo "fade_to_image=$fade_to_image" ;;
+                menu_panel_mask) panel_mask="$config2" ; [ "$noecho" -eq 0 ] && echo "panel_mask=$panel_mask" ;;
 
 
         esac
@@ -590,6 +593,14 @@ if [ -n "$theme" ] ; then
 			bgfile="$themedir"/"$bgfile"
 			if [ ! -f "$bgfile" ] ; then
 				echo "Error:  bad background filename in theme."
+			fi
+		fi
+	fi
+	if [ -n "$fade_to_image" ] ; then
+		if [ ! -f "$fade_to_image" ] ; then	
+			fade_to_image="$themedir"/"$fade_to_image"
+			if [ ! -f "$fade_to_image" ] ; then
+				echo "Error:  bad fade_to_image filename in theme."
 			fi
 		fi
 	fi
@@ -773,8 +784,8 @@ default_font2='helb____.ttf' # helvetica bold truetype
 
 ## other cool colors:  cadetblue cornflowerblue midnightblue
 bg_color='steelblue'  # imagemagick colors
-panel_height=28
-panel_width=288
+panel_width=400
+panel_height=''  # will be set later from the button_font_size
 button_font_size=21
 button_font_color="black"
 button_hilight_color="red"
@@ -784,8 +795,10 @@ title_font_size=40
 title_font_color="black"
 title_white_height=125
 radius=20
+button_radius=10
 title_location_x=80
 title_location_y=50
+title_justify=NorthWest
 
 hilight_border=50
 hilight_spacing=20
@@ -793,6 +806,8 @@ hilight_font_size=12
 
 embed_image_width=260
 embed_image_height=240
+
+menu_type='textbar'
 
 frames=20 	# number of frames in the menu mpg file. 
 		# I guess this only really needs to be 1 frame
@@ -805,10 +820,10 @@ low_quality=0
 high_quality=0
 vcd=0 ; svcd=0
 widescreen=0
-themedir='/home/scott/bin/dvd_project/themes'
+themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant:  see http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
 fadein=0
 fadeout=0
-fade_to_black=0
+fade_to_image=0
 
 # end of default  variables
 
@@ -830,6 +845,7 @@ do
 	-t) shift ; title[$n]="${1}"; let n=$n+1; shift ;;  # each title
 	-f) shift ; xmlfile[$m]="${1}"; let m=$m+1; shift ;;  # each titleset
 	-e) shift ; embedfile[$p]="${1}"; let p=$p+1; shift ;;  # the menu hilight images
+	-button) shift ; buttonfile[$q]="${1}"; let q=$q+1; shift ;;  # each button hilight images
         -u) shift; upAction="1" ;;
 #        -action) shift; Action="1" ;;  # do manual button navigation later
 	-o) shift; outdir="${1%%/}"; shift ;;  # dvd directory
@@ -855,7 +871,6 @@ do
 	-h) help ; exit 0 ; shift ;;
 	-?) help ; exit 0 ; shift ;;
 	-help) help ; exit 0 ; shift ;;
-#	-button) shift ; buttonfile[$q]="${1}"; let q=$q+1; shift ;;  # each button hilight images
 	esac
 done
 
@@ -888,6 +903,14 @@ for it in "${xmlfile[@]}"; do
 		exit 1
 	fi
 done
+
+# verify that the number of buttons (-t) is equal to the number of files (-f)
+if [ ${#xmlfile[@]} -ne ${#title[@]} ] ; then
+		echo "[dvd-menu] ERROR:  The number of buttons does not match the number of files!"
+		echo "[dvd-menu] buttons=${title[@]}"
+		echo "[dvd-menu] files=${xmlfile[@]}"
+		exit 1
+fi
 
 ## initialize log file:
 logfile="$outdir/$logfilename"
@@ -954,8 +977,20 @@ fi
 ## now, read the theme file if it was passed on the commandline:
 [ -n "$theme" ] && read_theme "$theme" 0
 
-button_text_location=$(( $panel_height/2 + $button_font_size/2 ))
+if [ -z "$panel_height" ] ; then
+	panel_height="$(( $button_font_size * 125 / 100 ))"
+fi
+
+# button_text_location=$(( $panel_height/2 + $button_font_size/2 ))
 menu_button_location_y=$(( $menu_panel_location_y + $button_font_size/2 ))  # y-location of first button
+
+if [ "$panel_mask" == "none" ] ; then
+	no_white=1
+elif [ "$panel_mask" == "default" ] ; then
+	no_white=0
+else
+	no_white=1  # this will change later to allow specific panel masks...
+fi	
 
 if [ "$vcd" -eq 1 ] ; then
 	# setup audio parameters
@@ -1032,6 +1067,7 @@ if [ "$nocleanup" == 1 ] ; then
         myecho "[dvd-menu] Leaving all temporary files in temp directory"
 	myecho "[dvd-menu] Temporary directory is $tmpdir"
 fi
+myecho "[dvd-menu] buttons=${#title[@]}"
 #echo "[dvd-menu] audio files=$audiofile"
 #echo "[dvd-menu] menu titles:" 
 #echo "[dvd-menu] ${title[@]}" 
@@ -1068,13 +1104,14 @@ if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
 	panel_height=$(( $panel_height / 2 ))
 	panel_width=$(( $panel_width / 2 ))
 	button_font_size=$(( $button_font_size / 2 ))
-	button_text_location=$(( $panel_height/2 + $button_font_size/2 ))
+#	button_text_location=$(( $panel_height/2 + $button_font_size/2 ))
 	menu_panel_location_x=$(( $menu_panel_location_x / 2 ))
 	menu_panel_location_y=$(( $menu_panel_location_y / 2 ))  
 	menu_button_location_y=$(( $menu_button_location_y / 2 ))  
 	title_font_size=$(( $title_font_size / 2 ))
 	title_white_height=$(( $title_white_height / 2 ))
 	radius=$(( $radius / 2 ))
+	button_radius=$(( $button_radius / 2 ))
 	title_location_x=$(( $title_location_x / 2 ))
 	title_location_y=$(( title_location_y / 2 ))
 	
@@ -1201,20 +1238,11 @@ if [ "$no_menu" -eq 0 ] ; then
 	## create overlay transparent image:
 	convert -depth 8 -colors 3 +antialias -size "$dvd_width"'x'"$dvd_height" xc:transparent "$tmpdir"/button_background_mask.png
 	cp "$tmpdir/button_background_mask.png" "$tmpdir/menu_mask.png"
-	
-	menuright=$(( $menu_panel_location_x + $panel_width))
-	menubottom=$(( $dvd_height + 50 ))  ## add 50 so we can chop off the bottom later
-	menuh=$(( $dvd_height + 50 ))
-	if [ "$no_white" -eq 0 ] ; then
-	        echo "[dvd-menu] Creating white button mask"
-		white_button_mask "$tmpdir/button_background_mask.png"
-		composite -compose src-over -type TrueColor -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
-	fi
 
 	if [ -n "$dvd_title" ] ; then
 	        echo "[dvd-menu] Creating white title mask"
 		white_title_mask "$tmpdir/title_background_mask.png"
-		composite -compose src-over -type TrueColor -depth 8 -dissolve 50 "$tmpdir/title_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+		composite -compose src-over -type TrueColor -depth 8 -dissolve 60 "$tmpdir/title_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 		title_text "$tmpdir/dvd_title.png"
 		composite -compose src-over -depth 8 -type TrueColor "$tmpdir/dvd_title.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 	fi
@@ -1225,15 +1253,23 @@ if [ "$no_menu" -eq 0 ] ; then
 	## 3.  6 icon buttons per page, multiple pages (not working)
 	## 4.  15 icon buttons per page, no text?	 (not working)
 	
-	if [ "${#buttonfile[@]}" -gt 1 ] ; then
-		menutype=2  ## don't use this yet!!!
-	else
-		menutype=1
-	fi
-	menutype=1
+#	if [ "${#buttonfile[@]}" -gt 1 ] ; then
+#		menu_type="6images"  ## don't use this yet!!!
+#	else
+#		menu_type="textbar"
+#	fi
 
 	## case 1:  old layout:
-	if [ "$menutype" -eq 1 ] ; then  # plain text on right side
+echo "menu_type=$menu_type"
+	if [ "$menu_type" == 'textbar' ] ; then  # plain text on right side
+		menuright=$(( $menu_panel_location_x + $panel_width))
+		menubottom=$(( $dvd_height + 50 ))  ## add 50 so we can chop off the bottom later
+		menuh=$(( $dvd_height + 50 ))
+		if [ "$no_white" -eq 0 ] ; then
+		        echo "[dvd-menu] Creating white button mask"
+			white_button_mask "$tmpdir/button_background_mask.png"
+			composite -compose src-over -type TrueColor -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+		fi
 		## create embedded image if defined:
 	        if [ -f "${embedfile[0]}" ]; then  # only one embedfile possible
 	                echo "[dvd-menu] using image highlight ${embedfile[0]}"
@@ -1254,31 +1290,35 @@ if [ "$no_menu" -eq 0 ] ; then
 	        fi
 		## loop over each title:
 		let i=0
-		for this_title in "${title[@]}"; do
+		for this_title in "${xmlfile[@]}"; do
 			echo "[dvd-menu] Title=${title[$i]}"
 			# make each individual button:
 			# to be fancy, let's add the button layers in two steps.  first the
 			# button background, then the text:
 			if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 				# add numbers to each line for VCD
-				convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -fill "$button_font_color" -draw "text 20,$button_text_location \"$(( $i + 1 )). ${title[$i]}\"" "$tmpdir"/button_text.png
+				convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -gravity West -fill "$button_font_color" -draw "text 20,0 \"$(( $i + 1 )). ${title[$i]}\"" "$tmpdir"/button_text.png
 			else
-				convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -fill "$button_font_color" -draw "text 20,$button_text_location \"${title[$i]}\"" "$tmpdir"/button_text.png
+				convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -gravity West -fill "$button_font_color" -draw "text 20,0 \"${title[$i]}\"" "$tmpdir"/button_text.png
 			fi
-#			convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -fill "$button_font_color" -draw "text 20,$button_text_location \"${title[$i]}\"" "$tmpdir"/button_text.png
 			# make each individual button mask (for when it's selected)
-			convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -fill $button_hilight_color +antialias -colors 3 -draw "text 20,$button_text_location \"${title[$i]}\"" "$tmpdir"/button_mask.png
+			convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -fill $button_hilight_color -gravity West +antialias -colors 3 -draw "text 20,0 \"${title[$i]}\"" "$tmpdir"/button_mask.png
 	
 			## add each button as necessary, and increment the location downward
+			echo "[dvd-menu] adding title button ${title[$i]} at $menu_panel_location_x , $menu_button_location_y"
 			composite -compose src-over -depth 8 -geometry +$menu_panel_location_x+$menu_button_location_y "$tmpdir/button_text.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 			## add each overlay mask for the selection of buttons:
 			composite -compose src-over -depth 8 -colors 3 -quality 100 -geometry +$menu_panel_location_x+$menu_button_location_y "$tmpdir/button_mask.png" "$tmpdir/menu_mask.png" "$tmpdir/menu_mask.png"
 		
 			## now record the button location:
 			right[$i]="$(( $menu_panel_location_x + $panel_width ))"
+			[ "${right[$i]}" -gt "$dvd_width" ] && right[$i]=$(( $dvd_width - 10 ))
 			left[$i]="$(( $menu_panel_location_x ))"
 			top[$i]="$(( $menu_button_location_y ))"
 			bottom[$i]="$(( $menu_button_location_y + $panel_height ))"
+			[ "${bottom[$i]}" -gt "$dvd_height" ] && bottom[$i]=$(( $dvd_height - 10 ))
+
+			echo "[dvd-menu] setting button mask l,r,t,b = ${left[$i]} ${right[$i]} ${top[$i]} ${bottom[$i]}"
 	
 			vts="$(( $i + 1 ))"
 #			echo "[dvd-menu] i=$i vts=$vts"
@@ -1286,47 +1326,75 @@ if [ "$no_menu" -eq 0 ] ; then
 			let menu_button_location_y=$menu_button_location_y+$panel_height
 			let i=$i+1
 		done
-	elif [ "$menutype" -eq 2 ] ; then   ### don't use this yet!
+	elif [ "$menu_type" == '6images' ] ; then   ### don't use this yet!
 		## loop over each title:
 		let i=0
 		let embed=1  # embedfile is for normal menu type
 		let embed_row=1
-		for this_title in "${title[@]}"; do
-			echo "[dvd-menu] Title=${title[$i]}"
+
+		# grab any info from .xml file comment lines:
+		for this_title in "${xmlfile[@]}"; do
+			suffix=`echo "${xmlfile[$i]}" | awk -F. '{print $NF}'`
+			if [ "$suffix" == 'xml' ] ; then
+				xml_button[$i]=$( grep '<!-- button=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' )
+				[ -n "${xml_button[$i]}" ] && echo "xml_button $i = ${xml_button[$i]}"
+				xml_title[$i]=$( grep '<!-- title=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' )
+				[ -n "${xml_title[$i]}" ] && echo "xml_title $i = ${xml_title[$i]}"
+			fi
 			# make each individual button:
 			# to be fancy, let's add the button layers in two steps.  first the
 			# button background, then the text:
-			convert -size ${panel_width}x$panel_height xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -draw "text 20,$button_text_location \"${title[$i]}\"" "$tmpdir/button_text.png"
 		        ## create embedded image hilight if required:
-			# hilight_border=50
-			# hilight_spacing=20
-			# hilight_font_size=12
-			# hilight_height=$(( ( $dvd_height - 1*$border - $title_location_y - $title_font_size - 2*$hilight_spacing - 2*$hilight_font_size)/2 ))
-			# hilight_width=$(( $hilight_height * $dvd_width / $dvd_height ))  # assume this aspect ratio.
-			# hilight_start_location_x=$(( ($dvd_width - 3*$hilight_width - 2*$hilight_spacing )/2 ))
-			# hilight_start_location_y=$(( $title_location_y + $title_font_size + $hilight_spacing ))
+			echo "dvd_width=$dvd_width"
+			dvd_width_scaled=$(( $dvd_width * $sq_pixel_multiplier / 1000 ))
+			echo "dvd_width_scaled=$dvd_width_scaled"
+			hilight_border=50
+			hilight_spacing=50
+			hilight_font_size=12
+			hilight_height=$(( ( $dvd_height - $title_white_height - 3 * $hilight_border - 2*$hilight_font_size)/2 ))
+			hilight_width=$(( $hilight_height * $dvd_width / $dvd_height ))  # assume images have dvd aspect ratio.
+			hilight_start_location_x=$(( ($dvd_width - 3*$hilight_width - 2*$hilight_spacing )/2 ))
+			hilight_start_location_y=$(( $title_white_height + $hilight_spacing / 2 ))
 			## size constraint seems to be vertically when we have a title.
 			## so, eventually, we could have different situations, depending on whether or not
 			## a title exists, etc...  let's assume it does for now!
-#			echo "hilight_border=$hilight_border"
-#			echo "hilight_spacing=$hilight_spacing"
-#			echo "hilight_font_size=$hilight_font_size"
-#			echo "hilight_height=$hilight_height"
-#			echo "hilight_width=$hilight_width"
-#			echo "hilight_start_location_x=$hilight_start_location_x"
-#			echo "hilight_start_location_y=$hilight_start_location_y"
+			echo "hilight_border=$hilight_border"
+			echo "hilight_spacing=$hilight_spacing"
+			echo "hilight_font_size=$hilight_font_size"
+			echo "hilight_height=$hilight_height"
+			echo "hilight_width=$hilight_width"
+			echo "hilight_start_location_x=$hilight_start_location_x"
+			echo "hilight_start_location_y=$hilight_start_location_y"
+
+			[ -z "${buttonfile[$i]}" ] && buttonfile[$i]="${xml_button[$i]}"
+			[ -z "${title[$i]}" ] && title[$i]="${xml_title[$i]}"
+			echo "[dvd-menu] Title=${title[$i]}"
+			button_text_white=1
+			if [ "$button_text_white" == 1 ] ; then
+				text_height=$(( 3* $hilight_font_size ))
+				convert -size "$hilight_width"x$text_height xc:transparent -depth 8 "$tmpdir"/button_mask_trans.png
+				convert -size "$hilight_width"x$text_height xc:transparent -depth 8 -fill white -draw "roundRectangle 0,0,$hilight_width,$text_height $button_radius,$button_radius" -background none -blur 0x3 "$tmpdir"/button_mask.png
+				composite -compose src-over -type TrueColor -depth 8 -dissolve 60 "$tmpdir"/button_mask.png "$tmpdir"/button_mask_trans.png "$tmpdir"/button_mask.png
+
+				convert -size ${hilight_width}x$text_height xc:transparent -quality 100 -font "$button_font" -fill "$button_font_color" -pointsize $button_font_size -gravity center -draw "text 0,0 \"${title[$i]}\"" "$tmpdir"/button_text.png
+				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/button_text.png "$tmpdir"/button_mask.png "$tmpdir"/button_text.png
+			fi
+
+			echo "buttonfile=${buttonfile[$i]}".
 		        if [ -f "${buttonfile[$i]}" ]; then
 		                echo "[dvd-menu] using image ${buttonfile[$i]} as button $embed ${title[$i]}"
 				echo "[dvd-menu] hilight_width=$hilight_width hilight_height=$hilight_height"
 		                convert "${buttonfile[$i]}" -resize "$hilight_width"x"$hilight_height" -quality 100 "$tmpdir/embed.jpg"
+				actual_hilight_width=$( imagewidth_sq "$tmpdir"/embed.jpg )
+				actual_hilight_height=$( imageheight "$tmpdir"/embed.jpg )
 				# make each individual button mask (for when it's selected)
-				convert -depth 8 -colors 3 +antialias -size "$hilight_width"x"$hilight_height" xc:transparent -fill transparent -stroke red -strokewidth 2 -draw "rectangle 0,0 $hilight_width,$hilight_height" -quality 100 "$tmpdir/button_mask.png"
+				convert -colors 3 +antialias -size "$actual_hilight_width"x"$actual_hilight_height" xc:transparent -fill transparent -stroke red -strokewidth 2 -draw "rectangle 0,0 $actual_hilight_width,$actual_hilight_height" -quality 100 "$tmpdir/button_mask.png"
 	
 				## calculate location of this image:
 				[ $embed -ge 4 ] && embed_row=2 || embed_row=1
 				[ $embed -ge 4 ] && embed_col=$(( $embed - 3 )) || embed_col=$embed
 				hilight_x=$(( $hilight_start_location_x + ($embed_col - 1)*($hilight_spacing + $hilight_width) ))
-				hilight_y=$(( $hilight_start_location_y + ($embed_row - 1)*($hilight_spacing + $hilight_height) ))
+				hilight_y=$(( $hilight_start_location_y + ($embed_row - 1)*($hilight_spacing + $hilight_height + $hilight_font_size ) ))
 				button_text_location_x=$(( $hilight_x ))
 				button_text_location_y=$(( $hilight_y + $hilight_height ))
 				echo "[dvd-menu] r,c=$embed_row,$embed_col hilight_x_loc=$hilight_x hilight_y_loc=$hilight_y"
@@ -1335,6 +1403,12 @@ if [ "$no_menu" -eq 0 ] ; then
 				composite -compose src-over -type TrueColor -depth 8 -geometry +$button_text_location_x+$button_text_location_y "$tmpdir/button_text.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 
 		                # Add embed image to menu background
+				difference_x=$(( ( $hilight_width - $actual_hilight_width )/2 ))
+				difference_y=$(( ( $hilight_height - $actual_hilight_height )/2 ))
+echo "differencex=$difference_x difference_y=$difference_y"
+				## adjust hilight location:
+				hilight_x=$(( $hilight_x + $difference_x ))
+				hilight_y=$(( $hilight_y + $difference_y ))
 				composite -compose src-over -type TrueColor -depth 8 -geometry +$hilight_x+$hilight_y "$tmpdir/embed.jpg" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 				## add each overlay mask for the selection of buttons:
 				composite -compose src-over -depth 8 -colors 3 -quality 100 -geometry +$hilight_x+$hilight_y "$tmpdir/button_mask.png" "$tmpdir/menu_mask.png" "$tmpdir/menu_mask.png"
@@ -1359,26 +1433,34 @@ if [ "$no_menu" -eq 0 ] ; then
 	ppmtoy4m -v 0 -n "$frames" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$tmpdir/menu.ppm" | mpeg2enc $mpeg2enc_params -o "$tmpdir/menu.mpg" 
 
 
-	if [ "$fade_to_black" == '1' ] ; then
-		convert -size "$dvd_width"'x'"$dvd_height" xc:black -type TrueColor -depth 8 "$tmpdir"/black.ppm
+	if [ "$fade_to_image" == 'black' ] ; then
+		background black "$tmpdir"/bg_fade.ppm
+	elif [ -f "$fade_to_image" ] ; then
+		background "$fade_to_image" "$tmpdir"/bg_fade.ppm
 	fi
 	if [ "$fadein" -eq 1 ] ; then
-		if [ "$fade_to_black" == '1' ] ; then
+		if [ "$fade_to_image" == 'black' ] ; then
 			echo "[dvd-menu] Creating fadein from black..."
-			fade "$tmpdir/menu.ppm" "$tmpdir/black.ppm" 2 "in" black
+			fade "$tmpdir/menu.ppm" "$tmpdir"/bg_fade.ppm 2
+		elif [ -f "$fade_to_image" ] ; then
+			echo "[dvd-menu] Creating fadein from image..."
+			fade "$tmpdir/menu.ppm" "$tmpdir"/bg_fade.ppm 2
 		else
 			echo "[dvd-menu] Creating fadein from background..."
-			fade "$tmpdir/menu.ppm" "$tmpdir/slideshow_background.ppm" 2 "in" black
+			fade "$tmpdir/menu.ppm" "$tmpdir/slideshow_background.ppm" 2
 		fi
 		mv "$tmpdir/fade.mpg" "$tmpdir/fadein.mpg"
 	fi
 	if [ "$fadeout" -eq 1 ] ; then
-		if [ "$fade_to_black" == '1' ] ; then
+		if [ "$fade_to_image" == 'black' ] ; then
 			echo "[dvd-menu] Creating fadeout to black..."
-			fade "$tmpdir/black.ppm" "$tmpdir/menu.ppm" 2 "out" black
+			fade "$tmpdir"/bg_fade.ppm "$tmpdir"/menu.ppm 2
+		elif [ -e "$fade_to_image" ] ; then
+			echo "[dvd-menu] Creating fadeout to image..."
+			fade "$tmpdir"/bg_fade.ppm "$tmpdir"/menu.ppm 2
 		else
 			echo "[dvd-menu] Creating fadeout to background..."
-			fade "$tmpdir/slideshow_background.ppm" "$tmpdir/menu.ppm" 2 "out" black
+			fade "$tmpdir/slideshow_background.ppm" "$tmpdir/menu.ppm" 2
 		fi
 		mv "$tmpdir/fade.mpg" "$tmpdir/fadeout.mpg"
 	fi
@@ -1562,6 +1644,10 @@ if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 		suffix=`echo "${xmlfile[$i]}" | awk -F. '{print $NF}'`
 		if [ "$suffix" == 'xml' ] ; then
 			file_base=`basename "${xmlfile[$i]}" .xml`
+			xml_button[$i]=$( grep '<!-- button=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' )
+			[ -n "${xml_button[$i]}" ] && echo "xml_button $i = ${xml_button[$i]}"
+			xml_title[$i]=$( grep '<!-- title=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' )
+			[ -n "${xml_title[$i]}" ] && echo "xml_title $i = ${xml_title[$i]}"
 		elif [ "$suffix" == 'mpg' ] ; then
 			file_base=`basename "${xmlfile[$i]}" .mpg`
 		elif [ "$suffix" == 'vob' ] ; then
@@ -1585,7 +1671,7 @@ else	# dvd menus:
 	echo '           <menus>' >> "$outdir/vmgm.xml"
 fi
 
-# write each button
+# write menu
 if [ "$no_menu" -eq 0 ] ; then
 	if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 		echo "<pbc>" >> "$outdir/vmgm.xml"
@@ -1657,7 +1743,6 @@ if [ "$vcd" -eq 0 ] && [ "$svcd" -eq 0 ] ; then ## DVD
 	## every dvd has at least one title!
 	echo '		<titles>' > "$tmpdir/titles_vmgm.xml"
 	echo '		<subpicture lang="'$subtitle_code'"/>' >> "$tmpdir/titles_vmgm.xml"
-	echo '		<subpicture lang="'$subtitle_code'"/>' >> "$tmpdir/titles_vmgm.xml"
 fi	
 ## now cat the other ones into this file...
 let i=0   
@@ -1701,7 +1786,12 @@ for (( it=1 ; it<=total_files ; it++ )) ; do
 #		echo '     <sequence-item src="'"$(full_path ${xmlfile[$i]})"'" id="'"$file_base"_$(($i+1))'"/>' >> "$tmpdir/titles_seq.xml"
 		echo '   </playlist>' >> "$tmpdir/titles_vmgm.xml"
 	else # dvd
-		echo '		<pgc>' >> "$tmpdir/titles_vmgm.xml"
+		# make sure palette file exists:
+#		if [ -e "$outdir"/palette.rgb ] ; then
+#			echo '		<pgc palette="'$outdir/palette.rgb'">' >> "$tmpdir/titles_vmgm.xml"
+#		else
+			echo '		<pgc>' >> "$tmpdir/titles_vmgm.xml"
+#		fi
 		## fadeout from vmgm
 		if [ "$fadeout" -eq 1 ] && [ "$continuous_method" -ne 1 ] ; then
 			# non-continuous play means we want to fadeout from every menu

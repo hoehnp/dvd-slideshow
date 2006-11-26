@@ -253,7 +253,7 @@ do
 done
 
 ## read in theme file:
-if [ -n "$theme" ] ; then
+if [ -n "$theme" ] && [ "$theme" != 'default' ] ; then
 	# check if directory
 	if [ -d "$theme" ] ; then
 		themedir="$theme"
@@ -658,8 +658,8 @@ fi
 name_converted="$( echo $name | sed -e 's/_/ /g' )"
 ## if title is wanted:
 if [ "$title" -eq 1 ] ; then
-	[ -n "$title_font_color" ] && fileecho "toptitle_font_color=$title_font_color"
-	[ -n "$title_font_size" ] && fileecho "toptitle_font_size=$title_font_size"
+	[ -n "$title_font_color" ] && fileecho "title_font_color=$title_font_color"
+	[ -n "$title_font_size" ] && fileecho "title_font_size=$title_font_size"
 	fileecho "background:1"
 	fileecho "fadein:1"
 	if [ "$title_type" == 'titlebar' ] ; then

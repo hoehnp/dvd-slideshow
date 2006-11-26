@@ -18,7 +18,7 @@
 #
 
 name='dvd-menu'
-version='0.8.0-pre5'
+version='0.8.0-pre9'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
@@ -37,6 +37,11 @@ changes ()
 {
 echo 'Changes:
 0.8.0
+	pre9:
+	Added 6image layout option.  It can also read the title and icon from
+	  the .xml file output from dvd-slideshow.  more testing and polish is needed.
+	Added many more variables to control the layout of the menu also.
+
 	Added -vcd and -svcd modes.  Works!  tested -vcd a little.
 	Audio automatically fades in/out for 2 seconds
 	Reads variables correctly from ~/.dvd-slideshowrc	
@@ -228,7 +233,7 @@ Variables:
 	menu_panel_location_x=360
 	menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
 	menu_button_font_size=21
-	menu_title_justify=center
+	menu_title_justify=left
 
  '
 }
@@ -287,6 +292,7 @@ if [ "$nocleanup" -eq 0 ] ; then
 	check_rm "$tmpdir/button_background_mask.png"
 	check_rm "$tmpdir/button_text.png"
 	check_rm "$tmpdir/button_mask.png"
+	check_rm "$tmpdir/button_mask_trans.png"
 	check_rm "$tmpdir/menu.ppm"
 	check_rm "$tmpdir/fadein.mpg"
 	check_rm "$tmpdir/bg_fade.ppm"
@@ -394,12 +400,12 @@ white_button_mask ()
 title_text ()
 {
 	# title_text outfile
+	echo "[dvd-menu] Creating title: $dvd_title"
 	[ "$title_justify" == 'left' ] && title_justify=NorthWest
 	[ "$title_justify" == 'right' ] && title_justify=NorthEast
 	[ "$title_justify" == 'center' ] && title_justify=North
-	convert -depth 8 -size $resolution xc:transparent -fill "$title_font_color" \
-	-pointsize $title_font_size -gravity $title_justify -font "$title_font" \
-	-draw "text $title_location_x,$title_location_y \"${dvd_title}\"" "$1" 
+	echo "[dvd-menu] title justified $title_justify"
+	convert -depth 8 -size $resolution xc:transparent -fill "$title_font_color" -pointsize $title_font_size -gravity $title_justify -font "$title_font" -draw "text $title_location_x,$title_location_y \"${dvd_title}\"" "$1" 
 }
 
 imagewidth ()  # IMAGEWIDTH
@@ -560,7 +566,7 @@ if [ -n "$theme" ] ; then
         # check if directory
         if [ -d "$theme" ] ; then
                 themedir="$theme"
-                themefile="`ls -1 "$theme"/*.theme | tail -n 1`"
+                themefile="`ls -1 "$theme"/*.theme 2> /dev/null | tail -n 1`"
                 [ "$noecho" == '0' ] && myecho "[dvd-menu] Using theme file to $(truncate_filename "$themefile")"
         elif [ -f "$theme" ] ; then
                 themefile="`full_path "$theme"`"
@@ -571,7 +577,7 @@ if [ -n "$theme" ] ; then
                 # check in default theme directory:
                 if [ -d "$themedir"/"$theme" ] ; then
                         themedir="$themedir"/"$theme"
-                        themefile="`ls -1 "$themedir"/*.theme | tail -n 1`"
+                        themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
                 	[ "$noecho" == '0' ] && myecho "[dvd-menu] Using theme file to $(truncate_filename "$themefile")"
                 else
                         [ "$noecho" == '0' ] && myecho "[dvd-menu] ERROR!  Bad theme name (not found)"
@@ -590,13 +596,23 @@ if [ -n "$theme" ] ; then
 	## now, fix paths to background files and such if they were local paths:
 	if [ -n "$bgfile" ] ; then
 		if [ ! -f "$bgfile" ] ; then	
-			bgfile="$themedir"/"$bgfile"
-			if [ ! -f "$bgfile" ] ; then
-				echo "Error:  bad background filename in theme."
+			bgfile2="$themedir"/"$bgfile"
+			if [ -f "$bgfile2" ] ; then
+				bgfile="$bgfile2"
+			else
+				# try hex color.
+				if [ "${bgfile:0:1}" == '#' ] ; then  # user passed a #RRGGBB hex color
+					bgfile="$bgfile"
+				else
+					echo "[dvd-menu] Error:  bad background filename in theme."
+					echo "[dvd-menu] Using default background instead."
+					bgfile=''
+				fi
 			fi
 		fi
 	fi
 	if [ -n "$fade_to_image" ] ; then
+		# add color option
 		if [ ! -f "$fade_to_image" ] ; then	
 			fade_to_image="$themedir"/"$fade_to_image"
 			if [ ! -f "$fade_to_image" ] ; then
@@ -609,6 +625,7 @@ if [ -n "$theme" ] ; then
 			audiofile="$themedir"/"$audiofile"
 			if [ ! -f "$audiofile" ] ; then
 				echo "Error:  bad audio filename in theme"
+				audiofile=''
 			fi
 		fi
 	fi
@@ -768,7 +785,6 @@ debug=0  # 1 or 0
 pal=0
 continuous=0 ; continuous_method=0
 no_dvdauthor=0
-no_white=0
 ac3=1
 iso=0
 no_menu=0
@@ -800,14 +816,15 @@ title_location_x=80
 title_location_y=50
 title_justify=NorthWest
 
-hilight_border=50
-hilight_spacing=20
+hilight_spacing_x=50
+hilight_spacing_y=50
 hilight_font_size=12
 
 embed_image_width=260
 embed_image_height=240
 
 menu_type='textbar'
+panel_mask=1
 
 frames=20 	# number of frames in the menu mpg file. 
 		# I guess this only really needs to be 1 frame
@@ -823,7 +840,7 @@ widescreen=0
 themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant:  see http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
 fadein=0
 fadeout=0
-fade_to_image=0
+fade_to_image=''
 
 # end of default  variables
 
@@ -854,7 +871,7 @@ do
 	-n) shift; dvd_title="$1"; shift ;; # name of DVD disk
 	-c) shift; continuous=1 ; continuous_method=1 ;;
 	-D) shift; no_dvdauthor=1 ;;
-	-W) shift; no_white=1 ;;
+#	-W) shift; no_white=1 ;;
 #	-w) shift; widescreen=1 ;;  # not supported in dvdauthor
 	-L) shift; low_quality=1 ;;
 	-H) shift; high_quality=1 ;;  # not used yet...
@@ -975,7 +992,9 @@ if [ -n "$commandline_bgfile" ] ; then
 fi
 
 ## now, read the theme file if it was passed on the commandline:
-[ -n "$theme" ] && read_theme "$theme" 0
+if [ -n "$theme" ] && [ "$theme" != 'default' ] ; then
+	read_theme "$theme" 0
+fi
 
 if [ -z "$panel_height" ] ; then
 	panel_height="$(( $button_font_size * 125 / 100 ))"
@@ -989,7 +1008,7 @@ if [ "$panel_mask" == "none" ] ; then
 elif [ "$panel_mask" == "default" ] ; then
 	no_white=0
 else
-	no_white=1  # this will change later to allow specific panel masks...
+	no_white=0  # this will change later to allow specific panel masks...
 fi	
 
 if [ "$vcd" -eq 1 ] ; then
@@ -1095,10 +1114,10 @@ fi
 resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}'`
 sq_to_dvd_pixels="${resize_factor}x100%"
 
-hilight_height=$(( ( $dvd_height - $hilight_border -$title_location_y - $title_font_size - 2*$hilight_spacing - 2*$hilight_font_size)/2 ))
+hilight_height=$(( ( $dvd_height - $hilight_spacing_y -$title_location_y - $title_font_size - 2*$hilight_spacing_y - 2*$hilight_font_size)/2 ))
 hilight_width=$(( $hilight_height * $dvd_width / $dvd_height ))  # assume this aspect ratio.
-hilight_start_location_x=$(( ($dvd_width - 3*$hilight_width - 2*$hilight_spacing )/2 ))
-hilight_start_location_y=$(( $title_location_y + $title_font_size + $hilight_spacing ))
+hilight_start_location_x=$(( ($dvd_width - 3*$hilight_width - 2*$hilight_spacing_x )/2 ))
+hilight_start_location_y=$(( $title_location_y + $title_font_size + $hilight_spacing_y ))
 
 if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
 	panel_height=$(( $panel_height / 2 ))
@@ -1118,8 +1137,8 @@ if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] ; then
 	embed_image_width=$(( $embed_image_width / 2 ))
 	embed_image_height=$(( $embed_image_height / 2 ))
 
-	hilight_border=$(( $hilight_border / 2 ))
-	hilight_spacing=$(( $hilight_spacing / 2 ))
+	hilight_spacing_x=$(( $hilight_spacing_x / 2 ))
+	hilight_spacing_y=$(( $hilight_spacing_y / 2 ))
 	hilight_font_size=$(( $hilight_font_size / 2 ))
 fi
 
@@ -1260,7 +1279,6 @@ if [ "$no_menu" -eq 0 ] ; then
 #	fi
 
 	## case 1:  old layout:
-echo "menu_type=$menu_type"
 	if [ "$menu_type" == 'textbar' ] ; then  # plain text on right side
 		menuright=$(( $menu_panel_location_x + $panel_width))
 		menubottom=$(( $dvd_height + 50 ))  ## add 50 so we can chop off the bottom later
@@ -1318,7 +1336,7 @@ echo "menu_type=$menu_type"
 			bottom[$i]="$(( $menu_button_location_y + $panel_height ))"
 			[ "${bottom[$i]}" -gt "$dvd_height" ] && bottom[$i]=$(( $dvd_height - 10 ))
 
-			echo "[dvd-menu] setting button mask l,r,t,b = ${left[$i]} ${right[$i]} ${top[$i]} ${bottom[$i]}"
+#			echo "[dvd-menu] setting button mask l,r,t,b = ${left[$i]} ${right[$i]} ${top[$i]} ${bottom[$i]}"
 	
 			vts="$(( $i + 1 ))"
 #			echo "[dvd-menu] i=$i vts=$vts"
@@ -1336,66 +1354,81 @@ echo "menu_type=$menu_type"
 		for this_title in "${xmlfile[@]}"; do
 			suffix=`echo "${xmlfile[$i]}" | awk -F. '{print $NF}'`
 			if [ "$suffix" == 'xml' ] ; then
-				xml_button[$i]=$( grep '<!-- button=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' )
-				[ -n "${xml_button[$i]}" ] && echo "xml_button $i = ${xml_button[$i]}"
-				xml_title[$i]=$( grep '<!-- title=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' )
-				[ -n "${xml_title[$i]}" ] && echo "xml_title $i = ${xml_title[$i]}"
+				xml_button[$i]=$( grep '<!-- button=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' | tr -d '\047' | tr -d '\042' )
+#echo "xml_button[$i]=${xml_button[$i]}"
+				[ -n "${xml_button[$i]}" ] && echo "[dvd-menu] xml_button $i = $( truncate_filename "${xml_button[$i]}" )"
+				xml_title[$i]=$( grep '<!-- title="' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F'" -->' '{print $1}' | tr -d '\047' | tr -d '\042' )
+#echo "xml_title[$i]=${xml_title[$i]}"
+				[ -n "${xml_title[$i]}" ] && echo "[dvd-menu] xml_title $i = ${xml_title[$i]}"
 			fi
 			# make each individual button:
 			# to be fancy, let's add the button layers in two steps.  first the
 			# button background, then the text:
 		        ## create embedded image hilight if required:
-			echo "dvd_width=$dvd_width"
 			dvd_width_scaled=$(( $dvd_width * $sq_pixel_multiplier / 1000 ))
-			echo "dvd_width_scaled=$dvd_width_scaled"
-			hilight_border=50
-			hilight_spacing=50
-			hilight_font_size=12
-			hilight_height=$(( ( $dvd_height - $title_white_height - 3 * $hilight_border - 2*$hilight_font_size)/2 ))
-			hilight_width=$(( $hilight_height * $dvd_width / $dvd_height ))  # assume images have dvd aspect ratio.
-			hilight_start_location_x=$(( ($dvd_width - 3*$hilight_width - 2*$hilight_spacing )/2 ))
-			hilight_start_location_y=$(( $title_white_height + $hilight_spacing / 2 ))
+			hilight_height=90
+			hilight_width=135
+#			hilight_height=$(( ( $dvd_height - $title_white_height - 3 * $hilight_spacing_y - 2*$hilight_font_size)/2 ))
+#			hilight_width=$(( $hilight_height * $dvd_width / $dvd_height ))
+			buttons="${#xmlfile[@]}"
+			if [ "$buttons" -gt 6 ] ; then
+				echo "[dvd-menu] ERROR:  too many buttons for this menu type!"
+				exit 1
+			elif [ "$buttons" == 4 ] ; then
+				hilight_spacing_x=100
+				hilight_start_location_x=$(( ($dvd_width - 2*$hilight_width - 1*$hilight_spacing_x )/2 ))
+				hilight_start_location_y=$(( $title_white_height + $hilight_spacing_y / 2 ))
+			elif [ "$buttons" -gt 3 ] ; then
+				hilight_start_location_x=$(( ($dvd_width - 3*$hilight_width - 2*$hilight_spacing_x )/2 ))
+				hilight_start_location_y=$(( $title_white_height + $hilight_spacing_y / 2 ))
+			else
+				[ "$buttons" == 2 ] && hilight_spacing_x=100
+				hilight_start_location_x=$(( ($dvd_width - $buttons * $hilight_width - ( $buttons - 1 )*$hilight_spacing_x )/2 ))
+				hilight_start_location_y=$(( $title_white_height + $hilight_spacing_y ))
+			fi
 			## size constraint seems to be vertically when we have a title.
 			## so, eventually, we could have different situations, depending on whether or not
 			## a title exists, etc...  let's assume it does for now!
-			echo "hilight_border=$hilight_border"
-			echo "hilight_spacing=$hilight_spacing"
-			echo "hilight_font_size=$hilight_font_size"
-			echo "hilight_height=$hilight_height"
-			echo "hilight_width=$hilight_width"
-			echo "hilight_start_location_x=$hilight_start_location_x"
-			echo "hilight_start_location_y=$hilight_start_location_y"
 
 			[ -z "${buttonfile[$i]}" ] && buttonfile[$i]="${xml_button[$i]}"
 			[ -z "${title[$i]}" ] && title[$i]="${xml_title[$i]}"
 			echo "[dvd-menu] Title=${title[$i]}"
+			echo "[dvd-menu] Image=${buttonfile[$i]}"
 			button_text_white=1
 			if [ "$button_text_white" == 1 ] ; then
 				text_height=$(( 3* $hilight_font_size ))
-				convert -size "$hilight_width"x$text_height xc:transparent -depth 8 "$tmpdir"/button_mask_trans.png
-				convert -size "$hilight_width"x$text_height xc:transparent -depth 8 -fill white -draw "roundRectangle 0,0,$hilight_width,$text_height $button_radius,$button_radius" -background none -blur 0x3 "$tmpdir"/button_mask.png
+				text_width=$(( $hilight_width + $hilight_spacing_x / 2 ))
+				convert -size "$text_width"x$text_height xc:transparent -depth 8 "$tmpdir"/button_mask_trans.png
+				convert -size "$text_width"x$text_height xc:transparent -depth 8 -fill white -draw "roundRectangle 0,0,$text_width,$text_height $button_radius,$button_radius" -background none -blur 0x3 "$tmpdir"/button_mask.png
 				composite -compose src-over -type TrueColor -depth 8 -dissolve 60 "$tmpdir"/button_mask.png "$tmpdir"/button_mask_trans.png "$tmpdir"/button_mask.png
 
-				convert -size ${hilight_width}x$text_height xc:transparent -quality 100 -font "$button_font" -fill "$button_font_color" -pointsize $button_font_size -gravity center -draw "text 0,0 \"${title[$i]}\"" "$tmpdir"/button_text.png
+				convert -size ${text_width}x$text_height xc:transparent -quality 100 -font "$button_font" -fill "$button_font_color" -pointsize $button_font_size -gravity center -draw "text 0,0 \"${title[$i]}\"" "$tmpdir"/button_text.png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/button_text.png "$tmpdir"/button_mask.png "$tmpdir"/button_text.png
 			fi
-
-			echo "buttonfile=${buttonfile[$i]}".
-		        if [ -f "${buttonfile[$i]}" ]; then
-		                echo "[dvd-menu] using image ${buttonfile[$i]} as button $embed ${title[$i]}"
-				echo "[dvd-menu] hilight_width=$hilight_width hilight_height=$hilight_height"
+#echo "buttonfile=${buttonfile[$i]}".
+		        if [ -e "${buttonfile[$i]}" ]; then
+		                echo "[dvd-menu] using image $( truncate_filename "${buttonfile[$i]}" )"
+#				echo "[dvd-menu] hilight_width=$hilight_width hilight_height=$hilight_height"
 		                convert "${buttonfile[$i]}" -resize "$hilight_width"x"$hilight_height" -quality 100 "$tmpdir/embed.jpg"
 				actual_hilight_width=$( imagewidth_sq "$tmpdir"/embed.jpg )
 				actual_hilight_height=$( imageheight "$tmpdir"/embed.jpg )
 				# make each individual button mask (for when it's selected)
-				convert -colors 3 +antialias -size "$actual_hilight_width"x"$actual_hilight_height" xc:transparent -fill transparent -stroke red -strokewidth 2 -draw "rectangle 0,0 $actual_hilight_width,$actual_hilight_height" -quality 100 "$tmpdir/button_mask.png"
+				convert -colors 3 +antialias -size "$actual_hilight_width"x"$actual_hilight_height" xc:transparent -fill transparent -stroke $button_hilight_color -strokewidth 5 -draw "rectangle 0,0 $actual_hilight_width,$actual_hilight_height" -quality 100 "$tmpdir/button_mask.png"
 	
 				## calculate location of this image:
-				[ $embed -ge 4 ] && embed_row=2 || embed_row=1
-				[ $embed -ge 4 ] && embed_col=$(( $embed - 3 )) || embed_col=$embed
-				hilight_x=$(( $hilight_start_location_x + ($embed_col - 1)*($hilight_spacing + $hilight_width) ))
-				hilight_y=$(( $hilight_start_location_y + ($embed_row - 1)*($hilight_spacing + $hilight_height + $hilight_font_size ) ))
-				button_text_location_x=$(( $hilight_x ))
+				if [ "$buttons" == "4" ] ; then
+					[ $embed -ge 3 ] && embed_row=2 || embed_row=1
+					[ $embed -ge 3 ] && embed_col=$(( $embed - 2 )) || embed_col=$embed
+				elif [ "$buttons" -gt 3 ] ; then
+					[ $embed -ge 4 ] && embed_row=2 || embed_row=1
+					[ $embed -ge 4 ] && embed_col=$(( $embed - 3 )) || embed_col=$embed
+				elif [ "$buttons" -le 3 ] ; then
+					embed_row=1
+					embed_col=$embed
+				fi
+				hilight_x=$(( $hilight_start_location_x + ($embed_col - 1)*($hilight_spacing_x + $hilight_width) ))
+				hilight_y=$(( $hilight_start_location_y + ($embed_row - 1)*($hilight_spacing_y + $hilight_height + $hilight_font_size ) ))
+				button_text_location_x=$(( $hilight_x - $hilight_spacing_x / 4 ))
 				button_text_location_y=$(( $hilight_y + $hilight_height ))
 				echo "[dvd-menu] r,c=$embed_row,$embed_col hilight_x_loc=$hilight_x hilight_y_loc=$hilight_y"
 				
@@ -1405,7 +1438,6 @@ echo "menu_type=$menu_type"
 		                # Add embed image to menu background
 				difference_x=$(( ( $hilight_width - $actual_hilight_width )/2 ))
 				difference_y=$(( ( $hilight_height - $actual_hilight_height )/2 ))
-echo "differencex=$difference_x difference_y=$difference_y"
 				## adjust hilight location:
 				hilight_x=$(( $hilight_x + $difference_x ))
 				hilight_y=$(( $hilight_y + $difference_y ))
@@ -1645,9 +1677,9 @@ if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 		if [ "$suffix" == 'xml' ] ; then
 			file_base=`basename "${xmlfile[$i]}" .xml`
 			xml_button[$i]=$( grep '<!-- button=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' )
-			[ -n "${xml_button[$i]}" ] && echo "xml_button $i = ${xml_button[$i]}"
+#			[ -n "${xml_button[$i]}" ] && echo "[dvd-menu] xml_button $i = ${xml_button[$i]}"
 			xml_title[$i]=$( grep '<!-- title=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' )
-			[ -n "${xml_title[$i]}" ] && echo "xml_title $i = ${xml_title[$i]}"
+#			[ -n "${xml_title[$i]}" ] && echo "[dvd-menu] xml_title $i = ${xml_title[$i]}"
 		elif [ "$suffix" == 'mpg' ] ; then
 			file_base=`basename "${xmlfile[$i]}" .mpg`
 		elif [ "$suffix" == 'vob' ] ; then

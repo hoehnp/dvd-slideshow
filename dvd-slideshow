@@ -711,7 +711,11 @@ nocleanup=0
 function_error=0
 vcd=0; svcd=0
 print_themes=0
+first_title=1
+first_image=1
 
+#image_postprocess='shadow'
+image_postprocess='none'
 mpeg_encoder='ffmpeg' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
 #mpeg_encoder='mpeg2enc' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
 output_format='mpeg2' # or flv, mp4, mp4_ipod.  mpeg2 is default
@@ -2214,21 +2218,62 @@ kenburns ()  # KENBURNS
 		## so if we're using only 50% of the image, we can pre-crop the image before the
 		## main loop to save some processing time...
 		## get smallest size of image during effect to know how to rescale:
-                min_width=`min $s_width $e_width`
-                min_height=`min $s_height $e_height`
-		xc0=`min $xs0 $xe0`; xc1=`max $xs1 $xe1`	
-		yc0=`min $ys0 $ye0`; yc1=`max $ys1 $ye1`	
+#                min_width=`min $s_width $e_width`
+#                min_height=`min $s_height $e_height`
+#		xc0=`min $xs0 $xe0`; xc1=`max $xs1 $xe1`	
+#		yc0=`min $ys0 $ye0`; yc1=`max $ys1 $ye1`	
 		## (make sure the image crop coordinates are not outside the image)
-		[ $xc0 -lt $xi ] && xc0=0 || xc0=$(( $xc0 - $xi ))
-		[ $yc0 -lt $yi ] && yc0=0 || yc0=$(( $yc0 - $yi ))
-		[ $xc1 -gt $(( $xi + $image_width )) ] && xc1=$image_width || xc1=$(( $xc1 - $xi ))
-		[ $yc1 -gt $(( $yi + $image_height )) ] && yc1=$image_height || yc1=$(( $yc1 - $yi ))
-		c_width=$(( $xc1 - $xc0 )) ; c_height=$(( $yc1 - $yc0 ))
-                [ $debug -ge 0 ] && myecho "[dvd-slideshow:kenburns] Smallest window during kenburns is $min_width x $min_height"
-		[ $debug -ge 0 ] && myecho "[dvd-slideshow:kenburns] Pan/zoom uses $c_width x $c_height of original $image_width x $image_height image"
-		did_resize=0
+#		[ $xc0 -lt $xi ] && xc0=0 || xc0=$(( $xc0 - $xi ))
+#		[ $yc0 -lt $yi ] && yc0=0 || yc0=$(( $yc0 - $yi ))
+#		[ $xc1 -gt $(( $xi + $image_width )) ] && xc1=$image_width || xc1=$(( $xc1 - $xi ))
+#		[ $yc1 -gt $(( $yi + $image_height )) ] && yc1=$image_height || yc1=$(( $yc1 - $yi ))
+#		c_width=$(( $xc1 - $xc0 )) ; c_height=$(( $yc1 - $yc0 ))
+#                [ $debug -ge 0 ] && myecho "[dvd-slideshow:kenburns] Smallest window during kenburns is $min_width x $min_height"
+#		[ $debug -ge 0 ] && myecho "[dvd-slideshow:kenburns] Pan/zoom uses $c_width x $c_height of original $image_width x $image_height image"
+#		did_resize=0
 
-		convert "$l_file" -resize "$sq_to_dvd_pixels" +repage -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc
+		# check original image width and height.  if too large,
+		# then make it smaller!
+		factorx=$(( 1000 * $image_width / $dvd_width ))
+		factory=$(( 1000 * $image_height / $dvd_height ))
+		maxfactor=$( max $factorx $factory )
+		if [ "$maxfactor" -gt 1500 ] && [ $enable_kenburns_resize == 1 ] ; then
+			# scale image down for better speed
+			if [ "$maxfactor" == "$factorx" ] ; then	
+				echo "factorx"
+				resize='-resize '$dvd_width'x'
+				resized_x=$dvd_width
+				resized_y=$(( 10 * $resized_x * $image_height / $image_width ))
+				echo "resized_y*10=$resized_y"
+				resized_y=$( div10 $(( 10 * $resized_x * $image_height / $image_width )) )
+			else
+				echo "factory"
+				resize='-resize x'$dvd_height
+				# resized_x / resized_y = imagewidth_x / imagewidth_y
+				resized_y=$dvd_height
+				resized_x=$(( $resized_y * $image_width / $image_height ))
+				echo "resized_x*10=$resized_x"
+				resized_x=$( div10 $(( 10 * $resized_y * $image_width / $image_height )) )
+			fi
+			echo "[dvd-slideshow] Rescaling $image_width"x"$image_height image to $resized_x"x"$resized_y speed up processing"
+			## now, update the coordinates with the new values after the scale. 
+			## we might want to use the actual resized image size instead?
+echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 ys0=$ys0 ye0=$ye0"
+			xi=$(( 1000 * $xi / $maxfactor ))
+			yi=$(( 1000 * $yi / $maxfactor ))
+			xs0=$(( 1000 * $xs0 / $maxfactor ))
+			xe0=$(( 1000 * $xe0 / $maxfactor ))
+			ys0=$(( 1000 * $ys0 / $maxfactor ))
+			ye0=$(( 1000 * $ye0 / $maxfactor ))
+			xs1=$(( 1000 * $xs1 / $maxfactor ))
+			xe1=$(( 1000 * $xe1 / $maxfactor ))
+			ys1=$(( 1000 * $ys1 / $maxfactor ))
+			ye1=$(( 1000 * $ye1 / $maxfactor ))
+			echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 ys0=$ys0 ye0=$ye0"
+		else
+			resize=''
+		fi
+		convert "$l_file" -resize $sq_to_dvd_pixels $resize +repage -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc
 
 		############################ end crop/resize large images
 
@@ -2720,16 +2765,6 @@ set_end_frame_time ()
 	slide_end_hms=`hms $slide_end_time`
 }
 
-end_frame_info ()
-# end_frame_info $frames
-{
-	## calculate the time point that we're at:
-	total_slideshow_frames=$(( $total_slideshow_frames + $1 ))
-	slide_end_frame="$total_slideshow_frames"
-	slide_end_time=$(( $slide_end_frame * 1000 * 1000 / $frames_per_ms ))  ## in thousandths of a second
-	slide_end_hms=`hms "$slide_end_time"`
-}
-
 truncate_filename ()
 {
 	# truncate filenames so they're not longer than 40 characters:
@@ -2759,9 +2794,8 @@ create_slide ()
 	fi
 	check_rm "$output_file"
 	# postprocessing options:
-	image_postprocess='shadow'
 	# add sepia, black_and_white, old, etc...
-	if [ "$image_postprocess" == 'shadow' ] ; then
+	if [ "$image_postprocess" == 'shadow' ] && [ "$border" -gt 0 ] ; then
 		postprocess='( +clone  -background black  -shadow 80x3+5+5 ) +swap -background none -mosaic'
 	else
 		postprocess=''
@@ -2856,7 +2890,6 @@ scroll ()  # SCROLL
 	V0x=$( echo "scale=9; 2 * ( $xe0 - $xs0 ) / ( $l_frames + $F2 - $F1 -2 )" | bc )  # hack -2 to make it fit better?
 	V0y=$( echo "scale=9; 2 * ( $ye0 - $ys0 ) / ( $l_frames + $F2 - $F1 -2 )" | bc )
 	pi='3.14159265'
-#	end_frame_info $rendered_frames
 	[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 	echo -n "[dvd-slideshow]"
 	lastbar=0 # required for progressbar
@@ -3004,6 +3037,7 @@ set_variables ()   # SET_VARIABLES
 		bottomtitle_text_location_x) bottomtitle_text_location_x="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_text_location_x=$bottomtitle_text_location_x" ;;
 		bottomtitle_text_location_y) bottomtitle_text_location_y="$config2" ; [ "$noecho" -eq 0 ] && echo "bottomtitle_text_location_y=$bottomtitle_text_location_y" ;;
 		border) border="$config2" ; frame_border=$border ; frame_width=$(( $dvd_width - 2 * $frame_border )); frame_height=$(( $dvd_height - 2 * $frame_border )) ; [ "$noecho" -eq 0 ] && echo "border=$border" ;;
+		slideshow_image_filter) image_postprocess="$config2" ; image_postprocess=$image_postprocess ; [ "$noecho" -eq 0 ] && echo "image_postprocess=$image_postprocess" ;;
 		sharpen) sharpen="$config2" ; [ "$noecho" -eq 0 ] && echo "sharpen=$sharpen" ;;
 		kenburns_acceleration) kenburns_acceleration="$config2" ; [ "$noecho" -eq 0 ] && echo "kenburns_acceleration=$kenburns_acceleration" ;;
 		subtitle_font) subtitle_font="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_font=$subtitle_font" ;;
@@ -3039,7 +3073,7 @@ if [ -n "$theme" ] ; then
         # check if directory
         if [ -d "$theme" ] ; then
                 themedir="$theme"
-                themefile="`ls -1 "$theme"/*.theme | tail -n 1`"
+                themefile="`ls -1 "$theme"/*.theme 2> /dev/null | tail -n 1`"
                 [ "$noecho" == '0' ] && myecho "[dvd-slideshow] Using theme $(truncate_filename "$theme")"
         elif [ -f "$theme" ] ; then
                 themefile="`full_path "$theme"`"
@@ -3049,7 +3083,7 @@ if [ -n "$theme" ] ; then
                 # check in default theme directory:
                 if [ -d "$themedir"/"$theme" ] ; then
                         themedir="$themedir"/"$theme"
-                        themefile="`ls -1 "$themedir"/*.theme | tail -n 1`"
+                        themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
                 	[ "$noecho" == '0' ] && myecho "[dvd-slideshow] Using theme file $theme"
                 else
                         [ "$noecho" == '0' ] && myecho "[dvd-slideshow] ERROR!  Bad theme name (not found)"
@@ -3268,7 +3302,9 @@ fi
 [ -n "$commandline_sharpen" ] && sharpen=$commandline_sharpen
 
 ## now, read the theme file if it was passed on the commandline:
-[ -n "$theme" ] && read_theme "$theme" 0
+if [ "$theme" != 'default' ] && [ -n "$theme" ] ; then
+	read_theme "$theme" 0
+fi
 
 ## we will read the .txt file next...
 
@@ -3467,7 +3503,9 @@ do
 	  it=`set_theme "${thisline}" 0`
 	  if [ -n "$it" ] ; then
 		logecho "[dvd-slideshow] Set theme to $it"
-		read_theme "$it" 1
+		if [ "$it" != 'default' ] ; then
+			read_theme "$it" 1
+		fi
 		## need to ignore these lines from now on!
 		line=$(( $line + 1 )) ; continue
 	  fi
@@ -4270,6 +4308,11 @@ for file in "${image[@]}"; do
                 myecho "[dvd-slideshow] Title `hms ${duration[$i]}`"
                 myecho "[dvd-slideshow]         Title=$title"
 
+		if [ "$first_title" == 1 ] ; then
+			first_title=0
+			hilight_title="$title"
+#			hilight_image="$image"
+		fi
 		# calculate actual frames rendered:
 		previous_increment="`previouseffectincrement`"
 		previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
@@ -4526,7 +4569,6 @@ for file in "${image[@]}"; do
 		fi
 		subtitle[$i]=''  # set subtitle to nothing so we don't get a subtitle
 		set_end_frame_time ${duration[$i]}
-#		end_frame_info $rendered_frames
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		myecho "[dvd-slideshow]############################################################"
 	elif [ "${image_file[$i]}" -eq 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG IMAGE
@@ -4534,6 +4576,10 @@ for file in "${image[@]}"; do
 		## now the slide may already exist if we had a fadein or crossfade before
 		myecho "[dvd-slideshow] $image_number/$imagefiles $(truncate_filename "$file") `hms ${duration[$i]}`"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle""= ${subtitle[$i]}"
+		if [ "$first_image" == 1 ] && [ "${image[$i]}" != 'background' ] ; then
+			first_image=0
+			hilight_image="${image[$i]}"
+		fi
 
 		# calculate actual frames rendered:
 		previous_increment="`previouseffectincrement`"
@@ -5396,6 +5442,10 @@ for file in "${image[@]}"; do
 		myecho "[dvd-slideshow] $image_number/$imagefiles `truncate_filename $file` `hms ${duration[$i]}`"
 		myecho "[dvd-slideshow] Crop ${effect1_params[$i]}"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle""= ${subtitle[$i]}"
+		if [ "$first_image" == 1 ] ; then
+			first_image=0
+			hilight_image="${image[$i]}"
+		fi
 
 		# calculate actual frames rendered:
 		previous_increment="`previouseffectincrement`"
@@ -5478,6 +5528,10 @@ for file in "${image[@]}"; do
 		myecho "[dvd-slideshow] $image_number/$imagefiles `truncate_filename $file` `hms ${duration[$i]}`"
 		myecho "[dvd-slideshow] Kenburns ${effect1_params[$i]}"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle""= ${subtitle[$i]}"
+		if [ "$first_image" == 1 ] ; then
+			first_image=0
+			hilight_image="${image[$i]}"
+		fi
 
 		window_start=`echo "${effect1_params[$i]}" | awk -F';' '{print $1";"$2}'`
 		window_end=`echo "${effect1_params[$i]}" | awk -F';' '{print $3";"$4}'`
@@ -5534,6 +5588,10 @@ for file in "${image[@]}"; do
 		myecho "[dvd-slideshow] $image_number/$imagefiles `truncate_filename $file` `hms ${duration[$i]}`"
 		myecho "[dvd-slideshow] Scroll ${effect1_params[$i]}"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle""= ${subtitle[$i]}"
+		if [ "$first_image" == 1 ] ; then
+			first_image=0
+			hilight_image="${image[$i]}"
+		fi
 		direction="${effect1_params[$i]}"
 		previous_increment="`previouseffectincrement`"
 		if [ "$previous_increment" -ne 0 ] ; then
@@ -5574,7 +5632,6 @@ for file in "${image[@]}"; do
 		find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm -f  # remove old files
 		find "$tmpdir" -name "fade*.png" -type f -print0 | xargs -0 rm -f # remove old files
 		set_end_frame_time ${duration[$i]}
-#		end_frame_info $rendered_frames
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		image_number=$(( $image_number + 1 ))
 		interp=0
@@ -5589,13 +5646,11 @@ for file in "${image[@]}"; do
 		## Create a slide of size 720x480 with yellow lines
 		convert -size 720x480 xc:gray -fill yellow -draw "line 0,0,719,0 text 110,0 \"0\" line 0,60,719,60 text 110,60 \"60\" line 0,120,719,120 text 110,120 \"120\" line 0,180,719,180 text 110,180 \"180\" line 0,240,719,240 text 110,240 \"240\" line 0,300,719,300 text 110,300 \"300\" line 0,360,719,360 text 110,360 \"360\" line 0,420,719,420 text 110,420 \"420\" line 0,479,719,479 text 110,479 \"479\" " -fill orange -draw "line 0,0,0,480 text 0,180 \"0\" line 90,0,90,480 text 90,180 \"90\" line 180,0,180,480 text 180,180 \"180\" line 270,0,270,480 text 270,180 \"270\" line 360,0,360,480 text 360,180 \"360\" line 450,0,450,480 text 450,180 \"450\" line 540,0,540,480 text 540,180 \"540\" line 630,0,630,480 text 630,180 \"630\" line 719,0,719,480 text 719,180 \"719\" " -type TrueColor -depth 8 -resize "$sq_to_dvd_pixels" -resize "$dvd_width"x"$dvd_height" -quality 100 "$tmpdir/slide_$i.ppm"
 		set_end_frame_time ${duration[$i]}
-#		end_frame_info $rendered_frames
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		myecho "[dvd-slideshow]############################################################"
 	elif [ "$file" == 'exit' ] ; then  # EXIT
 		## stop here and finish .vob
 		set_end_frame_time 0 
-#		end_frame_info 0
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		break
 	elif [ "$file" == 'background' ] ; then  # BACKGROUND
@@ -5603,7 +5658,7 @@ for file in "${image[@]}"; do
 		if [ -n "$bg" ] ; then
 			background "$bg"   # calls the background image subroutine
 		fi
-		if [ "${duration[$i]}" -ne 0 ] ; then  
+		if [ "${duration[$i]}" != 0 ] ; then  
 			myecho "[dvd-slideshow] $file `hms ${duration[$i]}`"
 			## user wants to actually display background for a given time
 			myecho "[dvd-slideshow] Displaying background $(truncate_filename "$bgfile")"
@@ -5622,7 +5677,6 @@ for file in "${image[@]}"; do
 			encode "$tmpdir/slide_$i.ppm" "$frames"
 		fi
 		set_end_frame_time ${duration[$i]}
-#		end_frame_info $rendered_frames
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		myecho "[dvd-slideshow]############################################################"
 #identify "$tmpdir/slide_$i.ppm"
@@ -5633,7 +5687,14 @@ for file in "${image[@]}"; do
 		subtitle[$i]=''  # set subtitle to nothing so we don't get a subtitle
 		myecho "[dvd-slideshow] Setting chapter marker at $slide_end_hms"
 		set_end_frame_time 0
-#		end_frame_info 0
+		myecho "[dvd-slideshow]############################################################"
+	elif [ "`echo $file | tr -d \[:blank:\]`" == 'highlight' ] ; then   # HIGHLIGHT
+		## use next image for this slideshow highlight image
+		## the next image name will be embedded in the output .xml file
+		first_image=1
+		subtitle[$i]=''  # set subtitle to nothing so we don't get a subtitle
+		myecho "[dvd-slideshow] Using next image for slideshow highlight"
+		set_end_frame_time 0
 		myecho "[dvd-slideshow]############################################################"
 	elif [ "${audio_file[$i]}" -eq 1 ] ; then  # AUDIO MP3
 		myecho "[dvd-slideshow] Audiofile $( truncate_filename "$file")"
@@ -5723,7 +5784,6 @@ for file in "${image[@]}"; do
 #echo "song_length_ms=$song_length_ms song_length_hms=$song_length_hms"
 		subtitle[$i]=''  # set subtitle to nothing so we don't get a subtitle
 		set_end_frame_time 0
-#		end_frame_info 0
 		myecho "[dvd-slideshow]############################################################"
 	else  
 		myecho "[dvd-slideshow] Unrecognized or malformed line in your input file:"
@@ -6577,6 +6637,9 @@ if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 	echo "$outdir"/"$slideshow_name".mpg > "$outdir"/"$slideshow_name".xml
 else
 	echo '		<vob chapters="'$chaps_string'" file="'$outdir/$slideshow_name.vob'"  />' > "$outdir/$slideshow_name".xml
+	echo '		<!-- pal="'$pal'" -->' >> "$outdir/$slideshow_name".xml
+	[ -n "$hilight_image" ] && echo '		<!-- button="'$hilight_image'" -->' >> "$outdir/$slideshow_name".xml
+	[ -n "$hilight_title" ] && echo '		<!-- title="'$hilight_title'" -->' >> "$outdir/$slideshow_name".xml
 fi
 
 cleanup

@@ -1,0 +1,138 @@
+## default dvd-slideshow theme. 
+## this file just contains the default settings for dvd-slideshow
+
+## NOTE: ALL images, backgrounds, audio, fonts, and such must be clearly licensed
+## in order to be distribued with dvd-slideshow.  You can, of course, use your own
+## copyrighted material for your own themes, but any distributed themes should have
+## descriptive license files like:
+## background.jpg   background.jpg.license.txt --> contains license/copyright 
+## audio.mp3   audio.mp3.license.txt --> contains license/copyright for audio
+
+## copy this default theme directory and rename it to create a new theme
+## then, rename the .theme file also (optional, but a good idea) and edit it
+## to create a new theme
+
+## you can override theme definitions on the command line or within dvd-slideshow. 
+## the order of variable readings goes like this:
+## program defaults --> ~/.dvd-slideshowrc --> theme_file --> command-line --> input file variables
+
+#######################################################################
+# Theme definitions:
+theme_designed_for=ntsc  # used to shift title/button locations because of different pal/ntsc sizes
+#theme_designed_for=pal
+
+#######################################################################
+# dir2slideshow or variables used to create input .txt file:
+slideshow_background=black
+#slideshow_background="#882211"	# use a hex RGB color if you wish
+#slideshow_background="mybackground.jpg"	# specify a real image if you want
+
+crossfade=0		# crossfade duration [seconds] (use 0 for no crossfade)
+# wipe=0 		# wipe diration [seconds] (use 0 for no wipe)  (not implemented yet)
+
+kenburns=0		
+#kenburns=1		# do random kenburns effect
+
+slide_duration=6	# seconds to display each slide
+
+#title_type=titlebar	# use two-line titles, one on top, one on bottom
+title_type=title	# use single line centered titles
+
+title_background=steelblue
+#title_background="#882211"	# use a hex RGB color if you wish
+#title_background="mybackground.jpg"	# specify a real image if you want
+
+#slideshow_audio=myaudio1.mp3,myaudio2.mp3,myaudio3.ogg # use these audio files
+
+#subtitle=filename	# automatically insert filename in subtitle field
+#subtitle=path		# automatically insert full path and filename into subtitle field
+
+#######################################################################
+# dvd-slideshow settings:
+widescreen=0		# use default 4:3 aspect ratio
+# widescreen=1		# use 16:9 aspect ratio
+
+copy=0		
+# copy=1	# add copies of original images to the output directory
+
+autocrop=0
+#autocrop=1	# autocrop images to fill full screen
+
+#high_quality=1  # high quality enabled by default (not a good idea now)
+
+border=0  # add border of N pixels around images (filled by background image or color)
+
+sharpen=0  # change to 1 to enable image sharpening
+
+subtitle_type=dvd   # use dvd subtitle track for subtitles
+#subtitle_type=render # force subtitles to be rendered in video
+#subtitle_font='fontname.ttf'
+subtitle_font_size=24
+subtitle_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+subtitle_color="white"
+subtitle_outline_color="black"
+subtitle_location="bottom"  # or, use "top"
+
+## Title:
+title_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+title_font_size=48
+title_font_color='black'  # or use hex "#RRGGBB"
+
+## top title:
+toptitle_font_size=48
+toptitle_font_color='black' # or use hex "#RRGGBB"
+toptitle_bar_height=125  # 0 for no 50% white behind text
+toptitle_text_location_x=80
+toptitle_text_location_y=50
+# bottom title:
+bottomtitle_font_size=36
+bottomtitle_font_color="black"  # or use hex "#RRGGBB"
+bottomtitle_bar_location_y=156 # relative to bottom of image
+bottomtitle_bar_height=55  # 0 for no 50% white behind text
+bottomtitle_text_location_x=0
+bottomtitle_text_location_y=155
+
+kenburns_acceleration=2  # seconds of slow acceleration for kenburns
+# use 0 for no acceleration, or, use a percent of the effect time:
+# kenburns_acceleration=25%  # will accelerate for the first 25% of the effect.
+
+#######################################################################
+# dvd-menu config variables:
+menu_continuous_play=0
+#menu_continuous_play=1	# play one file after another without going back up to menu.
+
+menu_fadein=0
+#menu_fadein=1	# fade in to menu
+menu_fadeout=0
+#menu_fadeout=1	# fade out from menu after a button is pressed.
+
+menu_background=steelblue  # or, use hex #RRGGBB
+#menu_background="#882211"	# use a hex RGB color if you wish
+#menu_background="mybackground.jpg"	# specify a real image if you want
+## pick other colors here: http://www.imagemagick.org/script/color.php
+
+#menu_fade_to_image='black' 	# image to fade to/from before/after menu
+#menu_fade_to_image='#ff3344'
+#menu_fade_to_image='myimage.jpg'
+
+#menu_title_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+menu_title_font_size=40
+menu_title_font_color=black
+menu_title_white_height=125
+menu_title_location_x=80
+menu_title_location_y=50
+#menu_title_justify=center
+
+#menu_panel_mask=none	# use this in the future to have image-based transparent masks.
+menu_panel_height=28
+menu_panel_width=288
+menu_panel_location_x=360
+menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
+
+#menu_button_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+menu_button_font_size=21
+menu_button_font_color=black
+menu_button_hilight_color=red
+
+#menu_audio=myaudio1.mp3
+

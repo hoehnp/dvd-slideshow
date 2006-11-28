@@ -1,0 +1,7 @@
+Document how to create themes here!
+
+System themes are located in /opt/dvd-slideshow/themes/
+local themes are located in ~/.dvd-slideshow/themes
+
+if you download the themes from the subversion repository, you'll have to put
+them in one of the directories shown above.

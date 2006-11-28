@@ -1,0 +1,117 @@
+## dvd-slideshow theme file "travel"
+
+######################################################################
+# theme definitions
+theme_designed_for=ntsc   # or pal. This allows for title and button shifting automatically
+
+#######################################################################
+# dir2slideshow or variables used to create input .txt file:
+slideshow_background="#add8e6"	# use a hex RGB color if you wish
+#slideshow_background="mybackground.jpg" # specify a real image if you want
+
+crossfade=0		# crossfade duration (use 0 for no crossfade)
+kenburns=0		# do random kenburns effect.  use 0 to turn it off
+slide_duration=6	# seconds to display each slide
+title_type=titlebar	# use two-line titles, one on top, one on bottom
+#title_type=title	# use single line centered titles
+
+title_background="#add8e6"	# use a hex RGB color if you wish
+#title_background=parchment.jpg	# specify a real image if you want
+
+#slideshow_audio=myaudio1.mp3,myaudio2.mp3,myaudio3.ogg # use these audio files
+
+subtitle=filename
+
+#slideshow_end="fadein:1"
+#slideshow_end="background:3"
+
+#######################################################################
+# dvd-slideshow settings:
+widescreen=0		# use default 4:3 aspect ratio
+# widescreen=1		# use 16:9 aspect ratio
+
+copy=0		
+# copy=1	# add copies of original images to the output directory
+
+autocrop=0
+#autocrop=1	# autocrop images to fill full screen
+
+high_quality=1  # high quality enabled by default
+
+border=50  # add border of N pixels around images (filled by background image or color)
+
+sharpen=0  # change to 1 to enable image sharpening
+
+#subtitle_type=dvd   # use dvd subtitle track for subtitles
+subtitle_type=render # force subtitles to be rendered in video
+subtitle_font_size=36
+subtitle_font=bip.ttf
+subtitle_color="white"
+subtitle_outline_color="darkblue"
+subtitle_location="bottom"  # or, use "top"
+
+## Title:
+title_font=bip.ttf # Helvetical bold URW font
+title_font_size=48
+#title_font_color='#948568'  # or use hex "#RRGGBB"
+
+## top title:
+toptitle_font_size=48
+#toptitle_font_color=black # or use hex "#RRGGBB"
+toptitle_bar_height=125  # 0 for no 50% white behind text
+toptitle_text_location_x=80
+toptitle_text_location_y=40
+# bottom title:
+bottomtitle_font_size=36
+bottomtitle_font_color=black  # or use hex "#RRGGBB"
+bottomtitle_bar_location_y=156 # relative to bottom of image
+bottomtitle_bar_height=55  # 0 for no 50% white behind text
+bottomtitle_text_location_x=0
+bottomtitle_text_location_y=155
+
+kenburns_acceleration=2  # seconds of slow acceleration for kenburns
+# use 0 for no acceleration, or, use a percent of the effect time:
+# kenburns_acceleration=25%  # will accelerate for the first 25% of the effect.
+
+#######################################################################
+# dvd-menu config variables:
+#menu_continuous_play=0
+menu_continuous_play=1	# play one file after another without going back up to menu.
+
+menu_fadein=0	# fade in to menu
+menu_fadeout=0	# fade out from menu after a button is pressed.
+
+#menu_background=ct001452.jpg
+menu_background="#add8e6"	# use a hex RGB color if you wish
+#menu_background="mybackground.jpg"	# specify a real image if you want
+## pick other colors here: http://www.imagemagick.org/script/color.php
+
+menu_type=6images
+# menu_type=textbar
+
+#menu_fade_to_image=parchment.jpg
+
+menu_title_font=bip.ttf # Helvetical bold URW font
+menu_title_font_size=48
+menu_title_font_color="black"
+menu_title_white_height=125
+menu_title_location_x=70
+menu_title_location_y=50
+menu_title_justify=left
+
+# only used for "button text list" style menu
+menu_panel_mask=default	# use this in the future for a white background mask
+#menu_panel_mask=mymask.png  # not implemented yet.
+#menu_panel_height=28  # this should be tied to the fontsize!
+menu_panel_width=400
+menu_panel_location_x=420
+menu_panel_location_y=180  # distance of the top of the first menu item to the top of the screen
+
+menu_button_font=bip.ttf
+menu_button_font_size=24
+#menu_button_font_color="#948568"
+menu_button_font_color=black
+menu_button_hilight_color="darkblue"
+
+#menu_audio="Ecossaise in E-flat.mp3"
+

@@ -1,0 +1,11 @@
+wedding_table_sepia.jpg
+By Scott Dylewski, 2006
+Originally distributed as part of a dvd-slideshow theme.
+http://dvd-slideshow.sourceforge.net
+
+My intention is for this image to be freely available to any other open-source developers.  For this reason, I've licensed it under the "Creative Commons Attribution-ShareAlike" license.  
+This means you can copy, distribute, display, make derivative works, or use commercially this image ONLY IF YOU include the text of this document with the image OR if you attribute the image to Scott Dylewski and license it under this same license.  
+
+This is better described at http://creativecommons.org/licenses/by-sa/2.5/
+
+This work is licensed under the Creative Commons Attribution-ShareAlike 2.5 License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/2.5/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

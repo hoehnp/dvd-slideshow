@@ -49,6 +49,8 @@ changes ()
 echo 'Changes:
 0.8.0	
     New features & Changes:	
+	Fixed kenburns coordinates when passing numbered coordinates.
+	Add title and button information to .xml file automatically for dvd-menu use.
 	pre9:
 	Allow multiple \n in titles (up to 4)
 	Added variables subtitle_color, subtitle_outline_color, and subtitle_location
@@ -1829,12 +1831,18 @@ parse_window ()  # PARSE_WINDOW
 		x1=`echo "$1" | awk -F';' '{print $2}' | awk -F',' '{print $1}'`
 		y1=`echo "$1" | awk -F';' '{print $2}' | awk -F',' '{print $2}'`
 
+		## we also need to convert the x coordinates to the dvd aspect (non-square) pixel coordinates:
+		## fix provided by <add name>
+		x0=$(( $x0 * $sq_pixel_multiplier / 1000 ))
+		x1=$(( $x1 * $sq_pixel_multiplier / 1000 ))
+
 		# xi,yi already calculated
 		# now, the size of the image frame should be new_image_width x new_image_height
 		# This mode assumes the image is placed in the center of the dvd window to start.
 		
 		# width and height of area passed:
-		xw=$(( ( $x1 - $x0 ) * $sq_pixel_multiplier / 1000 )) ; yh=$(( $y1 - $y0 ))
+		xw=$(( ( $x1 - $x0 ) )) ; yh=$(( $y1 - $y0 ))
+		#xw=$(( ( $x1 - $x0 ) * $sq_pixel_multiplier / 1000 )) ; yh=$(( $y1 - $y0 ))
 
 		## make sure the image crop coordinates are not outside the image:
 		[ $xi -eq 0 ] && x0=$x0 || x0=$(( $x0 + $xi ))

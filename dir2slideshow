@@ -214,6 +214,7 @@ kenburns=0
 vcd=0; svcd=0
 theme=''
 themedir='/opt/dvd-slideshow/themes' # LSB/FHS compliant. see http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
+local_themedir=~/.dvd-slideshow/themes # location of local themes directory (do not use quotes)
 title_type='title'
 audio_list=''
 recursive_single=0
@@ -273,6 +274,17 @@ if [ -n "$theme" ] && [ "$theme" != 'default' ] ; then
 		# check in default theme directory:
 		if [ -d "$themedir"/"$theme" ] ; then
 			themedir="$themedir"/"$theme"
+			themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
+			if [ -z "$themefile" ] ; then
+				echo "[dir2slideshow] Found theme directory: $themedir"
+				echo "[dir2slideshow] ERROR: theme directory does not contain a .theme file!"
+				exit 1
+			else
+				echo "[dir2slideshow] setting theme file to $themefile"
+			fi
+		# check in local theme directory
+		elif [ -d "$local_themedir"/"$theme" ] ; then
+			themedir="$local_themedir"/"$theme"
 			themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
 			if [ -z "$themefile" ] ; then
 				echo "[dir2slideshow] Found theme directory: $themedir"
@@ -425,8 +437,6 @@ if [ "$kenburns" != "0" ] ; then
 		echo "[dir2slideshow]    assuming NTSC."
 		pal=0
 	fi
-else
-	pal=0
 fi
 
 if [ "$pal" -eq 1 ] ; then
@@ -634,7 +644,7 @@ elif [ -n "$title_background" ] ; then # either color local file
 fi
 
 check_rm "$outfile"
-if [ "$pal" -eq 1 ] ; then
+if [ "$pal" == "1" ] ; then
 	fileecho "pal=1"
 fi
 if [ -n "$themefile" ] ; then

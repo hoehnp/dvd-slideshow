@@ -687,6 +687,7 @@ default_fontname2='helb____.ttf' # helvetica bold truetype
 
 logfile='dvd-slideshow.log'
 themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant.  see: http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
+local_themedir=~/.dvd-slideshow/themes  # local theme directory
 
 ##################################################################################
 ## not user configurable:
@@ -1826,15 +1827,24 @@ parse_window ()  # PARSE_WINDOW
 		## in square pixel frame!!!
 		## we need to convert this to the buffered (dvd aspect ratio) 
 		## and non-square pixel coordinate system!!!	
+#	myecho "[dvd-slideshow:parse_window] numbered or explicit coorinates"
 		x0=`echo "$1" | awk -F';' '{print $1}' | awk -F',' '{print $1}'`
 		y0=`echo "$1" | awk -F';' '{print $1}' | awk -F',' '{print $2}'`
 		x1=`echo "$1" | awk -F';' '{print $2}' | awk -F',' '{print $1}'`
 		y1=`echo "$1" | awk -F';' '{print $2}' | awk -F',' '{print $2}'`
+		[ $debug -ge 3 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
+		if [ -z "$y1" ] ; then
+			myecho "[dvd-slideshow] ERROR: Incorrect coordinates. You probably got the syntax wrong:"
+			myecho "[dvd-slideshow] image.jpg:duration:subtitle:crop:x0,y0;x1,y1"
+			myecho "[dvd-slideshow] image.jpg:duration:subtitle:kenburns:xs0,ys0;xs1,ys1;xe0,ye0;xe1,ye1"
+			exit 1
+		fi
 
 		## we also need to convert the x coordinates to the dvd aspect (non-square) pixel coordinates:
 		## fix provided by <add name>
 		x0=$(( $x0 * $sq_pixel_multiplier / 1000 ))
 		x1=$(( $x1 * $sq_pixel_multiplier / 1000 ))
+		[ $debug -ge 3 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
 
 		# xi,yi already calculated
 		# now, the size of the image frame should be new_image_width x new_image_height
@@ -3063,7 +3073,11 @@ if [ -d "$themedir" ] ; then
 	echo "[dvd-slideshow] Using themes directory $themedir"
 	echo "[dvd-slideshow] Found built-in themes:"
 	find "$themedir"/ -maxdepth 2 -name "*.theme" -type f -print0 | xargs -0 ls
-#	echo "[dvd-slideshow] $themes"
+	if [ -d "$local_themedir" ] ; then
+		echo "[dvd-slideshow] Found local themes directory $local_themedir"
+		echo "[dvd-slideshow] Found local themes:"
+		find "$local_themedir"/ -maxdepth 2 -name "*.theme" -type f -print0 | xargs -0 ls
+	fi
         exit 0
 else
 	echo "[dvd-slideshow] Themes directory not found: $themedir"
@@ -3091,6 +3105,10 @@ if [ -n "$theme" ] ; then
                 # check in default theme directory:
                 if [ -d "$themedir"/"$theme" ] ; then
                         themedir="$themedir"/"$theme"
+                        themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
+                	[ "$noecho" == '0' ] && myecho "[dvd-slideshow] Using theme file $theme"
+                elif [ -d "$local_themedir"/"$theme" ] ; then
+                        themedir="$local_themedir"/"$theme"
                         themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
                 	[ "$noecho" == '0' ] && myecho "[dvd-slideshow] Using theme file $theme"
                 else
@@ -3132,6 +3150,27 @@ if [ -n "$theme" ] ; then
 	                fi
 	        fi
 	fi
+	# now, modify theme depending on ntsc/pal:
+	if [ -z "$theme_designed_for" ] ; then
+		theme_designed_for="ntsc"
+	fi
+	if [ "$theme_designed_for" == 'pal' ] && [ "$pal" == 0 ] ; then
+		# shift coordinates down by 96?
+		myecho "[dvd-slideshow] Theme designed for PAL.  Shifting coordinates to NTSC"
+	elif [ "$theme_designed_for" == 'ntsc' ] && [ "$pal" == 1 ] ; then
+		# shift coordinates down by 96?
+		myecho "[dvd-slideshow] Theme designed for NTSC.  Shifting coordinates to PAL"
+                #toptitle_bar_height=
+                #toptitle_text_location_y
+                # bottom title
+                #bottomtitle_font_size
+                #bottomtitle_font_color
+                #bottomtitle_bar_location_y
+                #bottomtitle_bar_height
+                #bottomtitle_text_location_y
+
+	fi
+		
 fi
 }
 
@@ -3212,6 +3251,7 @@ subtitle ()  # SUBTITLE
 ############################################# End of functions
 
 if [ "$print_themes" -eq 1 ] ; then
+	echo "[dvd-slideshow] Printing theme list..."
 	print_themes
 	exit 0
 fi
@@ -3228,10 +3268,9 @@ fi
 # make sure a slideshow name was given:
 if [ -z "$slideshow_name" ] ; then
 	slideshow_name="`basename "$input_txtfile" .txt`"
-#	echo "[dvd-slideshow] ERROR:  You must specify a slideshow name with -n <slideshow name>"
 	echo "[dvd-slideshow] Using default slideshow name: $slideshow_name"
-#	exit 1
 fi
+hilight_title="$slideshow_name"  # make default
 
 # verity output directory exists:
 if [ -z "$outdir" ] ; then
@@ -3835,6 +3874,7 @@ finish_progressbar $line $total_lines
 
 # check to see if any functions had errors:
 if [ $function_error -eq 1 ] ; then
+	myecho "[dvd-slideshow] Function error..."
 	cleanup
 	exit 1
 fi
@@ -4152,8 +4192,6 @@ myecho "[dvd-slideshow] Total audio length = $length_hms"
 myecho "[dvd-slideshow] Total video length = $video_time_hms"
 
 if [ ! -d "$outdir" ] ; then	
-#        myecho "ERROR... output directory does not exist!"
-#        exit
 	myecho "creating directory $outdir"
 	mkdir -p "$outdir"  # create directory
 fi
@@ -4271,7 +4309,7 @@ for file in "${image[@]}"; do
 		waitforfile "$tmpdir/audio$track"_"$audio_index_padded.wav" # last audio file
 		song_length_ms=`wavlength "$tmpdir/audio$track"_"$audio_index_padded.wav"`
 		if [ -z "$song_length_ms" ] ; then
-			myecho '# ERROR: You must have an audio track before a slide specifying "audio"'
+			myecho '[dvd-slideshow] ERROR: You must have an audio track before a slide specifying "audio"'
 			cleanup; exit 1
 		fi
 		duration[$i]="$song_length_ms"  # duration in thousandths of a sec.
@@ -4674,7 +4712,10 @@ for file in "${image[@]}"; do
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Fadein Subtitle= ${subtitle[$i]}"
 		nextslide=`nextslidename`
 		increment=`nextslideincrement`
-		[ -z "$increment" ] && ( cleanup ; exit 0 )
+		if [ -z "$increment" ] ; then
+			myecho "[dvd-slideshow] ERROR: no next slide found to fadein to!"
+			cleanup ; exit 1
+		fi
 		nextslide_effect="${effect1[$i+$increment]}"
 		check_rm "$tmpdir/slide_$(($i+$increment)).ppm" # make sure it doesn't already exist!
 		## we need to prepare the NEXT image now:
@@ -4803,13 +4844,15 @@ for file in "${image[@]}"; do
 #		progressbar_fr=0 ; progrssbar_frames=0
 		nextslide=`nextslidename`
 		if [ -z "$nextslide" ] ; then
-			cleanup ; exit 0 
+			myecho "[dvd-slideshow] ERROR: No next slide to crossfade to!"
+			cleanup ; exit 1 
 		fi
 		increment=`nextslideincrement` 
 		nextslide_effect="${effect1[$i+$increment]}"
 		previous_increment="`previousslideincrement`"
 		if [ -z "$previous_increment" ] ; then 
-			cleanup ; exit 0 
+			myecho "[dvd-slideshow] ERROR: No previous slide to crossfade from!"
+			cleanup ; exit 1 
 		fi
 		previousslide_effect="${effect1[$i-$previous_increment]}"
 		next_effect_increment=`nexteffectincrement`
@@ -5006,7 +5049,8 @@ for file in "${image[@]}"; do
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Fadeout Subtitle= ${subtitle[$i]}"
 		previous_increment="`previousslideincrement`"
 		if [ -z "$previous_increment" ] ; then 
-			cleanup ; exit 0 
+			myecho "[dvd-slideshow] ERROR: No previous slide to fadeout from"
+			cleanup ; exit 1 
 		fi
 		previousslide_effect="${effect1[$i-$previous_increment]}"
 		previous_frames=0; 
@@ -5106,13 +5150,15 @@ for file in "${image[@]}"; do
 #		progressbar_fr=0 ; progrssbar_frames=0
 		nextslide=`nextslidename`
 		if [ -z "$nextslide" ] ; then
-			cleanup ; exit 0 
+			myecho "[dvd-slideshow] ERROR: No next slide to wipe to!"
+			cleanup ; exit 1 
 		fi
 		increment=`nextslideincrement` 
 		nextslide_effect="${effect1[$i+$increment]}"
 		previous_increment="`previousslideincrement`"
 		if [ -z "$previous_increment" ] ; then 
-			cleanup ; exit 0 
+			myecho "[dvd-slideshow] ERROR: No previous slide to wipe from"
+			cleanup ; exit 1 
 		fi
 		previousslide_effect="${effect1[$i-$previous_increment]}"
 		previousslide="${image[$i-$previous_increment]}"

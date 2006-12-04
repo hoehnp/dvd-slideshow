@@ -18,7 +18,7 @@
 #
 
 name='dvd-menu'
-version='0.8.0-pre9'
+version='0.8.0-pre10'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
@@ -41,7 +41,7 @@ echo 'Changes:
 	Added 6image layout option.  It can also read the title and icon from
 	  the .xml file output from dvd-slideshow.  more testing and polish is needed.
 	Added many more variables to control the layout of the menu also.
-
+	pre8:
 	Added -vcd and -svcd modes.  Works!  tested -vcd a little.
 	Audio automatically fades in/out for 2 seconds
 	Reads variables correctly from ~/.dvd-slideshowrc	
@@ -579,6 +579,11 @@ if [ -n "$theme" ] ; then
                         themedir="$themedir"/"$theme"
                         themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
                 	[ "$noecho" == '0' ] && myecho "[dvd-menu] Using theme file to $(truncate_filename "$themefile")"
+                # check in local theme directory:
+                elif [ -d "$local_themedir"/"$theme" ] ; then
+                        themedir="$local_themedir"/"$theme"
+                        themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
+                	[ "$noecho" == '0' ] && myecho "[dvd-menu] Using theme file to $(truncate_filename "$themefile")"
                 else
                         [ "$noecho" == '0' ] && myecho "[dvd-menu] ERROR!  Bad theme name (not found)"
                         exit 1
@@ -838,6 +843,7 @@ high_quality=0
 vcd=0 ; svcd=0
 widescreen=0
 themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant:  see http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
+local_themedir=~/.dvd-slideshow/themes  # local theme directory
 fadein=0
 fadeout=0
 fade_to_image=''

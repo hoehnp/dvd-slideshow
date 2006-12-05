@@ -7,22 +7,13 @@ sepiatone effect?
 B&W effect?  (or should we have these effects done before?)
 add image overlay function to overlay same image (logo or text?) on each image
 add text overlay function to overlay text on next image.
-Random Kenburns effect (done in dir2slideshow?)
-themes:  wedding, vacation, etc & documentation
 developer notes summarizing the crop/zoom kenburns effect stuff
 different background types? (gradient, etc)
 bi-linear interpolation for kenburns effect.
-fadein/fadeout at same time as kenburns effect
-crossfade during kenburns effects
 kenburns with rotation
 wrap text on titles
 allow user to pass mpeg, but then we need to resample them! (use tovid?)
 chapter selection menus?
-Better color handling for text and such
-Add text options to title slides
-configuration keywords for:
-	text color
-	output directory
 text: keyword for overlaying text anywhere on the screen
 	this would use the same keywords as the kenburns effect.
 
@@ -36,7 +27,5 @@ text-file input for menus
 allow sub-menus.
 
 Other:
-0.7.3 examples
 explain pixel aspect ratio resizing.
-explain log-zoom on kenburns
-better error info when things like oggdec are not found.
+explain acceleration on kenburns

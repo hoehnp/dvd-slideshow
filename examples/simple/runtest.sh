@@ -10,6 +10,7 @@ check_rm () {
 echo "[runtest.sh] Removing old files..."
 check_rm simple.xml
 check_rm simple.vob
+check_rm simple.flv
 check_rm dvd-slideshow.log
 check_rm dvd-menu.log
 check_rm vmgm.xml

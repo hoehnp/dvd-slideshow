@@ -11,14 +11,14 @@ background:1::
 titlebar:5:My top title:My lower title
 background:1::
 #  there are simple transitions that you can use:
-# fadein, fadeout, and crossfade. Fadein and Fadeout will
+# fadein, fadeout, crossfade, and wipe. Fadein and Fadeout will
 # fade to/from whatever background you're using.  Syntax is:
 # fadein:duration:subtitle
 # One confusing part (new in 0.8.0) is that the transitions will
 # be applied to the previous or next image, but they do not add
 # additional time to the slideshow.  Examples:
 # fadein:1 # this will be applied to the next real image
-# fadeout:1 # this will be applied to teh previous real image
+# fadeout:1 # this will be applied to the previous real image
 # crossfade:1 	# this will overlap the last and next images by 1 second.
 # You can add a subtitle during the transition, but it's optional
 # use a backslash to escape a colon ':in the subtitles.
@@ -43,7 +43,9 @@ background:2.5::#11a004
 # or
 background:2.5::black
 ../images/picture1.jpg:5:Picture 1 is so cool.  I can't believe how cool it really is.
-crossfade:1::
+# wihpe works similar to crossfade
+# wipe:duration:subtitle
+wipe:1::
 ../images/picture2.jpg:5:
 # it often looks nice to end the slideshow with a fadeout to the
 # background instead of just stopping the video quickly:

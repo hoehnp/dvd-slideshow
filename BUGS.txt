@@ -1,5 +1,15 @@
 Known bugs:
 
+0.8.0
+
+0.7.6
+
+0.7.5
+
+0.7.4
+
+0.7.3
+
 0.7.2
 Subtitle timings can be off
 Fadein to a first slide that is a "scroll" effect problem

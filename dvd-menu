@@ -866,7 +866,7 @@ do
         -mp2) shift; commandline_ac3=0 ;;  # use mp2 audio
 	## not config variables:
 	-t) shift ; title[$n]="${1}"; let n=$n+1; shift ;;  # each title
-	-f) shift ; xmlfile[$m]="${1}"; let m=$m+1; shift ;;  # each titleset
+	-f) shift ; xmlfile[$m]="$1"; let m=$m+1; shift ;;  # each titleset
 	-e) shift ; embedfile[$p]="${1}"; let p=$p+1; shift ;;  # the menu hilight images
 	-button) shift ; buttonfile[$q]="${1}"; let q=$q+1; shift ;;  # each button hilight images
         -u) shift; upAction="1" ;;
@@ -910,29 +910,35 @@ if [ -z "$outdir" ] ; then
         fi
 fi
 
-if [ -z "$xmlfile" ] ; then
+if [ -z "$xmlfile" ] && [ -n "$1" ] ; then
+	echo "using xml file $1".
 	xmlfile="$1"
-	if [ -z "$xmlfile" ] ; then
-		echo "[dvd-menu] ERROR: No xml file passed."
-		echo "[dvd-menu] use -f <filename> to pass a .xml, .vob, or .mpg file"
-		exit 1
-	fi
+#	if [ -z "$xmlfile" ] ; then
+#		echo "[dvd-menu] ERROR: No xml file passed."
+#		echo "[dvd-menu] use -f <filename> to pass a .xml, .vob, or .mpg file"
+#		exit 1
+#	fi
 fi
 		
 for it in "${xmlfile[@]}"; do
 	# verify xml file exists:
-	if [ ! -r "$it" ] ; then
+	echo "xmlfile=$it"
+	if [ -n "$it" ] && [ ! -r "$it" ] ; then
 		echo "[dvd-menu] ERROR: XML file $it does not exist."
 		exit 1
 	fi
 done
 
 # verify that the number of buttons (-t) is equal to the number of files (-f)
-if [ ${#xmlfile[@]} -ne ${#title[@]} ] ; then
-		echo "[dvd-menu] ERROR:  The number of buttons does not match the number of files!"
-		echo "[dvd-menu] buttons=${title[@]}"
-		echo "[dvd-menu] files=${xmlfile[@]}"
-		exit 1
+echo "xmlfiles=${#xmlfile[@]}"
+echo "xmlfiles=${xmlfile[@]}"
+if [ "${#xmlfile[@]}" -ge 1 ] ; then
+	if [ ${#xmlfile[@]} -ne ${#title[@]} ] ; then
+			echo "[dvd-menu] ERROR:  The number of buttons does not match the number of files!"
+			echo "[dvd-menu] buttons=${title[@]}"
+			echo "[dvd-menu] files=${xmlfile[@]}"
+			exit 1
+	fi
 fi
 
 ## initialize log file:

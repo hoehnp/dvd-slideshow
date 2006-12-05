@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.0-pre9'
+version='0.8.0-pre10'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -49,6 +49,9 @@ changes ()
 echo 'Changes:
 0.8.0	
     New features & Changes:	
+	pre10:
+	Added -size to resize calls for potential speedup.
+	Crossfade skips every other frame in normal mode for speedup.
 	Fixed kenburns coordinates when passing numbered coordinates.
 	Add title and button information to .xml file automatically for dvd-menu use.
 	pre9:
@@ -364,6 +367,8 @@ Options:
 
  [-theme <themefile>]
  	Use the given theme when setting variables/colors/etc.
+	Themes are installed in /opt/dvd-slideshow/themes or
+	in a local directory ~/.dvd-slideshow/themes
 
  [-border N]
  	Make a border of N pixels around each image.  
@@ -2250,25 +2255,40 @@ kenburns ()  # KENBURNS
 #		[ $debug -ge 0 ] && myecho "[dvd-slideshow:kenburns] Pan/zoom uses $c_width x $c_height of original $image_width x $image_height image"
 #		did_resize=0
 
+		## adjust step size: ##############################
+		if [ "$low_quality" -eq 1 ] ; then
+			stepsize=3
+			interp=0
+			enable_kenburns_resize=1
+		elif [ "$high_quality" -eq 1 ] ; then
+			stepsize=1
+			interp=1
+			enable_kenburns_resize=1
+		else
+			stepsize=1
+			interp=0  # fix this for now?
+			enable_kenburns_resize=1
+		fi
+
 		# check original image width and height.  if too large,
 		# then make it smaller!
 		factorx=$(( 1000 * $image_width / $dvd_width ))
 		factory=$(( 1000 * $image_height / $dvd_height ))
 		maxfactor=$( max $factorx $factory )
-		if [ "$maxfactor" -gt 1500 ] && [ $enable_kenburns_resize == 1 ] ; then
+		if [ "$maxfactor" -gt 1500 ] && [ "$enable_kenburns_resize" == 1 ] ; then
 			# scale image down for better speed
 			if [ "$maxfactor" == "$factorx" ] ; then	
-				echo "factorx"
-				resize='-resize '$dvd_width'x'
-				resized_x=$dvd_width
+				newsize=$(( 1 * $dvd_width ))
+				resize='-resize '$newsize'x'
+				resized_x=$newsize
 				resized_y=$(( 10 * $resized_x * $image_height / $image_width ))
 				echo "resized_y*10=$resized_y"
 				resized_y=$( div10 $(( 10 * $resized_x * $image_height / $image_width )) )
 			else
-				echo "factory"
-				resize='-resize x'$dvd_height
+				newsize=$(( 1 * $dvd_height ))
+				resize='-resize x'$newsize
 				# resized_x / resized_y = imagewidth_x / imagewidth_y
-				resized_y=$dvd_height
+				resized_y=$newsize
 				resized_x=$(( $resized_y * $image_width / $image_height ))
 				echo "resized_x*10=$resized_x"
 				resized_x=$( div10 $(( 10 * $resized_y * $image_width / $image_height )) )
@@ -2295,17 +2315,6 @@ echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 ys0=$ys0 ye0=$ye0"
 
 		############################ end crop/resize large images
 
-		## adjust step size: ##############################
-		if [ "$low_quality" -eq 1 ] ; then
-			stepsize=3
-			interp=0
-		elif [ "$high_quality" -eq 1 ] ; then
-			stepsize=1
-			interp=1
-		else
-			stepsize=1
-			interp=0  # fix this for now?
-		fi
 #		echo 'x0,y0,x1,y1,xcenter,ycenter,xwidth,yheight,xc0,yc0,c_width,c_height' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,iwn,ihn,predicted_resized_width,predicted_resized_height,xc0_dec,yc0_dec' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,predicted_resized_width,predicted_resized_height' > kenburns_coordinates.csv
@@ -2749,6 +2758,9 @@ duration2frames ()
 	local time_to_render=$(( $total_slideshow_time - $this_start_time ))
 	local total_slideshow_frames=`div1000 $(( $frames_per_ms * $total_slideshow_time / 1000 ))`
 	local frames=$(( $total_slideshow_frames - $this_start_frame ))
+	if [ "$frames" -le 2 ] ; then
+		frames=2
+	fi
 	echo "$frames"
 }
 
@@ -2820,11 +2832,11 @@ create_slide ()
 	fi
 	checkforautocrop "$file"	
 	if [ "$do_autocrop_h" -eq 1 ] ; then
-		convert "$file" -resize "$sq_to_dvd_pixels" -resize "$frame_width"x -type TrueColor -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen $postprocess +repage miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
+		convert -size "$frame_width"x"$frame_height" "$file" -resize "$sq_to_dvd_pixels" -resize "$frame_width"x -type TrueColor -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen $postprocess +repage miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
 	elif [ "$do_autocrop_w" -eq 1 ] ; then
-		convert "$file" -resize "$sq_to_dvd_pixels" -resize x"$frame_height" -type TrueColor -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen $postprocess +repage miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
+		convert -size "$frame_width"x"$frame_height" "$file" -resize "$sq_to_dvd_pixels" -resize x"$frame_height" -type TrueColor -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen $postprocess +repage miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
 	else
-		convert "$file" -resize "$sq_to_dvd_pixels" -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 $sharpen $postprocess miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
+		convert -size "$frame_width"x"$frame_height" "$file" -resize "$sq_to_dvd_pixels" -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 $sharpen $postprocess miff:- | composite -compose src-over -gravity center -type TrueColor -depth 8 - "$bg" "$output_file"
 	fi
 }
 
@@ -2850,10 +2862,10 @@ scroll ()  # SCROLL
 	## calculate frame size after adding black side bars for portrait pictures:
 	if [ $image_width -gt $image_height ] ; then
 		# landscape:  (for scroll left/right)
-		convert "$l_file" -resize "$sq_to_dvd_pixels" -resize x"$frame_height" +repage $sharpen -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc		
+		convert -size "$frame_width"x"$frame_height" "$l_file" -resize "$sq_to_dvd_pixels" -resize x"$frame_height" +repage $sharpen -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc		
 	else
 		# portrait:  (for scroll up/down )
-		convert "$l_file" -resize "$sq_to_dvd_pixels" -resize "$frame_width" +repage $sharpen -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc		
+		convert -size "$frame_width"x"$frame_height" "$l_file" -resize "$sq_to_dvd_pixels" -resize "$frame_width" +repage $sharpen -type TrueColor -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc		
 	fi
 
 	# now the image is scaled so the height is correct
@@ -4749,7 +4761,7 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i+$increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
+			convert -size "$frame_width"x"$frame_height" "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then  # if next picture has kenburns effect
 			myecho "[dvd-slideshow] Pre-rendering kenburns effect for fadein..."
 			[ -f "$tmpdir"/fade_0001.ppm ] && \rm "$tmpdir"/fade_????.ppm  # remove any old files
@@ -4934,7 +4946,7 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i+$increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
+			convert -size "$frame_width"x"$frame_height" "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering next kenburns effect for crossfade..."
@@ -4983,7 +4995,7 @@ for file in "${image[@]}"; do
 			stepsize=1
 			myecho "[dvd-slidsehow] Crossfading..."
 		else
-			stepsize=1
+			stepsize=2
 		fi
 		## convert ppm to mpc for better speed?:
 #		convert "$tmpdir/slide_$(($i+1)).ppm" -type TrueColor -depth 8 "$tmpdir/slide_$(($i+1)).mpc"
@@ -5202,7 +5214,7 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i-$previous_increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			convert "${image[$i-$previous_increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
+			convert -size "$frame_width"x"$frame_height" "${image[$i-$previous_increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$transparent_bg" "$last_outfile"
 			no_effects=1
 		elif [ "$previousslide_effect" == 'kenburns' ] ; then
@@ -5275,7 +5287,7 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i+$increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
-			convert "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
+			convert -size "$frame_width"x"$frame_height" "${image[$i+$increment]}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$transparent_bg" "$next_outfile"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then
 			myecho "[dvd-slideshow] Rendering next kenburns effect for wipe..."
@@ -5556,7 +5568,7 @@ for file in "${image[@]}"; do
 			mycrop  # takes the parameters from <parse_window> and returns: 
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow] Crop $c_width"x"$c_height"+"$xc0"+"$yc0 composite" +"$xci"+$yci
 			## now, do the actual crop:
-			convert "${file}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
+			convert -size "$frame_width"x"$frame_height" "${file}" -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
 			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 #			echo "subtitle1=${subtitle1[$i]}"
 			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then

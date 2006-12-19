@@ -17,13 +17,15 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.0-pre9'
+version='0.8.0-pre10'
 
 changes () 
 {
 echo 'Changes:
 0.8.0 	
+	Add audiobook option- looks for audio files and images & adds titles
 	Allow wipe effect as default between images -w duration
+	Allow decimals in crossfade duration.
 	Allow two different subtitles -s or -s2
 	Add random kenburns effect (-k)
 	Output file is copied to screen while running
@@ -93,8 +95,8 @@ Options:
  		
  [-s "subtitle text"]
 	  Add default subtitle "subtitle_text" to every slide
-	  Use "-s filename" to display filename as subtitle.
-	  Use "-s path" to display filename&path as subtitle.
+	  Use "-s filename" to display filename as the subtitle.
+	  Use "-s path" to display filename&path as the subtitle.
 
  [-s2 "subtitle text"]
 	  Same as -s option, but adds subtitles to subtitle track 2
@@ -123,6 +125,11 @@ Options:
 	  Files will be played sequentially for the duration of 
 	  the slideshow. Use quotes if you have spaces in filenames.
  		
+ [-B]  Use audiobook format.  This will look for individual audio files
+	along with images, and also add titles.  You wil probably have to
+	modify the output to your liking, but this should give you a start.
+	(alpha!) do not use yet.
+
  -h or -help 
    Prints this help. 
 '
@@ -172,6 +179,7 @@ set_variables ()
 		subtitle) subtitle="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle=$subtitle" ;;
 		subtitle2) subtitle2="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle2=$subtitle2" ;;
 		slideshow_end) slideshow_end[$end]="$config2" ; [ "$noecho" -eq 0 ] && echo "slideshow_end[$end]=${slideshow_end[$end]}"; end=$(($end+1)) ;;
+		audiobook) audiobook="$config2" ; [ "$noecho" -eq 0 ] && echo "audiobook=$audiobook" ;;
 	esac
 }
 
@@ -210,6 +218,7 @@ sortmethod=''
 title=1
 background=''
 title_background=''
+audiobook=0
 kenburns=0
 vcd=0; svcd=0
 theme=''
@@ -231,6 +240,7 @@ do
 	-b) shift; commandline_background="$1" ; shift ;;
 	-tb) shift; commandline_title_background="$1" ; shift ;;
 	-notitle) commandline_title=0 ; shift ;;
+	-B) commandline_audiobook=1 ; shift ;;
 	-k) commandline_kenburns=1 ; shift ;;
 	-r) commandline_recursive_single=1 ; shift ;;
 	-R) commandline_recursive_multiple=1 ; shift ;;
@@ -324,6 +334,7 @@ fi
 [ -n "$commandline_audio_list" ] && audio_list="$commandline_audio_list"
 [ -n "$commandline_recursive_single" ] && recursive_single="$commandline_recursive_single"
 [ -n "$commandline_recursive_multiple" ] && recursive_multiple="$commandline_recursive_multiple"
+[ -n "$commandline_audiobook" ] && audiobook="$commandline_audiobook"
 
 if [ -z "$input_dir" ] ; then
 	input_dir="$1"
@@ -356,7 +367,7 @@ checkforprog ()
 cleanup ()
 {
 	## clean up temporary files
-	check_rm "$output_dir"/filelist.txt
+	check_rm "$output_dir"/imagelist.txt
 	check_rm "$output_dir/filelist_sorted.txt"
 	echo "[dir2slideshow] Done!"
 }
@@ -439,7 +450,7 @@ if [ "$kenburns" != "0" ] ; then
 	fi
 fi
 
-if [ "$pal" -eq 1 ] ; then
+if [ "$pal" == 1 ] ; then
         framerate='25'
         frames_per_sec=25000  # in ms
         if [ "$vcd" -eq 1 ] ; then
@@ -533,9 +544,16 @@ fi
 
 ## get the total number of pictures:
 if [ "$recursive_single" == 1 ] ; then
-	find "$input_dir" -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/filelist.txt
-	pictures=`wc -l "$output_dir"/filelist.txt | awk '{print $1}'`
+	find "$input_dir" -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
+	find "$input_dir" -type f \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
+	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
+	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
+	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
+	echo "[dir2slideshow] Total audio files found = $audiofiles"
+	echo "[dir2slideshow] Total text files found = $txtfiles"
+	## now, join the audio files and images:
 elif [ "$recursive_multiple" == 1 ] ; then
 	echo "not supported yet"; exit 1
 	# do find, then check each file if it is a directory:
@@ -560,9 +578,24 @@ elif [ "$recursive_multiple" == 1 ] ; then
 #	echo Total files: $file
 #	echo Total: $total
 else
-	ls -1 "$input_dir"/*.jpg "$input_dir"/*.JPG "$input_dir"/*.jpeg "$input_dir"/*.png "$input_dir"/*.PNG > "$output_dir"/filelist.txt 2>/dev/null
-	pictures=`wc -l "$output_dir"/filelist.txt | awk '{print $1}'`
+	find "$input_dir" -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
+	find "$input_dir" -type f \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
+	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
+	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
+	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
+	echo "[dir2slideshow] Total audio files found = $audiofiles"
+	echo "[dir2slideshow] Total text files found = $txtfiles"
+	## now, join the audio files and images:
+	if [ "$audiobook" == 1 ] ; then
+		cat "$output_dir"/imagelist.txt "$output_dir"/audiolist.txt | sort > "$output_dir"/filelist.txt
+		mv "$output_dir"/filelist.txt "$output_dir"/imagelist.txt
+		sortmethod=''
+	fi
+#	ls -1 "$input_dir"/*.jpg "$input_dir"/*.JPG "$input_dir"/*.jpeg "$input_dir"/*.png "$input_dir"/*.PNG > "$output_dir"/filelist.txt 2>/dev/null
+#	pictures=`wc -l "$output_dir"/filelist.txt | awk '{print $1}'`
+#	echo "[dir2slideshow] Total pictures found = $pictures"
 fi
 
 # make sure we found some images:
@@ -573,13 +606,13 @@ fi
 
 ## sort the pictures:
 
+echo "[dir2slideshow] Sorting pictures..."
 if [ "$sortmethod" == 'taken_date' ] ; then
 	## sort by taken date:
 	checkforprog jhead
 	check_rm "$output_dir"/filelist_date.txt
-#	for i in `seq $pictures`; do
 	for (( i=1 ; i<=pictures ; i++ )) ; do
-		file=`sed -n "$i"p "$output_dir"/filelist.txt`
+		file=`sed -n "$i"p "$output_dir"/imagelist.txt`
 		taken=`jhead "$file" | grep 'Date/Time' | awk -F': ' '{print $2}'`
 		modified=`jhead "$file" | grep 'File date' | awk -F': ' '{print $2}'`
 		if [ -n "$taken" ] ; then
@@ -596,9 +629,8 @@ if [ "$sortmethod" == 'taken_date' ] ; then
 elif [ "$sortmethod" == 'modified_date' ] ; then
 	## sort by modified date
 	check_rm "$output_dir"/filelist_date.txt
-#	for i in `seq $pictures`; do
 	for (( i=1 ; i<=pictures ; i++ )) ; do
-		file=`sed -n "$i"p "$output_dir"/filelist.txt`
+		file=`sed -n "$i"p "$output_dir"/imagelist.txt`
 		modified_day=`ls -l --full-time "$file" | awk '{print $6}'`
 		modified_time=`ls -l --full-time "$file" | awk '{print $7}'`
 #		echo "modified_day=$modified_day"
@@ -609,11 +641,9 @@ elif [ "$sortmethod" == 'modified_date' ] ; then
 	sort -k 2,3 -d "$output_dir"/filelist_date.txt > "$output_dir"/filelist_sorted.txt
 else
 	## sort by name (should be done by ls -l)
-	mv "$output_dir"/filelist.txt "$output_dir"/filelist_sorted.txt	
+	mv "$output_dir"/imagelist.txt "$output_dir"/filelist_sorted.txt	
 fi
 check_rm "$output_dir"/filelist_date.txt
-
-echo "[dir2slideshow] Sorting pictures..."
 
 ## main loop:
 # kenburns constants:
@@ -703,123 +733,137 @@ if [ -n "$audio_list" ] ; then
 fi
 fileecho "fadein:1"
 
+total_lines=`wc -l "$output_dir"/filelist_sorted.txt | awk '{print $1}'`
 j=0
-#for i in `seq $pictures`; do
-for (( i=1 ; i<=pictures ; i++ )) ; do
+chapter=1
+for (( i=1 ; i<=total_lines ; i++ )) ; do
 	file="`sed -n "$i"p "$output_dir"/filelist_sorted.txt | awk -F: '{print $1}'`"
 	file="`full_path "$file"`"
+	filetype=$( echo "$file" | awk -F. '{print $NF}')
 	## write to file:
-	if [ "$kenburns" == "1" ] ; then
-#		autocrop_percent "$file"
-		autocrop_size_percent=`autocrop_percent "$file"`
-		if [ "$autocrop_size_percent" -lt "$min_kb_size_percent" ] ; then
-			# probably a portrait image, don't do auto kenburns?
-			kenburns_args=""
-#			echo "autocrop_size_percent=$autocrop_size_percent"
-		else	
-			# use autocrop as largest crop possible
-			large_kb_size_percent="$autocrop_size_percent"
-			if [ "$large_kb_size_percent" -gt "$min_kb_size_percent" ] ; then 
-				delta_kb_size_percent=$(( $large_kb_size_percent - $min_kb_size_percent ))
-				small_kb_size_percent=$min_kb_size_percent
-			else
-				delta_kb_size_percent=1
-				small_kb_size_percent=$min_kb_size_percent
-			fi
-			# generate random start and end between these two limits:
-			myrand="$RANDOM"
-#			echo "$(( $myrand % $delta_kb_size_percent ))"
-			# note $(( $RANDOM % number )) gives a random number (reminder)
-			# between 0 and number
-			kb_start=$(( $myrand % $delta_kb_size_percent + $small_kb_size_percent ))
-			
-			# zoom doesn't look that smooth, so don't use it!
-			# randomly choose between zoom and pan:
-#			zoom_or_pan=$(( $RANDOM % 2 ))
-#			echo "zoom_or_pan=$zoom_or_pan"
-			zoom_or_pan=0
-			if [ $zoom_or_pan -eq 1 ] ; then
-				# do zoom
-				kb_end=$(( $RANDOM % $delta_kb_size_percent + $small_kb_size_percent ))
-				kenburns_args="kenburns:$kb_start%;50%,50%;$kb_end%;50%,50%"
+	if [ "$filetype" == 'mp3' ] ; then
+		if [ "$audiobook" == 1 ] ; then
+			fileecho "$file:1"
+			book_title="$name_converted"
+			fileecho "titlebar:audio:$book_title:Chapter $chapter"
+			chapter=$(( $chapter + 1 ))
+		else
+			fileecho "$file:1"
+		fi
+	elif [ "$filetype" == 'txt' ] ; then
+		echo "found text file"
+	else
+		if [ "$kenburns" == "1" ] ; then
+			autocrop_size_percent=`autocrop_percent "$file"`
+			if [ "$autocrop_size_percent" -lt "$min_kb_size_percent" ] ; then
+				# probably a portrait image, don't do auto kenburns?
+				kenburns_args=""
+	#			echo "autocrop_size_percent=$autocrop_size_percent"
 			else	
-				# do pan
-				# now get horizontal and vertical movement for START:
-				if [ "$autocrop_size_percent" -gt "$kb_start" ] ; then
-					range=$(( $autocrop_size_percent - $kb_start ))
+				# use autocrop as largest crop possible
+				large_kb_size_percent="$autocrop_size_percent"
+				if [ "$large_kb_size_percent" -gt "$min_kb_size_percent" ] ; then 
+					delta_kb_size_percent=$(( $large_kb_size_percent - $min_kb_size_percent ))
+					small_kb_size_percent=$min_kb_size_percent
 				else
-					range=$(( $kb_start - $autocrop_size_percent ))
+					delta_kb_size_percent=1
+					small_kb_size_percent=$min_kb_size_percent
 				fi
-#				echo "autocrop=$autocrop_size_percent range=$range"
-				small_kb_percent=$(( 50 - $range/2 ))	
-				kb_x_start=$(( $RANDOM % $range + $small_kb_percent ))
-				kb_x_end=$(( $RANDOM % $range + $small_kb_percent ))
-				kb_y_start=$(( $RANDOM % $range + $small_kb_percent ))
-				kb_y_end=$(( $RANDOM % $range + $small_kb_percent ))
-				xrange=$(( $kb_x_start - $kb_x_end ))
-				[ "$xrange" -lt 0 ] && xrange=$(( -1 * $xrange ))
-				yrange=$(( $kb_y_start - $kb_y_end ))
-				[ "$yrange" -lt 0 ] && yrange=$(( -1 * $yrange ))
-				# make sure values are not the same?
-#echo "trying: 	kenburns:$kb_start%;$kb_x_start%,$kb_y_start%;$kb_start%;$kb_x_end%,$kb_y_end%"
-				if [ $kb_x_start -eq $kb_x_end ] && [ $kb_y_start -eq $kb_y_end ] ; then
-					kenburns_args=''
-				elif [ $(( $kb_x_start - $kb_x_end )) -le 1 ] && [ $(( $kb_y_start - $kb_y_end )) -le 1 ] ; then
-					kenburns_args=''
-				else
-					kenburns_args="kenburns:$kb_start%;$kb_x_start%,$kb_y_start%;$kb_start%;$kb_x_end%,$kb_y_end%"
+				# generate random start and end between these two limits:
+				myrand="$RANDOM"
+	#			echo "$(( $myrand % $delta_kb_size_percent ))"
+				# note $(( $RANDOM % number )) gives a random number (reminder)
+				# between 0 and number
+				kb_start=$(( $myrand % $delta_kb_size_percent + $small_kb_size_percent ))
+				
+				# zoom doesn't look that smooth, so don't use it!
+				# randomly choose between zoom and pan:
+	#			zoom_or_pan=$(( $RANDOM % 2 ))
+	#			echo "zoom_or_pan=$zoom_or_pan"
+				zoom_or_pan=0
+				if [ $zoom_or_pan -eq 1 ] ; then
+					# do zoom
+					kb_end=$(( $RANDOM % $delta_kb_size_percent + $small_kb_size_percent ))
+					kenburns_args="kenburns:$kb_start%;50%,50%;$kb_end%;50%,50%"
+				else	
+					# do pan
+					# now get horizontal and vertical movement for START:
+					if [ "$autocrop_size_percent" -gt "$kb_start" ] ; then
+						range=$(( $autocrop_size_percent - $kb_start ))
+					else
+						range=$(( $kb_start - $autocrop_size_percent ))
+					fi
+	#				echo "autocrop=$autocrop_size_percent range=$range"
+					small_kb_percent=$(( 50 - $range/2 ))	
+					kb_x_start=$(( $RANDOM % $range + $small_kb_percent ))
+					kb_x_end=$(( $RANDOM % $range + $small_kb_percent ))
+					kb_y_start=$(( $RANDOM % $range + $small_kb_percent ))
+					kb_y_end=$(( $RANDOM % $range + $small_kb_percent ))
+					xrange=$(( $kb_x_start - $kb_x_end ))
+					[ "$xrange" -lt 0 ] && xrange=$(( -1 * $xrange ))
+					yrange=$(( $kb_y_start - $kb_y_end ))
+					[ "$yrange" -lt 0 ] && yrange=$(( -1 * $yrange ))
+					# make sure values are not the same?
+	#echo "trying: 	kenburns:$kb_start%;$kb_x_start%,$kb_y_start%;$kb_start%;$kb_x_end%,$kb_y_end%"
+					if [ $kb_x_start -eq $kb_x_end ] && [ $kb_y_start -eq $kb_y_end ] ; then
+						kenburns_args=''
+					elif [ $(( $kb_x_start - $kb_x_end )) -le 1 ] && [ $(( $kb_y_start - $kb_y_end )) -le 1 ] ; then
+						kenburns_args=''
+					else
+						kenburns_args="kenburns:$kb_start%;$kb_x_start%,$kb_y_start%;$kb_start%;$kb_x_end%,$kb_y_end%"
+					fi
 				fi
 			fi
-		fi
-	else
-		kenburns_args=""
-	fi
-	if [ -n "$subtitle" ] ; then
-		if [ "$subtitle" == 'filename' ] ; then
-			# use name as the subtitle
-			subtitle_text="$( basename "$file" )"
-		elif [ "$subtitle" == 'path' ] ; then
-			# use full filename and path as subtitle (truncate?)
-			subtitle_text="$file"
 		else
-			subtitle_text="$subtitle"
+			kenburns_args=""
 		fi
-	else
-		subtitle_text=''
-	fi	
-
-	if [ -n "$subtitle2" ] ; then
-		if [ "$subtitle2" == 'filename' ] ; then
-			# use name as the subtitle2
-			subtitle2_text="$( basename "$file" )"
-		elif [ "$subtitle2" == 'path' ] ; then
-			# use full filename and path as subtitle2 (truncate?)
-			subtitle2_text="$file"
+		if [ -n "$subtitle" ] ; then
+			if [ "$subtitle" == 'filename' ] ; then
+				# use name as the subtitle
+				subtitle_text="$( basename "$file" )"
+			elif [ "$subtitle" == 'path' ] ; then
+				# use full filename and path as subtitle (truncate?)
+				subtitle_text="$file"
+			else
+				subtitle_text="$subtitle"
+			fi
 		else
-			subtitle2_text="$subtitle2"
+			subtitle_text=''
+		fi	
+	
+		if [ -n "$subtitle2" ] ; then
+			if [ "$subtitle2" == 'filename' ] ; then
+				# use name as the subtitle2
+				subtitle2_text="$( basename "$file" )"
+			elif [ "$subtitle2" == 'path' ] ; then
+				# use full filename and path as subtitle2 (truncate?)
+				subtitle2_text="$file"
+			else
+				subtitle2_text="$subtitle2"
+			fi
+		else
+			subtitle2_text=''
+		fi	
+		if [ -n "$subtitle2_text" ] && [ -n "$kenburns_args" ] ; then
+			fileecho "$file:$slide_duration:$subtitle_text"';'"$subtitle2_text:$kenburns_args"
+		elif [ -z "$subtitle2_text" ] && [ -n "$kenburns_args" ] ; then
+			fileecho "$file:$slide_duration:$subtitle_text:$kenburns_args"
+		elif [ -n "$subtitle_text" ] && [ -z "$subtitle2_text" ] && [ -z "$kenburns_args" ] ; then
+			fileecho "$file:$slide_duration:$subtitle_text"
+		elif [ -n "$subtitle2_text" ] && [ -z "$kenburns_args" ] ; then
+			fileecho "$file:$slide_duration:$subtitle_text"';'"$subtitle2_text"
+		else
+			fileecho "$file:$slide_duration"
 		fi
-	else
-		subtitle2_text=''
-	fi	
-	if [ -n "$subtitle2_text" ] && [ -n "$kenburns_args" ] ; then
-		fileecho "$file:$slide_duration:$subtitle_text"';'"$subtitle2_text:$kenburns_args"
-	elif [ -z "$subtitle2_text" ] && [ -n "$kenburns_args" ] ; then
-		fileecho "$file:$slide_duration:$subtitle_text:$kenburns_args"
-	elif [ -n "$subtitle_text" ] && [ -z "$subtitle2_text" ] && [ -z "$kenburns_args" ] ; then
-		fileecho "$file:$slide_duration:$subtitle_text"
-	elif [ -n "$subtitle2_text" ] && [ -z "$kenburns_args" ] ; then
-		fileecho "$file:$slide_duration:$subtitle_text"';'"$subtitle2_text"
-	else
-		fileecho "$file:$slide_duration"
-	fi
-	if [ "$crossfade" != "0" ] && [ "$i" -lt "$pictures" ] ; then
-		fileecho "crossfade:$crossfade"
-	elif [ "$wipe" != "0" ] && [ "$i" -lt "$pictures" ] ; then
-		fileecho "wipe:$wipe"
-	fi
-	let j=$j+1
+		if [ "$crossfade" != "0" ] && [ "$i" -lt "$pictures" ] ; then
+			fileecho "crossfade:$crossfade"
+		elif [ "$wipe" != "0" ] && [ "$i" -lt "$pictures" ] ; then
+			fileecho "wipe:$wipe"
+		fi
+		let j=$j+1
+	fi  # end of if statement for different file types
 done
-
+	
 ## fade out at end
 fileecho "fadeout:1"
 fileecho "background:2"

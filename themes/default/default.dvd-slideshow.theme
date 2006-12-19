@@ -64,6 +64,7 @@ border=0  # add border of N pixels around images (filled by background image or 
 
 sharpen=0  # change to 1 to enable image sharpening
 
+## subtitle:
 subtitle_type=dvd   # use dvd subtitle track for subtitles
 #subtitle_type=render # force subtitles to be rendered in video
 #subtitle_font='fontname.ttf'
@@ -84,6 +85,7 @@ toptitle_font_color='black' # or use hex "#RRGGBB"
 toptitle_bar_height=125  # 0 for no 50% white behind text
 toptitle_text_location_x=80
 toptitle_text_location_y=50
+
 # bottom title:
 bottomtitle_font_size=36
 bottomtitle_font_color="black"  # or use hex "#RRGGBB"

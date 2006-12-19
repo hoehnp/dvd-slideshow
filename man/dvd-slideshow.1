@@ -1,5 +1,5 @@
 .\" 
-.TH "dvd-slideshow" "1" "0.7.5" "Scott Dylewski" "dvd-slideshow"
+.TH "dvd-slideshow" "1" "0.8.0" "Scott Dylewski" "dvd-slideshow"
 .SH "NAME"
 .LP 
 dvd\-slideshow \- Creates a slideshow movie in DVD video format from a list of pictures and effects.
@@ -9,8 +9,7 @@ dvd\-slideshow [\fI\-n\fP <\fIslideshow name\fP>]
 [\fI\-o\fP <\fIoutput directory\fP>]
 [\fI\-b\fP <\fIbackground jpeg\fP>]
 [\fI\-a\fP <\fIaudiofile1\fP> \fI\-a\fP <\fIaudiofile2\fP> \fI\-a\fP <\fIaudiofileN\fP>]
-[\fI\-p\fP] [\fI\-L\fP] [\fI\-H\fP] [\fI\-mp2\fP] [\fI\-r\fP] [\fI\-smp\fP]
-\fI\-f\fP <\fIinput text file\fP>
+[\fI\-p\fP] [\fI\-L\fP] [\fI\-H\fP] [\fI\-mp2\fP] [\fI\-r\fP] [\fI\-smp\fP] [\fI\-border <bordersize>\fP] [\fI\-theme <themename>\fP] [\fI\-f\fP] <\fIinput text file\fP>
 .SH "DESCRIPTION"
 .LP 
 Creates a dvd\-compatible mpeg2 video from a bunch of images. You can add music on the command line or in the text input file. Supports several effects like fadein, fadeout, crossfade, crop, and kenburns.  dvd\-slideshow is designed to work with dvd\-menu to create a dvd navigation menu that you can then burn onto a dvd. There are also some helper scripts to convert a directory of pictures or your favorite online photo album to a dvd.
@@ -33,12 +32,12 @@ Image to use for the background of the slideshow. All of the pictures will be ov
 Audio file to play in background during the slideshow. It will be faded out at the end.  Supports mp3, ogg, or wav formats at this point.  Multiple files will be joined. See also the more flexible text file input method. To pass multiple files, use the \-a switch again.
 
 .TP 
-[\fB\-mp2\fR]
-Use mp2 audio by default.  AC3 audio seems to be more stable when playing in dvd hardware players, but requires ffmpeg.  This will over\-ride the AC3 default and use the mp2 audio encoder.
-
-.TP 
 [\fB\-p\fR]
 Use PAL output video format instead of NTSC.
+
+.TP 
+[\fB\-mp2\fR]
+Use mp2 audio by default.  AC3 audio seems to be more stable when playing in dvd hardware players, but requires ffmpeg.  This will over\-ride the AC3 default and use the mp2 audio encoder.
 
 .TP 
 [\fB\-L\fR]
@@ -49,8 +48,24 @@ Render a low\-quality video suitable for debugging. This sets the resolution to 
 (Beta) Render a higher\-quality video. This uses the default dvd resolution and keeps all other output parameters the same, but enables some pixel\-sampling methods that make the scroll effect look better at very slow velocities. This will make dvd\-slideshow take up to 4x longer to process the scroll effect. Only applied when needed; the output will explain if it is being used.
 
 .TP 
+[\fB\-theme <themefile>\fR]
+Use the given theme when setting variables/colors/etc. Themes are installed in /opt/dvd\-slideshow/themes or in a local directory ~/.dvd\-slideshow/themes
+
+.TP 
+[\fB\-border N\fR]
+Make a border of N pixels around each image. Does not apply to title slides.
+
+.TP 
+[\fB\-sharpen\fR]
+Sharpen images.
+
+.TP 
 [\fB\-r\fR]
 Autocrop images near the DVD output aspect ratio to fill the whole window.
+
+.TP 
+[\fB\-w\fR]
+[alpha] Render widescreen (16:9) output instead of standard (4:3). 
 
 .TP 
 [\fB\-smp\fR]
@@ -59,7 +74,26 @@ WARNING: If you do not have enough memory to hold all the frames for one "crossf
 Use at your own risk!
 
 .TP 
-\fB\-f <Input text file>\fR
+[\fB\-mpeg2enc\fR]
+The default mpeg encoder has changed to ffmpeg, so if you are having problems, you can force dvd\-slideshow to use mpeg2enc instead.
+
+.TP 
+[\fB\-vcd\fR]
+(alpha) Renders video in vcd\-compatible output.  
+.TP 
+[\fB\-svcd\fR]
+(alpha) Renders video in svcd\-compatible output.  
+
+.TP 
+[\fB\-flv\fR]
+(alpha) Renders a Flash video output.  
+
+.TP 
+[\fB\-s WxH\fR]
+(alpha) Force output size to have width W and height H.   
+
+.TP 
+\fB[\-f] <Input text file>\fR
 See the INPUT FILE section.
 
 .TP 
@@ -123,7 +157,10 @@ Fades out to the background
 \fBcrossfade\fR:duration:subtitle
 .br 
 Fades from one slide to the next.
+
+\fBwipe\fR:duration:subtitle:[up|down|left|right]
 .br 
+Wipes from one picture to the next.  The direction is optional and will default to left.
 
 \fBchapter\fR
 .br 
@@ -254,14 +291,14 @@ audiofile:1:fadein:3:fadeout:2
 
 (*NEW in 0.7.3) If you want to concatenate two audio files, just place them one right after another in the .txt file.
 .SH "CONFIGURATION"
-You can specify lots of variables and options throughout the dvd\-slideshow script.  Settings can be passed on the command line, in a default ~/.dvd\-slideshowrc file, or within the input text file.  The order in which the script reads the settings is as follows:
+You can specify lots of variables and options throughout the dvd\-slideshow script.  Settings can be passed on the command line, in a default ~/.dvd\-slideshow/dvd\-slideshowrc file, or within the input text file.  The order in which the script reads the settings is as follows:
 .br 
-Default script settings \-\-> ~/dvd\-slideshowrc \-\-> command line \-\-> input text file
+Default script settings \-\-> ~/.dvd\-slideshow/dvd\-slideshowrc \-\-> command line \-\-> input text file
 .br 
 so each successive setting will over\-ride the previous settings if they are already set.
 
 .TP 
-\fB~/.dvd\-slideshowrc:\fR
+\fB~/.dvd\-slideshow/dvd\-slideshowrc:\fR
 .br 
 With the syntax shown below, the following variables can be specified in the ~/.dvd\-slideshowrc file.  All lines are optional, and everything after the # character is not read.
 .br 
@@ -276,11 +313,29 @@ copy=0		# add copies of original images to the output directory
 .br 
 autocrop=1	# autocrop images to fill full screen
 .br 
+border=0	# add border of N pixels between image and dvd edge
+.br 
+sharpen=0	# Enable image sharpening for all images
+.br 
+widescreen=0	# use widescreen mode (16:9) instead of 4:3
+.br 
 
-font_dir="/usr/share/fonts"
+## Default font:
 .br 
-font="n019004l.pfb" # helvetica bold URW fonts
+font=/usr/share/fonts/default/Type1/n019004l.pfb # Helvetical bold URW font
+
+## Subtitle:
+subtitle_type="dvd"  # use "render" to force rendering of text.
 .br 
+subtitle_font_size=24
+.br 
+subtitle_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+.br 
+subtitle_color="white"
+.br 
+subtitle_outline_color="black"
+.br 
+subtitle_location="bottom"
 
 ## Title:
 .br 
@@ -288,6 +343,7 @@ title_font_size=48
 .br 
 title_font_color="black"  # or use hex "#RRGGBB"
 .br 
+title_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
 
 ## top title:
 .br 
@@ -317,10 +373,26 @@ bottomtitle_text_location_x=0
 bottomtitle_text_location_y=155
 .br 
 
+# kenburns:
+.br 
+kenburns_acceleration=2  # seconds of slow acceleration for kenburns
+.br 
+# use 0 for no acceleration, or, use a percent of the effect time:
+.br 
+# kenburns_acceleration=25%  # will accelerate for the first 25% of the effect.
+
 .TP 
 \fBInput text file:\fR
 .br 
-The same syntax used in ~/.dvd\-slideshowrc can be used in the input text file.  This way, you could specify settings specifit to the slideshow you are working on without changing your default settings. 
+The same syntax used in ~/.dvd\-slideshow/dvd\-slideshowrc can be used in the input text file.  This way, you could specify settings specifit to the slideshow you are working on without changing your default settings. 
+.br 
+.SH "THEMES"
+A theme is just a file containing a list of configuration variables, and possibly also background images, fonts, or audio in the same directory.
+.br 
+
+Any of the configuration variables can be placed in a dvd\-slideshow theme file to control dvd\-slideshow also..br 
+
+This will be explained more later...
 .br 
 .SH "FILES"
 .LP 
@@ -335,7 +407,7 @@ The same syntax used in ~/.dvd\-slideshowrc can be used in the input text file. 
 \fIjigl2slideshow\fP 
 .SH "EXAMPLES"
 .LP 
-There are a few heavily\-commented examples available in the examples section of the dvd\-slideshow webpage, which you can find at http://dvd\-slideshow.sourceforge.net/examples
+There are a few heavily\-commented examples available in the examples section of the dvd\-slideshow webpage, which you can find at http://dvd\-slideshow.sourceforge.net
 .SH "AUTHORS"
 .LP 
 Scott Dylewski <scott at dylewski dot com>

@@ -39,12 +39,12 @@ echo 'Changes:
 0.8.0
 	pre9:
 	Added 6image layout option.  It can also read the title and icon from
-	  the .xml file output from dvd-slideshow.  more testing and polish is needed.
+	  the .xml file output from dvd-slideshow.  more testing is needed.
 	Added many more variables to control the layout of the menu also.
 	pre8:
 	Added -vcd and -svcd modes.  Works!  tested -vcd a little.
 	Audio automatically fades in/out for 2 seconds
-	Reads variables correctly from ~/.dvd-slideshowrc	
+	Reads variables correctly from ~/.dvd-slideshow/dvd-slideshowrc	
 	Updated variables.  See dvd-slideshowrc example file
 	Better control of fonts and variables.
 	Deletes temp directory when finished.
@@ -152,16 +152,20 @@ Options:
 	or you can create your own for a simple mpeg2
 	file.
 
+ [-o <output directory>]
+	Directory where the output dvd file system resides
+
+ [-n "dvd_title"]
+        This string will be placed on the top of the
+        menu page.
+
+ [-b <background jpeg>]
+	Image to put in the background of the menu.
+
  [-e <embedded image>]
 	Embed a jpeg image in the middle of the screen.
 	If one image is passed for each button text, 
 	That image will be shown as each button is active.
-
- [-o <output directory>]
-	Directory where the output dvd file system resides
-
- [-b <background jpeg>]
-	Image to put in the background of the menu.
 
  [-a <audiofile>]
 	Audio file to use in the background of the
@@ -171,10 +175,6 @@ Options:
  [-mp2]
         Use MP2 audio by default.  AC3 seems to be more stable
 	in hardware players, but requires ffmpeg.
-
- [-n "dvd_title"]
-        This string will be placed on the top of the
-        menu page.
 
  [-p]
         Use PAL format instead of NTSC (untested initial support)
@@ -196,6 +196,11 @@ Options:
         Do not call dvdauthor at the end.  Useful when you want
 	to edit your own xml file and pass it to dvdauthor by hand.
 
+ [-theme themename]
+	Use the given theme when setting variables/colors/etc.  Themes are
+	installed in /opt/dvd-slideshow/themes or in a local directory
+	~/.dvd-slideshow/themes
+ 
  [-vcd]|[-svcd]  [ALPHA!]
         Create vcd .cue and .bin files (requires vcdimager)
 
@@ -220,7 +225,7 @@ Requires:
 	ImageMagick (convert)
 
 Variables:
-	dvd-menu will read the following variables out of your ~/.dvd-slideshowrc file.
+	dvd-menu will read the following variables out of your ~/.dvd-slideshow/dvd-slideshowrc file.
 	The default values are shown
 
 	menu_bg_color='steelblue'  # imagemagick colors or a hex #rrggbb value.
@@ -783,7 +788,7 @@ truncate_filename ()
 ###################################################################
 # Default variables
 # order of perference:
-# program defaults --> ~.dvd-slideshowrc command-line options --> .txtfile settings
+# program defaults --> ~/.dvd-slideshow/dvd-slideshowrc command-line options --> .txtfile settings
 
 ## setup program default variables (user configurable)
 debug=0  # 1 or 0
@@ -910,36 +915,37 @@ if [ -z "$outdir" ] ; then
         fi
 fi
 
-if [ -z "$xmlfile" ] && [ -n "$1" ] ; then
-	echo "using xml file $1".
-	xmlfile="$1"
+## dvdbaker doesn't use or need the autual xml or vob files!
+#if [ -z "$xmlfile" ] && [ -n "$1" ] ; then
+#	echo "using xml file $1".
+#	xmlfile="$1"
 #	if [ -z "$xmlfile" ] ; then
 #		echo "[dvd-menu] ERROR: No xml file passed."
 #		echo "[dvd-menu] use -f <filename> to pass a .xml, .vob, or .mpg file"
 #		exit 1
 #	fi
-fi
+#fi
 		
-for it in "${xmlfile[@]}"; do
-	# verify xml file exists:
-	echo "xmlfile=$it"
-	if [ -n "$it" ] && [ ! -r "$it" ] ; then
-		echo "[dvd-menu] ERROR: XML file $it does not exist."
-		exit 1
-	fi
-done
+#for it in "${xmlfile[@]}"; do
+#	# verify xml file exists:
+#	echo "xmlfile=$it"
+#	if [ -n "$it" ] && [ ! -r "$it" ] ; then
+#		echo "[dvd-menu] ERROR: XML file $it does not exist."
+#		exit 1
+#	fi
+#done
 
 # verify that the number of buttons (-t) is equal to the number of files (-f)
-echo "xmlfiles=${#xmlfile[@]}"
-echo "xmlfiles=${xmlfile[@]}"
-if [ "${#xmlfile[@]}" -ge 1 ] ; then
-	if [ ${#xmlfile[@]} -ne ${#title[@]} ] ; then
-			echo "[dvd-menu] ERROR:  The number of buttons does not match the number of files!"
-			echo "[dvd-menu] buttons=${title[@]}"
-			echo "[dvd-menu] files=${xmlfile[@]}"
-			exit 1
-	fi
-fi
+#echo "xmlfiles=${#xmlfile[@]}"
+#echo "xmlfiles=${xmlfile[@]}"
+#if [ "${#xmlfile[@]}" -ge 1 ] ; then
+#	if [ ${#xmlfile[@]} -ne ${#title[@]} ] ; then
+#			echo "[dvd-menu] ERROR:  The number of buttons does not match the number of files!"
+#			echo "[dvd-menu] buttons=${title[@]}"
+#			echo "[dvd-menu] files=${xmlfile[@]}"
+#			exit 1
+#	fi
+#fi
 
 ## initialize log file:
 logfile="$outdir/$logfilename"
@@ -964,14 +970,14 @@ else
 fi
 
 ############################################################# 
-## Now, read in the ~/.dvd-slideshowrc file if it exists:
-if [ -f "${HOME}/.dvd-slideshowrc" ] ; then         
-	echo "[dvd-menu] Reading default variables in ${HOME}/.dvd-slideshowrc"
-        total_lines=`wc -l "${HOME}/.dvd-slideshowrc" | awk '{print $1}'`         total_lines=$(( $total_lines + 1 ))
+## Now, read in the ~/.dvd-slideshow/dvd-slideshowrc file if it exists:
+if [ -f "${HOME}/.dvd-slideshow/dvd-slideshowrc" ] ; then         
+	echo "[dvd-menu] Reading default variables in ${HOME}/.dvd-slideshow/dvd-slideshowrc"
+        total_lines=`wc -l "${HOME}/.dvd-slideshow/dvd-slideshowrc" | awk '{print $1}'`         total_lines=$(( $total_lines + 1 ))
         line=1
         while [ $line -ne $total_lines -a $total_lines -ne 0 ];
         do
-          thisline=`sed -n "$line"p "${HOME}/.dvd-slideshowrc"`
+          thisline=`sed -n "$line"p "${HOME}/.dvd-slideshow/dvd-slideshowrc"`
           set_variables "${thisline}" 1
           it=`set_variables "${thisline}" 0`
           if [ -n "$it" ] ; then

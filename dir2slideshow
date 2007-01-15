@@ -17,7 +17,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.0-pre10'
+version='0.8.0'
 
 changes () 
 {
@@ -369,6 +369,8 @@ cleanup ()
 	## clean up temporary files
 	check_rm "$output_dir"/imagelist.txt
 	check_rm "$output_dir/filelist_sorted.txt"
+	check_rm "$output_dir/txtlist.txt"
+	check_rm "$output_dir/audiolist.txt"
 	echo "[dir2slideshow] Done!"
 }
 

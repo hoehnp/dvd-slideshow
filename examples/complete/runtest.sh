@@ -22,6 +22,13 @@ check_rm menu.vob
 check_rm menu.xml
 rm -rf dvd_fs_complete  # from the older examples
 
+## create a directory of images:
+mkdir my_pictures
+cp -a ../images/flower1.jpg my_pictures/.
+cp -a ../images/flower2.jpg my_pictures/.
+cp -a ../images/flower3.jpg my_pictures/.
+cp -a ../images/flower4.jpg my_pictures/.
+
 ## first, generate an input file for dvd-slideshow using dir2slideshow:
 echo "[runtest.sh] Executing command:"
 echo "[runtest.sh] dir2slideshow -n 'Complete example' -s filename -t 5 -c 1 -a '../audio/strojovna_07-TEXEMPO-30s.ogg' $* my_pictures"

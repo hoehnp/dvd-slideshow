@@ -3,7 +3,7 @@ Content-type: text/html
 <HTML><HEAD><TITLE>Manpage of dvd-slideshow</TITLE>
 </HEAD><BODY>
 <H1>dvd-slideshow</H1>
-Section: dvd-slideshow (1)<BR>Updated: 0.7.5<BR><A HREF="#index">Index</A>
+Section: dvd-slideshow (1)<BR>Updated: 0.8.0<BR><A HREF="#index">Index</A>
 <A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -21,8 +21,7 @@ dvd-slideshow [<I>-n</I> &lt;<I>slideshow name</I>&gt;]
 [<I>-o</I> &lt;<I>output directory</I>&gt;]
 [<I>-b</I> &lt;<I>background jpeg</I>&gt;]
 [<I>-a</I> &lt;<I>audiofile1</I>&gt; <I>-a</I> &lt;<I>audiofile2</I>&gt; <I>-a</I> &lt;<I>audiofileN</I>&gt;]
-[<I>-p</I>] [<I>-L</I>] [<I>-H</I>] [<I>-mp2</I>] [<I>-r</I>] [<I>-smp</I>]
-<I>-f</I> &lt;<I>input text file</I>&gt;
+[<I>-p</I>] [<I>-L</I>] [<I>-H</I>] [<I>-mp2</I>] [<I>-r</I>] [<I>-smp</I>] [<I>-border &lt;bordersize&gt;</I>] [<I>-theme &lt;themename&gt;</I>] [<I>-f</I>] &lt;<I>input text file</I>&gt;
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -47,11 +46,11 @@ Image to use for the background of the slideshow. All of the pictures will be ov
 <DT>[<B>-a &lt;Audio file&gt;</B>]<DD>
 Audio file to play in background during the slideshow. It will be faded out at the end.  Supports mp3, ogg, or wav formats at this point.  Multiple files will be joined. See also the more flexible text file input method. To pass multiple files, use the -a switch again.
 <P>
-<DT>[<B>-mp2</B>]<DD>
-Use mp2 audio by default.  AC3 audio seems to be more stable when playing in dvd hardware players, but requires ffmpeg.  This will over-ride the AC3 default and use the mp2 audio encoder.
-<P>
 <DT>[<B>-p</B>]<DD>
 Use PAL output video format instead of NTSC.
+<P>
+<DT>[<B>-mp2</B>]<DD>
+Use mp2 audio by default.  AC3 audio seems to be more stable when playing in dvd hardware players, but requires ffmpeg.  This will over-ride the AC3 default and use the mp2 audio encoder.
 <P>
 <DT>[<B>-L</B>]<DD>
 Render a low-quality video suitable for debugging. This sets the resolution to 1/2 of full resolution and decreases the quality of fades/transitions.  It should speed up the encoding process by at least a factor of 4.
@@ -59,15 +58,41 @@ Render a low-quality video suitable for debugging. This sets the resolution to 1
 <DT>[<B>-H</B>]<DD>
 (Beta) Render a higher-quality video. This uses the default dvd resolution and keeps all other output parameters the same, but enables some pixel-sampling methods that make the scroll effect look better at very slow velocities. This will make dvd-slideshow take up to 4x longer to process the scroll effect. Only applied when needed; the output will explain if it is being used.
 <P>
+<DT>[<B>-theme &lt;themefile&gt;</B>]<DD>
+Use the given theme when setting variables/colors/etc. Themes are installed in /opt/dvd-slideshow/themes or in a local directory ~/.dvd-slideshow/themes
+<P>
+<DT>[<B>-border N</B>]<DD>
+Make a border of N pixels around each image. Does not apply to title slides.
+<P>
+<DT>[<B>-sharpen</B>]<DD>
+Sharpen images.
+<P>
 <DT>[<B>-r</B>]<DD>
 Autocrop images near the DVD output aspect ratio to fill the whole window.
+<P>
+<DT>[<B>-w</B>]<DD>
+[alpha] Render widescreen (16:9) output instead of standard (4:3). 
 <P>
 <DT>[<B>-smp</B>]<DD>
 Enable more processes to run at the same time for multiprocessor machines.  Basically, this just renders each frame of a transition in the background at the same time, and then waits for them to be finished. 
 WARNING: If you do not have enough memory to hold all the frames for one &quot;crossfade&quot; or &quot;kenburns&quot; effect,then linux starts swapping to disk, and your machine may seem to lock up for a while.  I have crashed my old machine using this.
 Use at your own risk!
 <P>
-<DT><B>-f &lt;Input text file&gt;</B><DD>
+<DT>[<B>-mpeg2enc</B>]<DD>
+The default mpeg encoder has changed to ffmpeg, so if you are having problems, you can force dvd-slideshow to use mpeg2enc instead.
+<P>
+<DT>[<B>-vcd</B>]<DD>
+(alpha) Renders video in vcd-compatible output.  
+<DT>[<B>-svcd</B>]<DD>
+(alpha) Renders video in svcd-compatible output.  
+<P>
+<DT>[<B>-flv</B>]<DD>
+(alpha) Renders a Flash video output.  
+<P>
+<DT>[<B>-s WxH</B>]<DD>
+(alpha) Force output size to have width W and height H.   
+<P>
+<DT><B>[-f] &lt;Input text file&gt;</B><DD>
 See the INPUT FILE section.
 <P>
 <DT><B>-h</B><DD>
@@ -139,8 +164,11 @@ Fades out to the background
 <BR>
 
 Fades from one slide to the next.
+<P>
+<B>wipe</B>:duration:subtitle:[up|down|left|right]
 <BR>
 
+Wipes from one picture to the next.  The direction is optional and will default to left.
 <P>
 <B>chapter</B>
 <BR>
@@ -318,16 +346,16 @@ audiofile:1:fadein:3:fadeout:2
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFIGURATION</H2>
 
-You can specify lots of variables and options throughout the dvd-slideshow script.  Settings can be passed on the command line, in a default ~/.dvd-slideshowrc file, or within the input text file.  The order in which the script reads the settings is as follows:
+You can specify lots of variables and options throughout the dvd-slideshow script.  Settings can be passed on the command line, in a default ~/.dvd-slideshow/dvd-slideshowrc file, or within the input text file.  The order in which the script reads the settings is as follows:
 <BR>
 
-Default script settings --&gt; ~/dvd-slideshowrc --&gt; command line --&gt; input text file
+Default script settings --&gt; ~/.dvd-slideshow/dvd-slideshowrc --&gt; command line --&gt; input text file
 <BR>
 
 so each successive setting will over-ride the previous settings if they are already set.
 <P>
 <DL COMPACT>
-<DT><B>~/.dvd-slideshowrc:</B><DD>
+<DT><B>~/.dvd-slideshow/dvd-slideshowrc:</B><DD>
 <BR>
 
 With the syntax shown below, the following variables can be specified in the ~/.dvd-slideshowrc file.  All lines are optional, and everything after the # character is not read.
@@ -349,13 +377,38 @@ copy=0<TT>&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT># 
 autocrop=1<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT># autocrop images to fill full screen<BR>
 <BR>
 
+border=0<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT># add border of N pixels between image and dvd edge<BR>
+<BR>
+
+sharpen=0<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT># Enable image sharpening for all images<BR>
+<BR>
+
+widescreen=0<TT>&nbsp;&nbsp;&nbsp;</TT># use widescreen mode (16:9) instead of 4:3<BR>
+<BR>
+
 <P>
-font_dir=&quot;/usr/share/fonts&quot;
+## Default font:
 <BR>
 
-font=&quot;n019004l.pfb&quot; # helvetica bold URW fonts
+font=/usr/share/fonts/default/Type1/n019004l.pfb # Helvetical bold URW font
+<P>
+## Subtitle:
+subtitle_type=&quot;dvd&quot;  # use &quot;render&quot; to force rendering of text.
 <BR>
 
+subtitle_font_size=24
+<BR>
+
+subtitle_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+<BR>
+
+subtitle_color=&quot;white&quot;
+<BR>
+
+subtitle_outline_color=&quot;black&quot;
+<BR>
+
+subtitle_location=&quot;bottom&quot;
 <P>
 ## Title:
 <BR>
@@ -366,6 +419,7 @@ title_font_size=48
 title_font_color=&quot;black&quot;  # or use hex &quot;#RRGGBB&quot;
 <BR>
 
+title_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
 <P>
 ## top title:
 <BR>
@@ -408,14 +462,37 @@ bottomtitle_text_location_y=155
 <BR>
 
 <P>
+# kenburns:
+<BR>
+
+kenburns_acceleration=2  # seconds of slow acceleration for kenburns
+<BR>
+
+# use 0 for no acceleration, or, use a percent of the effect time:
+<BR>
+
+# kenburns_acceleration=25%  # will accelerate for the first 25% of the effect.
+<P>
 <DT><B>Input text file:</B><DD>
 <BR>
 
-The same syntax used in ~/.dvd-slideshowrc can be used in the input text file.  This way, you could specify settings specifit to the slideshow you are working on without changing your default settings. 
+The same syntax used in ~/.dvd-slideshow/dvd-slideshowrc can be used in the input text file.  This way, you could specify settings specifit to the slideshow you are working on without changing your default settings. 
 <BR>
 
 </DL>
 <A NAME="lbAH">&nbsp;</A>
+<H2>THEMES</H2>
+
+A theme is just a file containing a list of configuration variables, and possibly also background images, fonts, or audio in the same directory.
+<BR>
+
+<P>
+Any of the configuration variables can be placed in a dvd-slideshow theme file to control dvd-slideshow also..br 
+<P>
+This will be explained more later...
+<BR>
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>FILES</H2>
 
 <P>
@@ -433,13 +510,13 @@ The same syntax used in ~/.dvd-slideshowrc can be used in the input text file.  
 <BR>
 
 <I>jigl2slideshow</I> 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLES</H2>
 
 <P>
 
-There are a few heavily-commented examples available in the examples section of the dvd-slideshow webpage, which you can find at <A HREF="http://dvd-slideshow.sourceforge.net/examples">http://dvd-slideshow.sourceforge.net/examples</A>
-<A NAME="lbAJ">&nbsp;</A>
+There are a few heavily-commented examples available in the examples section of the dvd-slideshow webpage, which you can find at <A HREF="http://dvd-slideshow.sourceforge.net">http://dvd-slideshow.sourceforge.net</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>AUTHORS</H2>
 
 <P>
@@ -448,7 +525,7 @@ Scott Dylewski &lt;scott at dylewski dot com&gt;
 <BR>
 
 <A HREF="http://dvd-slideshow.sourceforge.net/">http://dvd-slideshow.sourceforge.net/</A>
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <P>
@@ -465,15 +542,16 @@ Scott Dylewski &lt;scott at dylewski dot com&gt;
 <DT><A HREF="#lbAE">OPTIONS</A><DD>
 <DT><A HREF="#lbAF">INPUT FILE</A><DD>
 <DT><A HREF="#lbAG">CONFIGURATION</A><DD>
-<DT><A HREF="#lbAH">FILES</A><DD>
-<DT><A HREF="#lbAI">EXAMPLES</A><DD>
-<DT><A HREF="#lbAJ">AUTHORS</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">THEMES</A><DD>
+<DT><A HREF="#lbAI">FILES</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLES</A><DD>
+<DT><A HREF="#lbAK">AUTHORS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 06:09:55 GMT, March 10, 2006
+Time: 04:59:43 GMT, January 14, 2007
 </BODY>
 </HTML>

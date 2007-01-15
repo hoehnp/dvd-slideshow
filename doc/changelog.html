@@ -5,7 +5,7 @@
 	<TITLE></TITLE>
 	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Linux)">
 	<META NAME="CREATED" CONTENT="20031218;23173200">
-	<META NAME="CHANGED" CONTENT="20060309;22011800">
+	<META NAME="CHANGED" CONTENT="20070114;18515600">
 	<STYLE>
 	<!--
 		@page { size: 8.5in 11in }
@@ -26,25 +26,197 @@ changelog:</FONT></FONT></P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>New Features:</B></I></P>
-<P STYLE="margin-bottom: 0.2in"><SPAN STYLE="font-weight: medium"><SPAN STYLE="font-style: normal">Use
-&quot;\n&quot; to force line breaks up to two lines in title text
-(not titlebar yet).</SPAN></SPAN></P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-Fixed code to rotate images.  (not that public yet)</P>
+***NOTE: The slideshow timings of fades will change with this
+version!</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
- Use
-image.jpg:duration:subtitle:[effect1:effect1_params:]rotate:angle</P>
+*Fadein/Fadeout/Crossfade to/from kenburns/scroll effects works now:</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+( fades happen during movement of effect )Default ffmpeg to no b
+frames.</P>
 <P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        	Configuration variables will be read in sequence now.  So
-you can configure fontcolors and sizes 	throughout the input file.</P>
+	*Now using ffmpeg to encode video. Seems over 2x faster than
+mpeg2enc.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-Allow comments in all lines.  Everything after &lt;space&gt;# will be
+Add title and button information to .xml file automatically for
+dvd-menu use.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Allow multiple \n in titles (up to 4)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Added variables subtitle_color, subtitle_outline_color, and
+subtitle_location</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Use variable subtitle_type=render to force subtitles to be rendered
+in frames.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Remove option for srt subtitles since we can force render them now.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Updated audio timing to be more accurate for long slideshows</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Added kenburns syntax for crop,kb,crop duration</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Kenburns has smooth start and end now.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Add option to sharpen images (-sharpen) with ImageMagicks unsharp
+mask.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+.flv output [alpha] use -flv for now, but his might change</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Specify output size other than default with -s 320x240 (alpha)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+*Added -border option to add space between image and edge of screen.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+*Added &quot;wipe&quot; transition between frames:</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+wipe:duration:subtitle:[right|left] (soon up|down also)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+mp4/aac audio is possible with faad</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+*Fadein/Fadeout/Crossfade to/from kenburns/scroll effects works now:</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+( fades happen during movement of effect )</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+*Adding .avi video inline is possible. See docs. [alpha]</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+*Initial theme support [beta]</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Widescreen (16:9) support using -w [alpha] Not tested yet.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Improved font variables.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+kenburns effect is much smoother for slow effects in high-quality
+mode. (slower)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Added -vcd and -svcd output options [beta] (lightly tested)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Inline audio processed as background job when specifiying -smp</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Audio fadein and fadeout times can be specified in decimals like
+0.250</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Automatically sets smp option if the current kernel has &quot;smp&quot;
+in the name.</P>
+<P STYLE="margin-bottom: 0.2in"><I><B>Bug Fixes:</B></I></P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed kenburns coordinates when passing numbered coordinates.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Escape brackets in [:blank:] (thanks Christian Moli&egrave;re)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed mismatch in kenburns coordinates due to non-square pixels.
+(thanks Tony Sauri)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Manual chapter markers fixed.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed reading of $HOME/.dvd-slideshow/dvd-slideshowrc settings.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Single or double quotes allowed in variable settings.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Got rid of lsof debugging lines. No longer needed.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed bug in seconds2ms that mishandled durations of 0.080 ms (thanks
+Eric)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Remove wc --chars calls for compatibility with FreeBSD</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Remove seq calls for compatibility with FreeBSD</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Add FreeBSD font path so fonts are found.</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>Changes:</B></I></P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Added 6image layout option.  It can also read the title and
+icon from</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+          the .xml file output from dvd-slideshow.  more testing is
+needed.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Added many more variables to control the layout of the menu
+also.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Added -vcd and -svcd modes.  Works!  tested -vcd a little.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Audio automatically fades in/out for 2 seconds</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Reads variables correctly from
+~/.dvd-slideshow/dvd-slideshowrc</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Updated variables.  See dvd-slideshowrc example file</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Better control of fonts and variables.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Deletes temp directory when finished.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        -nocleanup works</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Reads -theme files</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Added -fadein and -fadeout for menus.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Remove seq calls for compatibility with FreeBSD (Thanks David
+Mulcahy)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Remove wc --chars calls for compatibility with FreeBSD</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>Changes:</B></I></P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Add audiobook option- looks for audio files and images &amp;
+adds titles</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Allow wipe effect as default between images -w duration</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Allow decimals in crossfade duration.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Allow two different subtitles -s or -s2</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Add random kenburns effect (-k)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Output file is copied to screen while running</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Full paths are specified to images in output .txt file.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Start of themes being implemented. See theme documentation.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Add subtitle options to add path and/or filename. (Thanks
+Kenneth Weinert)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Add recursive directory search. -R and -r (Thanks Kenneth
+Weinert)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+        Removed seq calls for compatibility with FreeBSD</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.5</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>New Features:</B></I></P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Use &quot;\n&quot; to force line breaks up to two lines in title text
+(not titlebar yet).</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Fixed code to rotate images. (not that public yet)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Use image.jpg:duration:subtitle:[effect1:effect1_params:]rotate:angle</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Configuration variables will be read in sequence now. So you can
+configure fontcolors and sizes throughout the input file.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Allow comments in all lines. Everything after &lt;space&gt;# will be
 ignored.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
 Scroll effect is MUCH smoother for slow scrolls in high-quality mode!
 (takes 3x longer)</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-Slideshow name -n is optional now.  Defaults to the base name of the
+Slideshow name -n is optional now. Defaults to the base name of the
 input file.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
 * Changed old &quot;title&quot; keyword to
@@ -63,7 +235,7 @@ Reads ~/.dvd-slideshowrc in a loop for better debugging and security.</P>
 Added &quot;+repage&quot; in convert lines after cropping when using
 internal .mpc image format.</P>
 <P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-	( Fixes Kenburns and crop errors with ImageMagick &gt; 6.2.2 )</P>
+( Fixes Kenburns and crop errors with ImageMagick &gt; 6.2.2 )</P>
 <P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
 Fixed kenburns problems with black backgrounds.</P>
 <P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
@@ -93,8 +265,8 @@ for XML file existing.</P>
 	<DL>
 		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
 </DL>
-<P STYLE="margin-bottom: 0.2in; font-weight: medium">
-<SPAN STYLE="font-style: normal">Allow spaces in filenames</SPAN></P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Allow spaces in filenames</P>
 <P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.4</FONT></FONT></P>
 <DL>

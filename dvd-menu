@@ -18,7 +18,7 @@
 #
 
 name='dvd-menu'
-version='0.8.0-pre10'
+version='0.8.0'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
@@ -1296,6 +1296,20 @@ if [ "$no_menu" -eq 0 ] ; then
 #		menu_type="textbar"
 #	fi
 
+	if [ "${#xmlfile[@]}" == 0 ] ; then
+		echo "[dvd-menu] no xml files passed"
+		i=0
+		for it in "${title[@]}" ; do
+			total_titles[$i]="${title[$i]}"
+			i=$(( $i + 1 ))
+		done
+	else
+		i=0
+		for it in "${xmlfile[@]}" ; do
+			total_titles[$i]="${xmlfile[$i]}"
+			i=$(( $i + 1 ))
+		done
+	fi
 	## case 1:  old layout:
 	if [ "$menu_type" == 'textbar' ] ; then  # plain text on right side
 		menuright=$(( $menu_panel_location_x + $panel_width))
@@ -1326,7 +1340,7 @@ if [ "$no_menu" -eq 0 ] ; then
 	        fi
 		## loop over each title:
 		let i=0
-		for this_title in "${xmlfile[@]}"; do
+		for this_title in "${total_titles[@]}"; do
 			echo "[dvd-menu] Title=${title[$i]}"
 			# make each individual button:
 			# to be fancy, let's add the button layers in two steps.  first the
@@ -1354,7 +1368,7 @@ if [ "$no_menu" -eq 0 ] ; then
 			bottom[$i]="$(( $menu_button_location_y + $panel_height ))"
 			[ "${bottom[$i]}" -gt "$dvd_height" ] && bottom[$i]=$(( $dvd_height - 10 ))
 
-#			echo "[dvd-menu] setting button mask l,r,t,b = ${left[$i]} ${right[$i]} ${top[$i]} ${bottom[$i]}"
+			echo "[dvd-menu] setting button mask l,r,t,b = ${left[$i]} ${right[$i]} ${top[$i]} ${bottom[$i]}"
 	
 			vts="$(( $i + 1 ))"
 #			echo "[dvd-menu] i=$i vts=$vts"
@@ -1369,7 +1383,7 @@ if [ "$no_menu" -eq 0 ] ; then
 		let embed_row=1
 
 		# grab any info from .xml file comment lines:
-		for this_title in "${xmlfile[@]}"; do
+		for this_title in "${total_files[@]}"; do
 			suffix=`echo "${xmlfile[$i]}" | awk -F. '{print $NF}'`
 			if [ "$suffix" == 'xml' ] ; then
 				xml_button[$i]=$( grep '<!-- button=' "${xmlfile[$i]}" | awk -F= '{print $2}' | awk -F' -->' '{print $1}' | tr -d '\047' | tr -d '\042' )
@@ -1548,7 +1562,7 @@ echo "song=$audiofile"
 		fi
 	else
 		## create silence:  
-		echo "[dvd-menu] creating silence .wav file"
+		echo "[dvd-menu] creating silent audio track"
 		## create audio for 1 second:
 		sox -t raw -s -w -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:01.000 > "$tmpdir/audio.wav" 
 	fi

@@ -3,7 +3,7 @@ Content-type: text/html
 <HTML><HEAD><TITLE>Manpage of dir2slideshow</TITLE>
 </HEAD><BODY>
 <H1>dir2slideshow</H1>
-Section: dvd-slideshow (1)<BR>Updated: 0.7.5<BR><A HREF="#index">Index</A>
+Section: dvd-slideshow (1)<BR>Updated: 0.8.0<BR><A HREF="#index">Index</A>
 <A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,6 +43,9 @@ Number of seconds to display each picture in the movie.  Defaults to 5 seconds i
 <DT>[<B>-c</B> &lt;<I>Crossfade seconds</I>&gt;]<DD>
 Number of seconds to crossfade between images. One second is usually fine.  Note that this will increase the processing time considerably, but it looks nice.
 <P>
+<DT>[<B>-w</B> &lt;<I>Wipe seconds</I>&gt;]<DD>
+Number of seconds to wipe between images. One second is usually fine.  Pick either crossfade or wipe, but not both.
+<P>
 <DT><B>-n</B> &lt;<I>Slideshow name</I>&gt;<DD>
 The name of this slideshow.  This name is used as the default title text for the first title slide in the slideshow. This name will be used (converting spaces to underscores) for the output file name.
 <P>
@@ -53,10 +56,34 @@ Sort images by the JPEG header picture taken time, then by the file modification
 Sort images by the file modification date, and then by the filename. Default sort if by name only.
 <P>
 <DT>[<B>-s subtitle_text</B>]<DD>
-Add default subtitle &quot;subtitle_text&quot; to every slide.
+Add default subtitle &quot;subtitle_text&quot; to every slide.  Use &quot;-s filename&quot; to display filename as the subtitle.  Use &quot;-s path&quot; to display the path and filename as the subtitle.
+<P>
+<DT>[<B>-s subtitle_text</B>]<DD>
+Add default subtitle &quot;subtitle_text&quot; to every slide.  Use &quot;-s filename&quot; to display filename as the subtitle.  Use &quot;-s path&quot; to display the path and filename as the subtitle.
+<P>
+<DT>[<B>-s2 subtitle_text</B>]<DD>
+Same as -s but adds subtitles to subtitle track 2.
 <P>
 <DT>[<B>-notitle</B>]<DD>
 Do not create a title slide.
+<P>
+<DT>[<B>-b background.jpg</B>]<DD>
+Use background.jpg as the background images.  Default is black.
+<P>
+<DT>[<B>-r</B>]<DD>
+Recursively search directories for images, creating one output file.
+<P>
+<DT>[<B>-k</B>]<DD>
+Apply random kenburns effects to images.
+<P>
+<DT>[<B>-p</B>]<DD>
+Use PAL output video format instead of NTSC
+<P>
+<DT>[<B>-theme themename</B>]<DD>
+Use themename as a theme file.  See theme help files for more info. (TBD)
+<P>
+<DT>[<B>-a audiofile1,audiofile2,...</B>]<DD>
+Add audio files to the slideshow. Files will be played sequentially for the duration of the slideshow.  Use quotes if you have spaces in filenames.
 <P>
 <DT>&lt;<I>Images directory</I>&gt;<DD>
 The path to the directory containing the images you want to use.
@@ -66,7 +93,7 @@ The path to the directory containing the images you want to use.
 
 <P>
 
-<A HREF="http://dvd-slideshow.sourceforge.net/examples">http://dvd-slideshow.sourceforge.net/examples</A>
+<A HREF="http://dvd-slideshow.sourceforge.net">http://dvd-slideshow.sourceforge.net</A>
 <A NAME="lbAG">&nbsp;</A>
 <H2>AUTHORS</H2>
 
@@ -99,6 +126,6 @@ Scott Dylewski &lt;scott at dylewski dot com&gt;
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 06:09:55 GMT, March 10, 2006
+Time: 04:59:43 GMT, January 14, 2007
 </BODY>
 </HTML>

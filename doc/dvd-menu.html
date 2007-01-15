@@ -3,7 +3,7 @@ Content-type: text/html
 <HTML><HEAD><TITLE>Manpage of dvd-menu</TITLE>
 </HEAD><BODY>
 <H1>dvd-menu</H1>
-Section: dvd-slideshow (1)<BR>Updated: 0.7.5<BR><A HREF="#index">Index</A>
+Section: dvd-slideshow (1)<BR>Updated: 0.8.0<BR><A HREF="#index">Index</A>
 <A HREF="http://localhost/cgi-bin/man/man2html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -46,7 +46,6 @@ This will be printed at the top of the DVD menu page.
 <DT>[<B>-b</B> &lt;<I>Background jpeg</I>&gt;]<DD>
 Image to use for the background DVD menu. If no file is specified, a blue gradient will be used for the menu background.
 <P>
-<P>
 <DT>[<B>-e</B> &lt;<I>embed image</I>&gt;]<DD>
 Embed an image in the menu screen.  This image will show up to the left of the menu buttons.
 <P>
@@ -77,25 +76,145 @@ Do not create a menu.  Useful for just finishing the dvdauthor xml file from one
 <DT>[<B>-L</B>]<DD>
 Create a low quality, half-slize menu.  This works with dvd-slideshow so you can render your whole project in low-quality mode and still test everything quickly.
 <P>
+<DT>[<B>-theme &lt;themefile&gt;</B>]<DD>
+Use the given theme when setting variables/colors/etc. Themes are installed in /opt/dvd-slideshow/themes or in a local directory ~/.dvd-slideshow/themes
+<P>
+<DT>[<B>-fadein</B>]<DD>
+Fade in from background before menu
+<P>
+<DT>[<B>-fadeout</B>]<DD>
+Fade to background after menu buttons are pressed.
+<P>
+<DT>[<B>-vcd</B>]<DD>
+(alpha) Create vcd .cue and .bin files (requires vcdimager)
+<DT>[<B>-svcd</B>]<DD>
+(alpha) Create svcd .cue and .bin files (requires vcdimager)
+<P>
 <DT><B>-h</B><DD>
 Prints help file (basically this manpage).
 </DL>
 <A NAME="lbAF">&nbsp;</A>
-<H2>INPUT FILE</H2>
+<H2>CONFIGURATION</H2>
+
+Settings can be passed on the command line, in a default ~/.dvd-slideshow/dvd-slideshowrc file, or in a theme file.  The order in which the script reads the settings is as follows:
+<BR>
+
+Default script settings --&gt; ~/.dvd-slideshow/dvd-slideshowrc --&gt; theme --&gt; command line
+<BR>
+
+so each successive setting will over-ride the previous settings if they are already set.
+<P>
+<DL COMPACT>
+<DT><B>~/.dvd-slideshow/dvd-slideshowrc:</B><DD>
+<BR>
+
+With the syntax shown below, the following variables can be specified in the ~/.dvd-slideshow/dvd-slideshowrc file.  All lines are optional, and everything after the # character is not read.
+<BR>
 
 <P>
+# general:
+<BR>
 
-<DL COMPACT>
-<DT>No input file info yet.  Hopefully we will be able to control dvd-menu better in the future by means of a simple text file like in dvd-slideshow.  This should allow sub-menus and more complex menuing. (not implemented yet)<DD>
+menu_continuous_play=0 # set to 1 to play one file after another without going back up to menu.
+<BR>
+
+<P>
+menu_fadein=0 # set to 1 to fade in to menu
+<BR>
+
+menu_fadeout=0 # set to 1 to fade out from menu after a button is pressed.
+<BR>
+
+<P>
+menu_background=steelblue  # or, use hex #RRGGBB
+<BR>
+
+#menu_background=&quot;#882211&quot;      # use a hex RGB color if you wish
+<BR>
+
+#menu_background=&quot;mybackground.jpg&quot;     # specify a real image if you want
+<BR>
+
+## pick other colors here: <A HREF="http://www.imagemagick.org/script/color.php">http://www.imagemagick.org/script/color.php</A>
+<BR>
+
+<P>
+menu_fade_to_image=&quot;black&quot;     # image to fade to/from before/after menu
+<BR>
+
+#menu_fade_to_image=&quot;#ff3344&quot;
+<BR>
+
+#menu_fade_to_image=&quot;myimage.jpg&quot;
+<BR>
+
+<P>
+#menu_title_font=&quot;/usr/share/fonts/default/Type1/n019004l.pfb&quot; # Helvetical bold URW font
+<BR>
+
+menu_title_font_size=40
+<BR>
+
+menu_title_font_color=black
+<BR>
+
+menu_title_white_height=125
+<BR>
+
+menu_title_location_x=80
+<BR>
+
+menu_title_location_y=50
+<BR>
+
+#menu_title_justify=center
+<BR>
+
+<P>
+menu_panel_height=28
+<BR>
+
+menu_panel_width=288
+<BR>
+
+menu_panel_location_x=360
+<BR>
+
+menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
+<BR>
+
+<P>
+#menu_button_font=&quot;/usr/share/fonts/default/Type1/n019004l.pfb&quot; # Helvetical bold URW font
+<BR>
+
+menu_button_font_size=21
+<BR>
+
+menu_button_font_color=black
+<BR>
+
+menu_button_hilight_color=red
+<BR>
+
+<P>
+#menu_audio=myaudio1.mp3  
+<BR>
+
 </DL>
 <A NAME="lbAG">&nbsp;</A>
-<H2>Variables</H2>
+<H2>THEMES</H2>
+
+A theme is just a file containing a list of configuration variables, and possibly also background images, fonts, or audio in the same directory.
+<BR>
 
 <P>
+Any of the configuration variables can be placed in a dvd-slideshow theme file to control dvd-menu also.
+<BR>
 
-<DL COMPACT>
-<DT>Reads variables from the ~/.dvd-slideshowrc file.  See dvd-slideshow for settings.<DD>
-</DL>
+<P>
+This will be explained more later...
+<BR>
+
 <A NAME="lbAH">&nbsp;</A>
 <H2>FILES</H2>
 
@@ -119,7 +238,7 @@ Prints help file (basically this manpage).
 
 <P>
 
-There are a few heavily-commented examples available in the examples section of the dvd-slideshow webpage, which you can find at <A HREF="http://dvd-slideshow.sourceforge.net/examples">http://dvd-slideshow.sourceforge.net/examples</A>
+There are a few heavily-commented examples available in the examples section of the dvd-slideshow webpage, which you can find at <A HREF="http://dvd-slideshow.sourceforge.net">http://dvd-slideshow.sourceforge.net</A>
 <A NAME="lbAJ">&nbsp;</A>
 <H2>AUTHORS</H2>
 
@@ -144,8 +263,8 @@ Scott Dylewski &lt;scott at dylewski dot com&gt;
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">OPTIONS</A><DD>
-<DT><A HREF="#lbAF">INPUT FILE</A><DD>
-<DT><A HREF="#lbAG">Variables</A><DD>
+<DT><A HREF="#lbAF">CONFIGURATION</A><DD>
+<DT><A HREF="#lbAG">THEMES</A><DD>
 <DT><A HREF="#lbAH">FILES</A><DD>
 <DT><A HREF="#lbAI">EXAMPLES</A><DD>
 <DT><A HREF="#lbAJ">AUTHORS</A><DD>
@@ -155,6 +274,6 @@ Scott Dylewski &lt;scott at dylewski dot com&gt;
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 06:09:55 GMT, March 10, 2006
+Time: 04:59:43 GMT, January 14, 2007
 </BODY>
 </HTML>

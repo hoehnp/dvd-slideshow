@@ -5,7 +5,7 @@
 	<TITLE></TITLE>
 	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Linux)">
 	<META NAME="CREATED" CONTENT="20031218;23173200">
-	<META NAME="CHANGED" CONTENT="20070114;18515600">
+	<META NAME="CHANGED" CONTENT="20070120;20225400">
 	<STYLE>
 	<!--
 		@page { size: 8.5in 11in }
@@ -19,7 +19,7 @@
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>DVD Slideshow package
 changelog:</FONT></FONT></P>
 <P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
-<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.5</FONT></FONT></P>
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.8.0</FONT></FONT></P>
 <DL>
 	<DL>
 		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
@@ -35,7 +35,7 @@ version!</P>
 ( fades happen during movement of effect )Default ffmpeg to no b
 frames.</P>
 <P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-	*Now using ffmpeg to encode video. Seems over 2x faster than
+*Now using ffmpeg to encode video. Seems over 2x faster than
 mpeg2enc.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
 Add title and button information to .xml file automatically for
@@ -128,38 +128,34 @@ Add FreeBSD font path so fonts are found.</P>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>Changes:</B></I></P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Added 6image layout option.  It can also read the title and
-icon from</P>
+Added 6image layout option. It can also read the title and icon from</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-          the .xml file output from dvd-slideshow.  more testing is
-needed.</P>
+the .xml file output from dvd-slideshow. more testing is needed.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Added many more variables to control the layout of the menu
-also.</P>
+Added many more variables to control the layout of the menu also.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Added -vcd and -svcd modes.  Works!  tested -vcd a little.</P>
+Added -vcd and -svcd modes. Works! tested -vcd a little.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Audio automatically fades in/out for 2 seconds</P>
+Audio automatically fades in/out for 2 seconds</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Reads variables correctly from
-~/.dvd-slideshow/dvd-slideshowrc</P>
+Reads variables correctly from ~/.dvd-slideshow/dvd-slideshowrc</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Updated variables.  See dvd-slideshowrc example file</P>
+Updated variables. See dvd-slideshowrc example file</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Better control of fonts and variables.</P>
+Better control of fonts and variables.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Deletes temp directory when finished.</P>
+Deletes temp directory when finished.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        -nocleanup works</P>
+-nocleanup works</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Reads -theme files</P>
+Reads -theme files</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Added -fadein and -fadeout for menus.</P>
+Added -fadein and -fadeout for menus.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Remove seq calls for compatibility with FreeBSD (Thanks David
+Remove seq calls for compatibility with FreeBSD (Thanks David
 Mulcahy)</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Remove wc --chars calls for compatibility with FreeBSD</P>
+Remove wc --chars calls for compatibility with FreeBSD</P>
 <DL>
 	<DL>
 		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
@@ -167,30 +163,29 @@ Mulcahy)</P>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>Changes:</B></I></P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Add audiobook option- looks for audio files and images &amp;
-adds titles</P>
+Add audiobook option- looks for audio files and images &amp; adds
+titles</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Allow wipe effect as default between images -w duration</P>
+Allow wipe effect as default between images -w duration</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Allow decimals in crossfade duration.</P>
+Allow decimals in crossfade duration.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Allow two different subtitles -s or -s2</P>
+Allow two different subtitles -s or -s2</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Add random kenburns effect (-k)</P>
+Add random kenburns effect (-k)</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Output file is copied to screen while running</P>
+Output file is copied to screen while running</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Full paths are specified to images in output .txt file.</P>
+Full paths are specified to images in output .txt file.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Start of themes being implemented. See theme documentation.</P>
+Start of themes being implemented. See theme documentation.</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Add subtitle options to add path and/or filename. (Thanks
-Kenneth Weinert)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Add recursive directory search. -R and -r (Thanks Kenneth
+Add subtitle options to add path and/or filename. (Thanks Kenneth
 Weinert)</P>
 <P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
-        Removed seq calls for compatibility with FreeBSD</P>
+Add recursive directory search. -R and -r (Thanks Kenneth Weinert)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+Removed seq calls for compatibility with FreeBSD</P>
 <P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.5</FONT></FONT></P>
 <DL>

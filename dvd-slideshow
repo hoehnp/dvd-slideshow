@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.0'
+version='0.8.1'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -47,6 +47,9 @@ LANG=C
 changes ()
 {
 echo 'Changes:
+0.8.1
+    Bug fixes:
+	removed -size option from crop function because large images were improperly cropped.
 0.8.0	
     New features & Changes:	
 	pre10:
@@ -1749,7 +1752,6 @@ parse_window ()  # PARSE_WINDOW
 		yi=0 # will need to add frame border later...
 		xi=`div10 $(( 10*( $new_image_width - $image_width ) / 2 ))`
 	fi
-	[ $debug -ge 3 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
 	[ $debug -ge 3 ] && myecho "[dvd-slideshow:parse_window] new_image_width=$new_image_width new_image_height=$new_image_height xi=$xi yi=$yi"
 	if [ "$it" -eq 2 ] || [ "$firstarg" == 'imagewidth' ] || [ "$firstarg" == 'imageheight' ] ; then 
 		## use "keywords"
@@ -1768,8 +1770,21 @@ parse_window ()  # PARSE_WINDOW
 			## sq_pixel_multiplier 
 			zoom_percent=`echo "$1" | awk -F';' '{print $1}' | awk -F% '{print $1}'`
 			[ $debug -ge 3 ] && myecho "[dvd-slideshow:parse_window] zoom=$zoom_percent, loc=$loc "
-			xw=`div10 $(( 10 * $new_image_width * $zoom_percent / 100 ))`
-			yh=`div10 $(( 10 * $new_image_height * $zoom_percent / 100 ))`
+			## need to make the largest dimension smaller, and then scale the
+			## other dimension to the correct aspect ratio!
+			if [ "$ratio" -gt "$out_ratio" ] ; then
+				# image width greater than output width at same scale
+				# take percentage of width and calculate height:
+				xw=`div10 $(( 10 * $new_image_width * $zoom_percent / 100 ))`
+				yh=`div10 $(( 10 * $frame_height * $xw / $frame_width ))`
+#				yh=`div10 $(( 10 * $new_image_height * $zoom_percent / 100 ))`
+			elif [ "$ratio" -le $out_ratio ] ; then
+				# image height greater than output height at same scale 
+				# take percentage of height and calculate width:
+#				xw=`div10 $(( 10 * $new_image_width * $zoom_percent / 100 ))`
+				yh=`div10 $(( 10 * $new_image_height * $zoom_percent / 100 ))`
+				xw=`div10 $(( 10 *$frame_width * $yh / $frame_height ))`
+			fi
 		fi
 		## next line is because we want the zoom % coordinates to be relative to the
 		## whole screen size, so if you have a tall, narrow picture, 50% will mean
@@ -2103,7 +2118,7 @@ crop_parameters () # CROP_PARAMETERS
 #		myecho "[dvd-slideshow:crop_parameters] Correcting xci - 1 "
 	fi
 #	w=`div1000 $w` ; h=`div1000 $h`
-	[ $debug -ge 3 ] && myecho "[dvd-slideshow:crop_parameters] output: c_width,c_height=$c_width,$c_height ratio=$crop_ratio $out_ratio xc0,yc0=$xc0,$yc0 xci,yci=$xci,$yci"
+	[ $debug -ge 2 ] && myecho "[dvd-slideshow:crop_parameters] output: c_width,c_height=$c_width,$c_height ratio=$crop_ratio $out_ratio xc0,yc0=$xc0,$yc0 xci,yci=$xci,$yci"
 	# used output is:
 	# xc0,yc0 (coordinates of the top left corner of the image crop in the image frame)
 	# c_width,c_height (crop width and height in the image frame)
@@ -2264,17 +2279,17 @@ kenburns ()  # KENBURNS
 		if [ "$low_quality" -eq 1 ] ; then
 			stepsize=3
 			interp=0
-			enable_kenburns_resize=0
+			enable_kenburns_resize=1
 			multiple=1
 		elif [ "$high_quality" -eq 1 ] ; then
 			stepsize=1
 			interp=1
-			enable_kenburns_resize=0
+			enable_kenburns_resize=1
 			multiple=2
 		else
 			stepsize=1
 			interp=0  # fix this for now?
-			enable_kenburns_resize=0
+			enable_kenburns_resize=1
 			multiple=2
 		fi
 
@@ -4962,6 +4977,7 @@ for file in "${image[@]}"; do
 			window=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			parse_window "$window" "${image[$i+$increment]}"
 			mycrop  # takes the parameters from <parse_window> and returns: 
+			[ $debug -ge 2 ] && myecho "[dvd-slideshow] Crop $c_width"x"$c_height"+"$xc0"+"$yc0 composite" +"$xci"+$yci
 			convert -size "$frame_width"x"$frame_height" "${image[$i+$increment]}" -filter $filtermethod -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | \
 			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$(($i+$increment)).ppm"
 		elif [ "$nextslide_effect" == 'kenburns' ] ; then
@@ -5585,7 +5601,7 @@ for file in "${image[@]}"; do
 			mycrop  # takes the parameters from <parse_window> and returns: 
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow] Crop $c_width"x"$c_height"+"$xc0"+"$yc0 composite" +"$xci"+$yci
 			## now, do the actual crop:
-			convert -size "$frame_width"x"$frame_height" "${file}" -filter $filtermethod -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
+			convert "${file}" -filter $filtermethod -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColor -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColor -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
 			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 #			echo "subtitle1=${subtitle1[$i]}"
 			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then

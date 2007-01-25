@@ -50,6 +50,7 @@ echo 'Changes:
 0.8.1
     Bug fixes:
 	removed -size option from crop function because large images were improperly cropped.
+	added -M option to mplex calls (for some reason it was removed)
 0.8.0	
     New features & Changes:	
 	pre10:
@@ -736,6 +737,7 @@ mpeg_encoder='ffmpeg' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
 #mpeg_encoder='mpeg2enc' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
 output_format='mpeg2' # or flv, mp4, mp4_ipod.  mpeg2 is default
 #output_format='flv' # or flv, mp4, mp4_ipod
+ignore_seq_end='-M'
 
 # set smp option based on kernel name:
 if [ -z "`uname -a | grep -i smp`" ] ; then

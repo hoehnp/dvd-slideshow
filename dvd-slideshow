@@ -2743,6 +2743,7 @@ set_system_variables ()
 	[ -n "$2" -a "$2" == 1 ] && noecho=1 || noecho=0
 	## check for global configuration variables:
 	case "$config" in 
+        	debug) debug="$config2" ; [ "$noecho" -eq 0 ] && echo "debug=$debug" ;;
 		pal) pal="$config2" ; [ "$noecho" -eq 0 ] && echo "pal=$pal" ;;
 		ac3) ac3="$config2" ; [ "$noecho" -eq 0 ] && echo "ac3=$ac3" ;;
 		copy) copy="$config2" ; [ "$noecho" -eq 0 ] && echo "copy=$copy" ;;
@@ -3517,6 +3518,9 @@ do
 	    cat "$incfile" >> "$tmpdir/$tmptxtfile"
 ## cat removed the backslashes protecting special characters?
 #	    sed -e '/*/p' >> "$tmpdir/$tmptxtfile"
+      	  else
+          	myecho "[dvd-slideshow] Input file $incfile not found."
+          	cleanup; exit 1
 	  fi
   elif [ -n "$mygrep_kb" ]; then
 	  # found kenburns syntax:  1,5,1

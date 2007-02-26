@@ -17,11 +17,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.0'
+version='0.8.1'
 
 changes () 
 {
 echo 'Changes:
+0.8.1
+	Bug fix for spaces in filenames (thanks Ken Zutter)
 0.8.0 	
 	Add audiobook option- looks for audio files and images & adds titles
 	Allow wipe effect as default between images -w duration
@@ -183,12 +185,12 @@ set_variables ()
 	esac
 }
 
-full_path ()   # from Shea Martin
+full_path ()   # from Shea Martin  with fix by Ken Zutter for spaces in filenames
 {
 if [ -f "$1" ]; then
 	DIR="$(dirname "$1")"
 	DIR=$(cd "$DIR" && pwd)
-	FILE="$(basename $1)"
+	FILE="$(basename "$1")"
 	RSLT=$?
 	echo "$DIR/$FILE"
 	return $RSLT

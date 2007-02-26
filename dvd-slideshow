@@ -28,6 +28,7 @@ echo "[dvd-slideshow]            "
 ## todo: (sorted by priority?)
 # binary rendering engine for much better speed
 # kenburns with rotation
+# add -check option to verify syntax before running long slideshows.
 # explain difference between Low/Medium/High quality modes
 # fast preview mode for slcreator!
 # add hints for smoothest kenburns effects. (no zoom and pan)

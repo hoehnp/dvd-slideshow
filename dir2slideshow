@@ -548,8 +548,8 @@ fi
 
 ## get the total number of pictures:
 if [ "$recursive_single" == 1 ] ; then
-	find "$input_dir" -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
-	find "$input_dir" -type f \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
+	find "$input_dir" -L -type f '.*' -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
+	find "$input_dir" -L -type f '.*' -prune \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
 	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
@@ -561,29 +561,9 @@ if [ "$recursive_single" == 1 ] ; then
 elif [ "$recursive_multiple" == 1 ] ; then
 	echo "not supported yet"; exit 1
 	# do find, then check each file if it is a directory:
-#	directory=0
-#	file=0
-#	total=0
-#	
-#	for a in `ls`
-#	do
-#	   if test -d $a; then
-#	      directory=$(($directory+1))
-#	   else
-#	      file=$(($file+1))
-#	   fi
-#	
-#	   total=$(($total+1))
-#	   echo $a
-#	
-#	done
-#	
-#	echo Total directories: $directory
-#	echo Total files: $file
-#	echo Total: $total
 else
-	find "$input_dir" -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
-	find "$input_dir" -type f \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
+	find "$input_dir" -L -maxdepth 1 -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
+	find "$input_dir" -L -maxdepth 1 -type f \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
 	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
@@ -597,9 +577,6 @@ else
 		mv "$output_dir"/filelist.txt "$output_dir"/imagelist.txt
 		sortmethod=''
 	fi
-#	ls -1 "$input_dir"/*.jpg "$input_dir"/*.JPG "$input_dir"/*.jpeg "$input_dir"/*.png "$input_dir"/*.PNG > "$output_dir"/filelist.txt 2>/dev/null
-#	pictures=`wc -l "$output_dir"/filelist.txt | awk '{print $1}'`
-#	echo "[dir2slideshow] Total pictures found = $pictures"
 fi
 
 # make sure we found some images:

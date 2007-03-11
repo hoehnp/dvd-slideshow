@@ -5585,7 +5585,6 @@ for file in "${image[@]}"; do
 			rendered_time=$rendered_time	
 			old_rendered_time=$old_rendered_time
 		fi
-
 		set_end_frame_time $rendered_time
 		rendered_frames="$frames_to_render"
 
@@ -5701,30 +5700,69 @@ for file in "${image[@]}"; do
 		fi
 		direction="${effect1_params[$i]}"
 		previous_increment="`previouseffectincrement`"
+		previous_slide="${image[$i-$previous_increment]}"
 		if [ "$previous_increment" -ne 0 ] ; then
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 		fi
 		next_increment="`nexteffectincrement`"
+		next_slide="${image[$i+$next_increment]}"
 		if [ "$next_increment" -ne 0 ] ; then
 			next_duration=`seconds2ms ${duration[$i+$next_increment]}`  # duration in thousandths of sec
 			next_frames=$( duration2frames $next_duration )  # frames for next slide
 		fi
+
+		[ -z "$previous_slide" ] && previous_slide=0
+		[ -z "$next_slide" ] && next_slide=0
+#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
+			# subtract 1/2 time from rendered time:
+			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
+			old_rendered_time=$(( ${duration[$i]} + $previous_duration ))
+		elif [ "$previous_slide" == 'fadein' ] ; then
+			rendered_time=$(( ${duration[$i]} - $previous_duration )) 
+			old_rendered_time=$(( ${duration[$i]} + $previous_duration ))
+		else  # no previous fade
+			rendered_time=${duration[$i]}
+			old_rendered_time=$rendered_time
+		fi
+#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
+			# subtract time from rendered time:
+			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
+			old_rendered_time=$(( $rendered_time + $next_duration )) 
+		elif [ "$next_slide" == 'fadeout' ] ; then
+			rendered_time=$(( $rendered_time - $next_duration )) 
+			old_rendered_time=$(( $rendered_time + $next_duration )) 
+		else  # no next fade
+			rendered_time=$rendered_time	
+			old_rendered_time=$old_rendered_time
+		fi
+		set_end_frame_time $rendered_time
+		rendered_frames="$frames_to_render"
+#echo "rendered_time=$rendered_time"
+#echo "rendered_frames=$rendered_frames"
+#echo "previous_frames=$previous_frames"
+#echo "next_frames=$next_frames"
+
+		# scroll syntax is: 
+		# scroll $direction $file $bg $total_frames [$startframe] [$lastframe] [$char]
+		#
 		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
-			scroll "$direction" "$file" "$normal_bg" "$frames" "$(( $previous_frames + 1 ))" "$(( $frames - $next_frames ))"
-			rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} - $previous_duration - $next_duration ) / 1000 ))` # both duration and fps are in ms
-			old_rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} + $previous_duration - $next_duration ) / 1000 ))` # both duration and fps are in ms
+			scroll "$direction" "$file" "$normal_bg" "$frames" "$(( $previous_frames + 1 ))" "$(( $previous_frames + $rendered_frames ))"
+#			rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} - $previous_duration - $next_duration ) / 1000 ))` # both duration and fps are in ms
+#			old_rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} + $previous_duration - $next_duration ) / 1000 ))` # both duration and fps are in ms
 		elif [ "$previous_increment" -ne 0 ] ; then
 			scroll "$direction" "$file" "$normal_bg" "$frames" "$(( $previous_frames + 1 ))" "$frames" '#'
-			rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} - $previous_duration ) / 1000 ))` # both duration and fps are in ms
-			old_rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} + $previous_duration ) / 1000 ))` # both duration and fps are in ms
+#			rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} - $previous_duration ) / 1000 ))` # both duration and fps are in ms
+#			old_rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} + $previous_duration ) / 1000 ))` # both duration and fps are in ms
 		elif [ "$next_increment" -ne 0 ] ; then
-			scroll "$direction" "$file" "$normal_bg" "$frames" 1 "$(( $frames - $next_frames ))" '#'
-			rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} - $next_duration ) / 1000 ))` # both duration and fps are in ms
-			old_rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} + $next_duration ) / 1000 ))` # both duration and fps are in ms
+			scroll "$direction" "$file" "$normal_bg" "$frames" 1 "$(( $rendered_frames ))" '#'
+#			rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} - $next_duration ) / 1000 ))` # both duration and fps are in ms
+#			old_rendered_frames=`div1000 $(( $frames_per_ms * ( ${duration[$i]} + $next_duration ) / 1000 ))` # both duration and fps are in ms
 		else
 			scroll "$direction" "$file" "$normal_bg" "$frames" 1 "$frames" "#"
-			rendered_frames="$frames"
+#			rendered_frames="$frames"
 		fi
 		if [ "$rendered_frames" -le 0 ] ; then
 			echo "[dvd-slideshow] ERROR: Frames rendered are less than 1!"
@@ -5732,14 +5770,13 @@ for file in "${image[@]}"; do
 			echo "[dvd-slideshow] 	or the fade time(s) are longer than the slide time."
 			cleanup; exit 0
 		fi
+#		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		encode_fade
 #		finish_progressbar $fr $frames
 		## just in case we want to fade out or crossfade, we need to save the last image:
 		mv "$tmpdir/fade_$dj.ppm" "$tmpdir/slide_$i.ppm"
 		find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm -f  # remove old files
 		find "$tmpdir" -name "fade*.png" -type f -print0 | xargs -0 rm -f # remove old files
-		set_end_frame_time ${duration[$i]}
-		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		image_number=$(( $image_number + 1 ))
 		interp=0
 	elif [ "$file" == 'black' ] ; then  ###############################################
@@ -6295,7 +6332,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			[ "$song_end_ms" -lt 0 ] && song_end_ms=0
 			song_end_hms=`hms $song_end_ms`
 			song_start_hms="0"  # cannot modify starting point yet...
-#			myecho "[dvd-slideshow] song_start_hms=$song_start_hms song_end_hms=$song_end_hms"
+			[ "$debug" -ge 1 ] && myecho "[dvd-slideshow] song_start_hms=$song_start_hms song_end_hms=$song_end_hms"
 
 			if [ "$song_length_ms" -lt "$song_end_ms" ] ; then
 				myecho "[dvd-slideshow] Audio length < song_end   `hms $song_length_ms` < `hms $song_end_ms`"
@@ -6316,6 +6353,13 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 #				sox -t raw -s -w -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" "$tmpdir/audio1_$i_padded.wav"
 				rm "$tmpdir"/silence.raw
 			else
+				if [ "$debug" -ge 2 ] ; then
+					length=`wavlength "$tmpdir/audio1_$i_padded.wav"`
+					myecho "[dvd-slideshow] Actual length of .raw file=`hms $length`"
+					myecho "[dvd-slideshow] Fadein: $fade_in_hms"
+					myecho "[dvd-slideshow] Song End: $song_end_hms"
+					myecho "[dvd-slideshow] Fadeout: $fade_out_hms"
+				fi
 				sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
 			fi
 			# now, audio should span to the end mark
@@ -6764,12 +6808,12 @@ sed -e '/ [[:cntrl:]]size= /d' "$outdir"/"tmp.txt" > "$outdir"/"$logfile"
 \rm "$outdir"/tmp.txt
 #mv "$outdir"/tmp.txt "$outdir"/"$logfile"
 
-echo "[dvd-slideshow] More extensive logfile output is at:"
-echo "[dvd-slideshow] $outdir/$logfile"
+myecho "[dvd-slideshow] More extensive logfile output is at:"
+myecho "[dvd-slideshow] $outdir/$logfile"
 myecho "[dvd-slideshow] Done!"
-echo ""
-echo "[dvd-slideshow] use one of the following comands to view your output:"
-echo "[dvd-slideshow] xine -g -u 0 \"$outdir/$slideshow_name.vob\""
-echo "[dvd-slideshow] mplayer -sid 0 \"$outdir/$slideshow_name.vob\""
+myecho ""
+myecho "[dvd-slideshow] use one of the following comands to view your output:"
+myecho "[dvd-slideshow] xine -g -u 0 \"$outdir/$slideshow_name.vob\""
+myecho "[dvd-slideshow] mplayer -sid 0 \"$outdir/$slideshow_name.vob\""
 myecho
 exit 0

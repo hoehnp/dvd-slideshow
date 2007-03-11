@@ -18,7 +18,7 @@
 #
 
 name='dvd-menu'
-version='0.8.0'
+version='0.8.1'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
@@ -36,6 +36,8 @@ LANG=C
 changes () 
 {
 echo 'Changes:
+0.8.1
+	Fix embedded image help text.
 0.8.0
 	pre9:
 	Added 6image layout option.  It can also read the title and icon from
@@ -164,8 +166,6 @@ Options:
 
  [-e <embedded image>]
 	Embed a jpeg image in the middle of the screen.
-	If one image is passed for each button text, 
-	That image will be shown as each button is active.
 
  [-a <audiofile>]
 	Audio file to use in the background of the

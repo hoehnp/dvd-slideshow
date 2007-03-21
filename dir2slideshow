@@ -548,8 +548,8 @@ fi
 
 ## get the total number of pictures:
 if [ "$recursive_single" == 1 ] ; then
-	find "$input_dir" -L -type f '.*' -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
-	find "$input_dir" -L -type f '.*' -prune \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
+	find -L "$input_dir" -type f '.*' -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
+	find -L "$input_dir" -type f '.*' -prune \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
 	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
@@ -562,8 +562,8 @@ elif [ "$recursive_multiple" == 1 ] ; then
 	echo "not supported yet"; exit 1
 	# do find, then check each file if it is a directory:
 else
-	find "$input_dir" -L -maxdepth 1 -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
-	find "$input_dir" -L -maxdepth 1 -type f \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
+	find -L "$input_dir" -maxdepth 1 -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
+	find -L "$input_dir" -maxdepth 1 -type f \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
 	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`

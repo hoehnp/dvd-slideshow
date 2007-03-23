@@ -49,7 +49,12 @@ changes ()
 {
 echo 'Changes:
 0.8.1
+    New features:
+	Added -logo <logofile> option to add a logo to each slide. (does not work with transitions yet)
+	Added -mpg output for creating alternate-sized mpeg output that does not conform to dvd standards
+	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
     Bug fixes:
+	Added "k" to audio bitrate arguments to ffmpeg (thanks Tony!)
 	Fixed bug where subtitles would now show in crop and kenburns effects.
 	Fixed bug with audio timing when using scroll & kenburns.
 	removed -size option from crop function because large images were improperly cropped.
@@ -617,6 +622,8 @@ Options:
 	  subtitle_color="white"
 	  subtitle_outline_color="black"
 	  subtitle_location="bottom"
+	subtitle_location_x=0
+	subtitle_location_y=105
 
 	  ## Title:
 	  title_font_size=48
@@ -681,6 +688,8 @@ default_fontname2='helb____.ttf' # helvetica bold truetype
 	  subtitle_color="white"
 	  subtitle_outline_color="black"
 	  subtitle_location="bottom" # or "top"
+	subtitle_location_x=0
+	subtitle_location_y=105
 
 	  ## Title:
 	  title_font_size=48
@@ -738,8 +747,8 @@ filtermethod=Lanczos
 image_postprocess='none'
 mpeg_encoder='ffmpeg' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
 #mpeg_encoder='mpeg2enc' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
-output_format='mpeg2' # or flv, mp4, mp4_ipod.  mpeg2 is default
-#output_format='flv' # or flv, mp4, mp4_ipod
+output_format='mpeg2' # or flv, mpg, mp4, mp4_ipod.  mpeg2 is default
+#output_format='flv' # or flv, mpg, mp4, mp4_ipod
 ignore_seq_end='-M'
 
 # set smp option based on kernel name:
@@ -769,6 +778,7 @@ do
 	-b) shift; bgfile="$1"; shift ;;
 	-theme) shift; commandline_theme="$1"; shift ;;
 	-themes) shift; print_themes=1 ; shift ;;  # print available themes
+	-logo) shift; commandline_logo="$1"; shift ;;
 	-n) shift; slideshow_name="$1"; shift ;;
 	-t) shift; time_per_picture="$1"; shift ;;  ## in tenths or hundredths of seconds?
 	-f) shift; input_txtfile="$1"; shift
@@ -788,6 +798,8 @@ do
 	-mpeg2enc) shift; mpeg_encoder='mpeg2enc' ;; # force using mpeg2enc instead of ffmpeg
 	-flv) shift; output_format='flv' ;; # force using mpeg2enc instead of ffmpeg
 	-swf) shift; output_format='swf' ;; # force using mpeg2enc instead of ffmpeg
+	-mp4) shift; output_format='mp4' ;; # force using mpeg2enc instead of ffmpeg
+	-mpg) shift; output_format='mpg' ;; # force using mpeg2enc instead of ffmpeg
 	-w) shift; widescreen=1 ;;  # use 16:9 instead of 4:3 aspect ratio
 	-L) shift; low_quality=1 ;;  # use low-quality mode
 	-M) shift; commandline_high_quality=0 ; low_quality=0 ;;  # use medium-quality mode (this is the default)
@@ -1422,7 +1434,7 @@ titlebarslide ()
 	check_rm "$output_file"
 
 	# figure out actual coordinates:
-	if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
+	if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] || [ "$output_format" == 'mpg' ] || [ "$output_format" == 'mp4' ] ; then
 		## top title:
 		local f_toptitle_font_size=$(( $toptitle_font_size * $dvd_height / 480 ))
 		local f_toptitle_bar_height=$(( $toptitle_bar_height * $dvd_height / 480 ))
@@ -1434,6 +1446,9 @@ titlebarslide ()
 		local f_bottomtitle_bar_height=$(( $bottomtitle_bar_height * $dvd_height / 480 ))
 		local f_bottomtitle_text_location_x=$(( $bottomtitle_text_location_x * $dvd_height / 480 ))
 		local f_bottomtitle_text_location_y=$(( $bottomtitle_text_location_y * $dvd_height / 480 ))
+		subtitle:
+		local f_subtitle_location_x=$(( $subtitle_location_x * $dvd_height / 480 ))
+		local f_subtitle_location_y=$(( $subtitle_location_y * $dvd_height / 480 ))
 	elif [ "$svcd" -eq 1 ] ; then  # x-resolution is 480x480 (ntsc) or 480x576 (pal)
 		## top title:
 		local f_toptitle_font_size=$(( $toptitle_font_size ))
@@ -1446,6 +1461,9 @@ titlebarslide ()
 		local f_bottomtitle_bar_height=$(( $bottomtitle_bar_height ))
 		local f_bottomtitle_text_location_x=$(( $bottomtitle_text_location_x / 3 ))
 		local f_bottomtitle_text_location_y=$(( $bottomtitle_text_location_y ))
+		# subtitle:
+		local f_subtitle_location_x=$(( $subtitle_location_x * $dvd_height / 480 ))
+		local f_subtitle_location_y=$(( $subtitle_location_y * $dvd_height / 480 ))
 	else
 		local f_toptitle_font_size=$(( $toptitle_font_size ))
 		local f_toptitle_bar_height=$(( $toptitle_bar_height ))
@@ -1457,6 +1475,9 @@ titlebarslide ()
 		local f_bottomtitle_bar_height=$(( $bottomtitle_bar_height ))
 		local f_bottomtitle_text_location_x=$(( $bottomtitle_text_location_x ))
 		local f_bottomtitle_text_location_y=$(( $bottomtitle_text_location_y ))
+		# subtitle:
+		local f_subtitle_location_x=$(( $subtitle_location_x ))
+		local f_subtitle_location_y=$(( $subtitle_location_y ))
 	fi
 	## now the title2 y-locations were specified relative to the bottom of the image
 	## but imagemagick needs them relative to the top of the image:
@@ -1530,7 +1551,7 @@ titleslide ()
 	fi
 	check_rm "$output_file"
 
-	if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
+	if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] || [ "$output_format" == 'mp4' ] || [ "$output_format" == 'mpg' ]; then
 		local f_title_font_size=$(( $title_font_size * $dvd_height / 480 ))
 	else
 		local f_title_font_size=$(( $title_font_size ))
@@ -1581,7 +1602,7 @@ musictitleslide ()
 			local bg="$tmpdir"/slideshow_background.ppm
 		fi
 		check_rm "$output_file"
-		if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
+		if [ "$low_quality" -eq 1 ] || [ "$vcd" -eq 1 ] || [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] || [ "$output_format" == 'mp4' ] || [ "$output_format" == 'mpg' ]; then
 			f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 			convert -size $dvd_width"x"$dvd_height xc:transparent \
 			-pointsize "$f_subtitle_font_size" -gravity SouthWest -font "$title_font" \
@@ -3113,6 +3134,9 @@ set_variables ()   # SET_VARIABLES
 		subtitle_color) subtitle_color="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_color=$subtitle_color" ;;
 		subtitle_outline_color) subtitle_outline_color="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_outline_color=$subtitle_outline_color" ;;
 		subtitle_location) subtitle_location="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_location=$subtitle_location" ;;
+		subtitle_location_x) subtitle_location_x="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_location_x=$subtitle_location_x" ;;
+		subtitle_location_y) subtitle_location_y="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_location_y=$subtitle_location_y" ;;
+		logo) logo="$config2" ; [ "$noecho" -eq 0 ] && echo "logo=$logo" ;;
 	esac
 }
 
@@ -3290,11 +3314,12 @@ subtitle ()  # SUBTITLE
 		gravity="South"
 	fi
 	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
+	subtitle2_location_y=$(( $subtitle_location_y / 2 ))
 	if [ "$subtitle_type" == 'render' ] ; then
-#	       	echo convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
-	       	convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -blur 0x2 -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
+#	       	echo convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -stroke none -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
+	       	convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -blur 0x2 -stroke none -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
 	else
-       		convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -colors 3 +antialias -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -stroke none -draw "text 0,105 \"$subtitle_line1\"" -draw "text 0,75 \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
+       		convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -colors 3 +antialias -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -stroke none -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
 	fi
 }
 
@@ -3397,6 +3422,7 @@ fi
 [ -n "$commandline_output_framerate" ] && output_framerate=$commandline_output_framerate
 [ -n "$commandline_border" ] && border=$commandline_border
 [ -n "$commandline_sharpen" ] && sharpen=$commandline_sharpen
+[ -n "$commandline_logo" ] && logo=$commandline_logo
 
 ## now, read the theme file if it was passed on the commandline:
 if [ "$theme" != 'default' ] && [ -n "$theme" ] ; then
@@ -3408,13 +3434,9 @@ fi
 ## report version of bash for debugging:
 logecho "[dvd-slideshow] Using `which bash` version `bash --version | head -n 1`"
 bashversion=`bash --version | head -n 1 | awk '{print $4}' | awk -F. '{print $1"."$2}'`
-#logecho "bash version is $bashversion"
 
 
 ## Check for required programs
-# ppmtoy4m
-# progver="`rpmversion mjpegtools`"
-#checkforprog ppmtoy4m
 progver=`mplex 2>&1 | grep version | awk '{ print $4 }'`
 logecho "[dvd-slideshow] Found mjpegtools version $progver"
 it=`which ppmtoy4m 2> /dev/null`
@@ -4060,7 +4082,7 @@ if [ "$output_format" == 'flv' ] ; then
 		# see http://www.uwasa.fi/~f76998/video/conversion
 	dvd_width='320' ; dvd_height='240'
 elif [ "$output_format" == 'swf' ] ; then
-	video_bitrate=50
+	video_bitrate=100
 	video_suffix='swf'
 	framerate='15'  # is this needed for .swf?
 	frames_per_ms=15000  # in ms
@@ -4068,23 +4090,20 @@ elif [ "$output_format" == 'swf' ] ; then
 	ppmtoy4m_frc='15:1'  # 15 fps
 	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
-	dvd_width='320' ; dvd_height='240'
+	dvd_width='320' ; dvd_height='240'  # default
 elif [ "$output_format" == 'mp4' ] ; then
 	video_suffix='mp4'
-	framerate='29.97'  # is this needed for .
+	framerate='29.97'  
 	frames_per_ms=29970  # in ms
-#	sq_pixel_multiplier=$(( 1000 * 320 / 240 ))  # keep pixels square?
 	ppmtoy4m_frc='30000:1001'
 	ppmtoy4m_aspect='10:11'  # 4:3
 		# see http://www.uwasa.fi/~f76998/video/conversion
-	dvd_width='320' ; dvd_height='240'
-else 
+	dvd_width='320' ; dvd_height='240'  # default
+else  # assume dvd output
 	video_suffix='mpg'
 	if [ "$pal" -eq 1 ] ; then
 		framerate='25'
 		frames_per_ms=25000  # in ms
-	#	sq_to_dvd_pixels='93.75x100%' # i.e., make the horizontal smaller
-#		sq_pixel_multiplier=$(( 1000 * 540 / 576 ))
 		ppmtoy4m_frc='25:1'
 		ppmtoy4m_aspect='59:54'
 			# see http://www.uwasa.fi/~f76998/video/conversion
@@ -4107,8 +4126,6 @@ else
 	else  ## NTSC
 		framerate='29.97'
 		frames_per_ms=29970  # in ms
-	#	sq_to_dvd_pixels='112.5x100%' # i.e., make the horizontal 12% larger
-#		sq_pixel_multiplier=$(( 1000 * 540 / 480 ))
 		ppmtoy4m_frc='30000:1001'
 		ppmtoy4m_aspect='10:11'
 			# see http://www.uwasa.fi/~f76998/video/conversion
@@ -4129,6 +4146,17 @@ else
 			ffmpeg_target='ntsc-dvd'
 		fi
 	fi
+	if [ "$output_format" == 'mpg' ] ; then  # assume computer output:
+		sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
+		ppmtoy4m_aspect='1:1'  # square pixels
+	        ac3=0  # force mp2 ?
+	        audio_bitrate=128
+		video_bitrate='8000'
+	        audio_sample_rate=44100
+		mplex_type=3
+		aspect_ratio="4:3"
+		mpeg2enc_params="-v 0 -4 2 -2 1 -H -b 6500 -n n -s -f $mplex_type"
+	fi
 fi
 
 resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}'`
@@ -4142,7 +4170,7 @@ if [ -n "$output_size" ] ; then
 	orig_dvd_width=$dvd_width ; orig_dvd_height=$dvd_height
 	dvd_width=$( echo "$output_size" | cut -dx -f1 | tr -d \[:blank:\] )
 	dvd_height=$( echo "$output_size" | cut -dx -f2 | tr -d \[:blank:\] )
-	if [ "$output_format" == 'flv' ] ; then
+	if [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
 		video_bitrate=$(( $video_bitrate * ( $dvd_width * $dvd_height ) / ( $orig_dvd_width * $orig_dvd_height ) ))
 		myecho "[dvd-slideshow] Set new video bitrate to $video_bitrate kb/s"
 	fi
@@ -4175,7 +4203,7 @@ fi
 [ "$vcd" -eq 1 ] && myecho "[dvd-slideshow] VCD mode"
 [ "$svcd" -eq 1 ] && myecho "[dvd-slideshow] SVCD mode"
 myecho "[dvd-slideshow] Video: $ntsc_or_pal $dvd_width"x"$dvd_height $framerate"fps" $aspect_ratio"
-myecho "[dvd-slideshow] Audio: $mp2_or_ac3 $audio_sample_rate $audio_bitrate" 
+myecho "[dvd-slideshow] Audio: $mp2_or_ac3 $audio_sample_rate $audio_bitrate"k 
 myecho "[dvd-slideshow] Debug=$debug  Autocrop=$autocrop Subtitles=$subtitle_type Border=$frame_border"
 if [ "$manual_chapter_markers" == 1 ] ; then
 	myecho "[dvd-slideshow] Chapter markers= Manual"
@@ -4188,6 +4216,10 @@ if [ "$nocleanup" == 1 ] ; then
 fi	
 myecho "[dvd-slideshow] Title_font=$(truncate_filename "$title_font")"
 myecho "[dvd-slideshow] Subtitle_font=$(truncate_filename "$subtitle_font")"
+
+if [ -n "$logo" ] ; then
+	myecho "[dvd-slideshow] Logo=$(truncate_filename "$logo")"
+fi
 
 ## convert command-line audio files to wav format first, so we know how long they are:
 if [ -n "${passed_audio[0]}" ] && [ $audio_inside_txtfile -eq 0 ] ; then  ## only command-line passed audio
@@ -4206,7 +4238,7 @@ if [ -n "${passed_audio[0]}" ] && [ $audio_inside_txtfile -eq 0 ] ; then  ## onl
 #			checkfor_lame
 			myecho "[dvd-slideshow] Decoding mp3 audio: $file"
 			# use ffmpeg instead of lame!
-			ffmpeg -i "$file" -y -vn -ab $audio_bitrate -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1
+			ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1
 #			lame --decode "$file" "$tmpdir/audio$track"_"$audio_index_padded.wav" 2> /dev/null
 		elif [ "$suffix" == "ogg" ] ; then
 			checkfor_oggdec
@@ -4296,8 +4328,8 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .swf file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f swf "$tmpdir/video.swf" >> "$outdir/$logfile" 2>&1 &
-	elif [ "$output_format" == 'mp4' ] ; then   # NOT TESTED YET
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.swf" >> "$outdir/$logfile" 2>&1 &
+	elif [ "$output_format" == 'mp4' ] ; then   
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .mp4 file"
@@ -4308,9 +4340,13 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting ipod .mp4 file"
 		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 -maxrate 1000 -b 700 -qmin 3 -qmax 5 -bufsize 4096 -g 300 "$tmpdir/video.mov" >> "$outdir/$logfile" 2>&1 &
+	elif [ "$output_format" == 'mpg' ] ; then
+		# do pass one first, then add audio at the end during pass 2?
+		# don't do mplex, do second pass instead.
+		myecho "[dvd-slideshow] Exporting .mpg file"
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
 	else  # default mpeg2 video for dvd/vcd
 		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -bf 2 -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
-#		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
 	fi
 else
 	mpeg2enc $mpeg2enc_params -o "$tmpdir/video.mpg" < "$tmpdir"/$yuvfifo >> "$outdir/$logfile" 2>&1 & 
@@ -4742,6 +4778,14 @@ for file in "${image[@]}"; do
 		
 		if [ ! -f "$tmpdir/slide_$i.ppm" ] ; then 
 			create_slide "$file" "$tmpdir/slide_$i.ppm"
+		fi
+		if [ -n "$logo" ] ; then
+			if [ -f "$logo" ] ; then
+				composite -compose src-over -gravity southeast -type TrueColor -depth 8 "$logo" "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
+			else
+				echo "[dvd-slideshow] ERROR: Logo specified but file not found:"
+				echo "[dvd-slideshow] $logo"
+			fi
 		fi
 		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 		if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
@@ -5905,13 +5949,13 @@ for file in "${image[@]}"; do
 			checkfor_lame
 			myecho "[dvd-slideshow] decoding mp3 audio file... be patient..."
 			if [ "$audiosmp" -eq 1 ] ; then
-				ffmpeg -i "$file" -y -vn -ab $audio_bitrate -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1 &
+				ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1 &
 #				lame --decode "${file}" "$tmpdir/audio$track"_"$audio_index_padded.wav" 2> /dev/null &
-#				ffmpeg -i "$file" -y -vn -ab $audio_bitrate -acodec pcm_s16be -f s16be -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.raw" >> "$outdir/$logfile" 2>&1 &
+#				ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -acodec pcm_s16be -f s16be -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.raw" >> "$outdir/$logfile" 2>&1 &
 			else
-				ffmpeg -i "$file" -y -vn -ab $audio_bitrate -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1
+				ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1
 #				lame --decode "${file}" "$tmpdir/audio$track"_"$audio_index_padded.wav" 2> /dev/null
-#				ffmpeg -i "$file" -y -vn -ab $audio_bitrate -acodec pcm_s16be -f s16be -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.raw" >> "$outdir/$logfile" 2>&1
+#				ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -acodec pcm_s16be -f s16be -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.raw" >> "$outdir/$logfile" 2>&1
 			fi
 		elif [ "$suffix" == "m4a" ] || [ "$suffix" == "aac" ] ; then
 			if [ "$audiosmp" -eq 1 ] ; then
@@ -6193,7 +6237,7 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 	if [ "$ac3" -eq 1 ] && [ "$output_format" != 'flv' ] ; then
 		checkforprog ffmpeg
 		myecho "[dvd-slideshow] Creating ac3 audio for $file..."
-		ffmpeg -i "$tmpdir/audio1.wav" -y -vn -ab $audio_bitrate -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
+		ffmpeg -i "$tmpdir/audio1.wav" -y -vn -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
 		if [ $? -ne 0 ] ; then
 			## ffmpeg errored
 			myecho "[dvd-slideshow] ERROR during ffmpeg execution!"
@@ -6202,7 +6246,7 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 		fi
 	else
 		## toolame is way faster! (3x in my test)
-		it=`which toolame`
+		it=`which toolame 2> /dev/null`
 		if [ -n "$it" ] ; then
 			toolame_version=`toolame -h | head -n 4 | grep version | awk '{ print $3 }'`
 			myecho "[dvd-slideshow] using toolame $toolame_version..."
@@ -6413,13 +6457,13 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 	done
 		
 	## AC3 audio may be more compatible:
-	if [ "$ac3" -eq 1 ] && [ "$output_format" != 'flv' ]; then
+	if [ "$ac3" -eq 1 ] && [ "$output_format" == 'mpeg2' ]; then
 		myecho "[dvd-slideshow] Creating ac3 audio..."
 		checkforprog ffmpeg
 		check_rm "$tmpdir/audio1.ac3"
 	#	find "$tmpdir" -name audio1_\?\?\?\?.raw -print0 | xargs -0 sox -t raw -w -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
-		cat "$tmpdir"/audio1_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null |  ffmpeg -i - -vn -ab $audio_bitrate -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
-#		ffmpeg -i "$tmpdir/audio1.wav" -vn -ab $audio_bitrate -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
+		cat "$tmpdir"/audio1_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null |  ffmpeg -i - -vn -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
+#		ffmpeg -i "$tmpdir/audio1.wav" -vn -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
 		if [ $? -ne 0 ] ; then
 			## ffmpeg errored
 			myecho "[dvd-slideshow] ERROR during ffmpeg execution!"
@@ -6437,7 +6481,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			myecho "[dvd-slideshow] Actual length of .raw file=`hms $length`"
 		fi
 		## toolame is way faster! (3x in my test)
-		it=`which toolame`
+		it=`which toolame 2> /dev/null`
 		if [ -n "$it" ] ; then
 			toolame_version=`toolame -h | head -n 4 | grep version | awk '{ print $3 }'`
 			myecho "[dvd-slideshow] Creating mp2 audio using toolame $toolame_version..."
@@ -6643,11 +6687,11 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 		myecho "[dvd-slideshow] Actual length of .raw file=`hms $length`"
 	fi
 	## AC3 audio may be more compatible:
-	if [ "$ac3" -eq 1 ] && [ "$output_format" != 'flv' ] ; then
+	if [ "$ac3" -eq 1 ] && [ "$output_format" == 'mpeg2' ] ; then  # only if dvd output
 		myecho "[dvd-slideshow] Creating ac3 audio..."
 		checkforprog ffmpeg
 		check_rm "$tmpdir/audio2.ac3"
-		ffmpeg -i "$tmpdir/audio2.wav" -vn -ab $audio_bitrate -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio2.ac3" >> "$outdir/$logfile" 2>&1
+		ffmpeg -i "$tmpdir/audio2.wav" -vn -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio2.ac3" >> "$outdir/$logfile" 2>&1
 		if [ $? -ne 0 ] ; then
 			## ffmpeg errored
 			myecho "[dvd-slideshow] ERROR during ffmpeg execution!"
@@ -6656,7 +6700,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 		fi
 	else
 		## toolame is way faster! (3x in my test)
-		it=`which toolame`
+		it=`which toolame 2> /dev/null`
 		if [ -n "$it" ] ; then
 			toolame_version=`toolame -h | head -n 4 | grep version | awk '{ print $3 }'`
 			myecho "[dvd-slideshow] Creating mp2 audio using toolame $toolame_version..."
@@ -6705,16 +6749,19 @@ if [ "$output_format" == 'flv' ] ; then  # only one audio track for .flv, .swf, 
 	fi
 elif [ "$output_format" == 'swf' ] ; then
 	myecho "[dvd-slideshow] Adding audio to .swf file"
-	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir/video.swf" -vcodec copy -f swf -ar 22050 -ab 48 -ac 1 "$tmpdir/video1.swf" >> "$outdir"/"$logfile" 2>&1 
-	mv "$tmpdir/video1.swf" "$outdir"/"$slideshow_name".swf
+	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.swf -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir"/video1.swf >> "$outdir"/"$logfile" 2>&1 
+	mv "$tmpdir"/video1.swf "$outdir"/"$slideshow_name".swf
 	myecho "[dvd-slideshow] Generating video thumbnail..."
 	ffmpeg -y -i "$outdir"/"$slideshow_name".swf -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$outdir"/"$logfile" 2>&1
-elif [ "$output_format" == 'mp4' ] ; then   # NOT TESTED YET
-	myecho "[dvd-slideshow] Exporting .mp4 file"
+elif [ "$output_format" == 'mp4' ] ; then   # lightly tested
+	myecho "[dvd-slideshow] Adding audio to .mp4 file"
+	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.mp4 -vcodec copy -f mp4 -ar 22050 -ab 48 -ac 1 "$tmpdir"/video1.mp4 >> "$outdir"/"$logfile" 2>&1 
+	mv "$tmpdir"/video1.mp4 "$outdir"/"$slideshow_name".mp4
 #	ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$outdir/$logfile" 2>&1
 elif [ "$output_format" == 'mp4_ipod' ] ; then   # NOT TESTED YET
 	myecho "[dvd-slideshow] Exporting ipod .mp4 file"
 #	ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 -maxrate 1000 -b 700 -qmin 3 -qmax 5 -bufsize 4096 -g 300 "$tmpdir/video.mov" >> "$outdir/$logfile" 2>&1
+
 elif [ -n "${audio_2[0]}" ] && [ "$vcd" -eq 0 -a "$svcd" -eq 0 ] ; then
 	## two audio tracks!
 	echo "[dvd-slidehsow] two audio tracks found"
@@ -6737,7 +6784,7 @@ else  # default mpeg2 video for dvd/vcd
 			myecho "[dvd-slideshow] Must be some error with your input audio"
 			myecho "[dvd-slideshow] or the mp2 audio encoder"
 		fi
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2  2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -r 9000 -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2  2>> "$outdir/$logfile"
 	fi
 	if [ $? -ne 0 ] ; then
 		## mplex errored
@@ -6754,7 +6801,7 @@ verbosity=0
 if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 	myecho "[dvd-slideshow] VCD mode: not running spumux"
 elif [ "$output_format" == "flv" ] || [ "$output_format" == "mp4" ] || [ "$output_format" == 'swf' ] ; then
-	myecho "[dvd-slideshow] FLV mode: not running spumux"
+	myecho "[dvd-slideshow] Non-DVD mode: not running spumux"
 elif [ "$subtitle_type" != 'render' ] ; then   # dvd
 	if [ "$has_subtitles" -eq 1 ] ; then
 		spumux -m dvd -v $verbosity -s 0 -P "$tmpdir"/"$slideshow_name".spumux < "$outdir"/"$slideshow_name".vob > "$outdir/tmp.vob"  2>> "$outdir/$logfile"
@@ -6817,11 +6864,16 @@ if [ "$write_chaps" -eq 1 ] ; then
 	echo "$chaps_string" > "$outdir"/"${slideshow_name}.chap"
 fi
 
-myecho "[dvd-slideshow] chapter markers at $chaps_string"
+if [ "$debug" -ge 1 ] ; then
+	myecho "[dvd-slideshow] chapter markers at $chaps_string"
+fi
 myecho "[dvd-slideshow]############################################################"
 
 if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 	mv "$outdir"/"$slideshow_name".vob "$outdir"/"$slideshow_name".mpg
+	echo "$outdir"/"$slideshow_name".mpg > "$outdir"/"$slideshow_name".xml
+elif [ "$output_format" == 'mpg' ] ; then
+	mv "$outdir"/"$slideshow_name".vob "$outdir"/"$slideshow_name".mpg	
 	echo "$outdir"/"$slideshow_name".mpg > "$outdir"/"$slideshow_name".xml
 else
 	echo '		<vob chapters="'$chaps_string'" file="'$outdir/$slideshow_name.vob'"  />' > "$outdir/$slideshow_name".xml
@@ -6843,7 +6895,12 @@ myecho "[dvd-slideshow] $outdir/$logfile"
 myecho "[dvd-slideshow] Done!"
 myecho ""
 myecho "[dvd-slideshow] use one of the following comands to view your output:"
-myecho "[dvd-slideshow] xine -g -u 0 \"$outdir/$slideshow_name.vob\""
-myecho "[dvd-slideshow] mplayer -sid 0 \"$outdir/$slideshow_name.vob\""
+if [ "$output_format" == 'mpg' ] ; then
+	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.mpg\""
+	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.mpg\""
+else
+	myecho "[dvd-slideshow] xine -g -u 0 \"$outdir/$slideshow_name.vob\""
+	myecho "[dvd-slideshow] mplayer -sid 0 \"$outdir/$slideshow_name.vob\""
+fi
 myecho
 exit 0

@@ -1446,7 +1446,7 @@ titlebarslide ()
 		local f_bottomtitle_bar_height=$(( $bottomtitle_bar_height * $dvd_height / 480 ))
 		local f_bottomtitle_text_location_x=$(( $bottomtitle_text_location_x * $dvd_height / 480 ))
 		local f_bottomtitle_text_location_y=$(( $bottomtitle_text_location_y * $dvd_height / 480 ))
-		subtitle:
+		# subtitle:
 		local f_subtitle_location_x=$(( $subtitle_location_x * $dvd_height / 480 ))
 		local f_subtitle_location_y=$(( $subtitle_location_y * $dvd_height / 480 ))
 	elif [ "$svcd" -eq 1 ] ; then  # x-resolution is 480x480 (ntsc) or 480x576 (pal)

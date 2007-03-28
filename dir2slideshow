@@ -554,7 +554,7 @@ if [ "$recursive_single" == 1 ] ; then
 #	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
-	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
+#	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
 	echo "[dir2slideshow] Total audio files found = $audiofiles"
 #	echo "[dir2slideshow] Total text files found = $txtfiles"
@@ -568,7 +568,7 @@ else
 #	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
-	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
+#	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
 	echo "[dir2slideshow] Total audio files found = $audiofiles"
 #	echo "[dir2slideshow] Total text files found = $txtfiles"

@@ -1113,7 +1113,7 @@ addzeros ()
 			echo "$dj2"
 }
 
-# strip every yuv file except the first
+# strip first line of every yuv file except the first
 yuvstrip ()
 {
        read junk
@@ -1150,10 +1150,13 @@ fi
 
 encode_fade ()
 {
+echo "yuvfirstfile=$yuvfirstfile"
 if [ "$yuvfirstfile" -eq 1 ]; then
 	yuvfirstfile=0
+	echo ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p 
 	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | cat >&3
 else
+	echo ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p 
 	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | yuvstrip >&3
 fi
 }
@@ -4038,35 +4041,6 @@ myecho "[dvd-slideshow] Found $transitions transitions (fadein/fadeout/crossfade
 # myecho ", and $moviefiles videos"
 
 # setup audio parameters
-if [ "$vcd" -eq 1 ] ; then
-        ac3=0  # force mp2
-        audio_bitrate=224
-	video_bitrate='1152'
-        audio_sample_rate=44100
-	mplex_type=1
-	aspect_ratio="4:3"
-	mpeg2enc_params="-v 0 -4 2 -2 1 -H -b 1150 -n n -s -f $mplex_type"
-elif [ "$svcd" -eq 1 ] ; then
-        ac3=0  # force mp2
-        audio_bitrate=128
-	video_bitrate='4500'
-        audio_sample_rate=44100
-	mplex_type=4
-	aspect_ratio="4:3"
-	mpeg2enc_params="-v 0 -4 2 -2 1 -H -b 2500 -n n -s -f $mplex_type"
-else
-        audio_bitrate=192
-	video_bitrate='3800'
-        audio_sample_rate=48000 
-	mplex_type=8
-	if [ "$widescreen" -eq 1 ] ; then
-		aspect_ratio="16:9"
-		mpeg2enc_params="-v 0 -a 3 -q 4 -4 2 -2 1 -s -M 0 -f $mplex_type"
-	else
-		aspect_ratio="4:3"
-		mpeg2enc_params="-v 0 -a 2 -q 4 -4 2 -2 1 -s -M 0 -f $mplex_type -E -N -R 2"
-	fi
-fi
 
 
 ## setup video parameters:
@@ -4092,14 +4066,16 @@ elif [ "$output_format" == 'swf' ] ; then
 		# see http://www.uwasa.fi/~f76998/video/conversion
 	dvd_width='320' ; dvd_height='240'  # default
 elif [ "$output_format" == 'mp4' ] ; then
+	video_bitrate=1000
 	video_suffix='mp4'
 	framerate='29.97'  
 	frames_per_ms=29970  # in ms
+	sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
 	ppmtoy4m_frc='30000:1001'
 	ppmtoy4m_aspect='10:11'  # 4:3
 		# see http://www.uwasa.fi/~f76998/video/conversion
 	dvd_width='320' ; dvd_height='240'  # default
-else  # assume dvd output
+else  # assume mpeg2 video output (dvd, vcd, svcd or other)
 	video_suffix='mpg'
 	if [ "$pal" -eq 1 ] ; then
 		framerate='25'
@@ -4146,16 +4122,47 @@ else  # assume dvd output
 			ffmpeg_target='ntsc-dvd'
 		fi
 	fi
+	if [ "$vcd" -eq 1 ] ; then
+	        ac3=0  # force mp2
+       		audio_bitrate=224
+		video_bitrate='1152'
+	        audio_sample_rate=44100
+		mplex_type=1
+		aspect_ratio="4:3"
+		mpeg2enc_params="-v 0 -4 2 -2 1 -H -b 1150 -n n -s -f $mplex_type"
+	elif [ "$svcd" -eq 1 ] ; then
+		ac3=0  # force mp2
+		audio_bitrate=128
+		video_bitrate='4500'
+	        audio_sample_rate=44100
+		mplex_type=4
+		aspect_ratio="4:3"
+		mpeg2enc_params="-v 0 -4 2 -2 1 -H -b 2500 -n n -s -f $mplex_type"
+	else
+	        audio_bitrate=192
+		video_bitrate='3800'
+	        audio_sample_rate=48000 
+		mplex_type=8
+		if [ "$widescreen" -eq 1 ] ; then
+			aspect_ratio="16:9"
+			mpeg2enc_params="-v 0 -a 3 -q 4 -4 2 -2 1 -s -M 0 -f $mplex_type"
+		else
+			aspect_ratio="4:3"
+			mpeg2enc_params="-v 0 -a 2 -q 4 -4 2 -2 1 -s -M 0 -f $mplex_type -E -N -R 2"
+		fi
+	fi
+	video_buffer='-b 1000'
 	if [ "$output_format" == 'mpg' ] ; then  # assume computer output:
 		sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
 		ppmtoy4m_aspect='1:1'  # square pixels
 	        ac3=0  # force mp2 ?
-	        audio_bitrate=128
-		video_bitrate='8000'
-	        audio_sample_rate=44100
+	        audio_bitrate=192
+		video_bitrate=$(( 6000 * $dvd_width / 480 ))
+		echo "video_bitrate=$video_bitrate"
+	        audio_sample_rate=48000
 		mplex_type=3
-		aspect_ratio="4:3"
-		mpeg2enc_params="-v 0 -4 2 -2 1 -H -b 6500 -n n -s -f $mplex_type"
+		aspect_ratio="1:1"
+		mpeg2enc_params="-v 0 -4 2 -2 1 -H -b $video_bitrate -n n -s -f $mplex_type"
 	fi
 fi
 
@@ -4333,6 +4340,7 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .mp4 file"
+		echo ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" 
 		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$outdir/$logfile" 2>&1 &
 	elif [ "$output_format" == 'mp4_ipod' ] ; then   # NOT TESTED YET
 		# see http://www.ubuntuforums.org/showthread.php?t=114946
@@ -4344,6 +4352,7 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .mpg file"
+		echo ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/video.mpg" 
 		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
 	else  # default mpeg2 video for dvd/vcd
 		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -bf 2 -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
@@ -4935,6 +4944,7 @@ for file in "${image[@]}"; do
 		if [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
 			rm "$tmpdir"/kb_????.ppm
 		fi
+exit
 		rm "$tmpdir"/fade_????.ppm
 	elif [ "$file" == 'crossfade' ] ; then  # CROSSFADE
 		## ok, for crossfades, we need to fade both the foreground and background.
@@ -6766,9 +6776,9 @@ elif [ -n "${audio_2[0]}" ] && [ "$vcd" -eq 0 -a "$svcd" -eq 0 ] ; then
 	## two audio tracks!
 	echo "[dvd-slidehsow] two audio tracks found"
 	if [ "$ac3" -eq 1 ] ; then
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.ac3 "$tmpdir"/audio2.ac3 2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $ignore_seq_end $video_buffer -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.ac3 "$tmpdir"/audio2.ac3 2>> "$outdir/$logfile"
 	else
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2 "$tmpdir"/audio2.mp2 2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $ignore_seq_end $video_buffer -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2 "$tmpdir"/audio2.mp2 2>> "$outdir/$logfile"
 	fi
 else  # default mpeg2 video for dvd/vcd
 	if [ "$ac3" -eq 1 ] ; then
@@ -6777,14 +6787,14 @@ else  # default mpeg2 video for dvd/vcd
 			myecho "[dvd-slideshow] Must be some error with your input audio"
 			myecho "[dvd-slideshow] or the ac3 encoder"
 		fi
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.ac3 2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $video_buffer $ignore_seq_end -f $mplex_type -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.ac3 2>> "$outdir/$logfile"
 	else
 		if [ ! -f "$tmpdir/audio1.mp2" ] ; then
 			myecho "[dvd-slideshow] ERROR: no output .mp2 file found!"
 			myecho "[dvd-slideshow] Must be some error with your input audio"
 			myecho "[dvd-slideshow] or the mp2 audio encoder"
 		fi
-		mplex -V -v $verbosity $ignore_seq_end -f $mplex_type -r 9000 -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2  2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $video_buffer $ignore_seq_end -f $mplex_type -r 9000 -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2  2>> "$outdir/$logfile"
 	fi
 	if [ $? -ne 0 ] ; then
 		## mplex errored

@@ -23,6 +23,7 @@ changes ()
 {
 echo 'Changes:
 0.8.1
+	Recursive finds follow symbolic links.
 	Bug fix for spaces in filenames (thanks Ken Zutter)
 0.8.0 	
 	Add audiobook option- looks for audio files and images & adds titles
@@ -548,29 +549,29 @@ fi
 
 ## get the total number of pictures:
 if [ "$recursive_single" == 1 ] ; then
-	find -L "$input_dir" -type f '.*' -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
-	find -L "$input_dir" -type f '.*' -prune \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
-	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+	find -L "$input_dir" -type f -o -type l '.*' -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
+	find -L "$input_dir" -type f -o -type l '.*' -prune \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
+#	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
 	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
 	echo "[dir2slideshow] Total audio files found = $audiofiles"
-	echo "[dir2slideshow] Total text files found = $txtfiles"
+#	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
 elif [ "$recursive_multiple" == 1 ] ; then
 	echo "not supported yet"; exit 1
 	# do find, then check each file if it is a directory:
 else
-	find -L "$input_dir" -maxdepth 1 -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
-	find -L "$input_dir" -maxdepth 1 -type f \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
-	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+	find -L "$input_dir" -maxdepth 1 -type f -o -type l \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) -exec ls -1 {} \; | sort > "$output_dir"/imagelist.txt
+	find -L "$input_dir" -maxdepth 1 -type f -o -type l \( -name \*.mp3 -o -name \*.ogg \) -exec ls -1 {} \; | sort > "$output_dir"/audiolist.txt
+#	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
 	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
 	echo "[dir2slideshow] Total audio files found = $audiofiles"
-	echo "[dir2slideshow] Total text files found = $txtfiles"
+#	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
 	if [ "$audiobook" == 1 ] ; then
 		cat "$output_dir"/imagelist.txt "$output_dir"/audiolist.txt | sort > "$output_dir"/filelist.txt

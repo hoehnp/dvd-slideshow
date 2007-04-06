@@ -51,11 +51,12 @@ echo 'Changes:
 0.8.1
     New features:
 	Added -logo <logofile> option to add a logo to each slide. (does not work with transitions yet)
-	Added -mpg output for creating alternate-sized mpeg output that does not conform to dvd standards
+	Added -mpg output for creating alternate-sized mpeg output that does not conform to dvd standards (very alpha)
 	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
     Bug fixes:
+	Fixed problem with subtitles- last one was not being displayed.
 	Added "k" to audio bitrate arguments to ffmpeg (thanks Tony!)
-	Fixed bug where subtitles would now show in crop and kenburns effects.
+	Fixed bug where subtitles would not show in crop and kenburns effects.
 	Fixed bug with audio timing when using scroll & kenburns.
 	removed -size option from crop function because large images were improperly cropped.
 	added -M option to mplex calls (for some reason it was removed)
@@ -4725,7 +4726,7 @@ for file in "${image[@]}"; do
 		## use real jpeg. 
 		## now the slide may already exist if we had a fadein or crossfade before
 		myecho "[dvd-slideshow] $image_number/$imagefiles $(truncate_filename "$file") `hms ${duration[$i]}`"
-		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle""= ${subtitle[$i]}"
+		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle= ${subtitle[$i]}"
 		if [ "$first_image" == 1 ] && [ "${image[$i]}" != 'background' ] ; then
 			first_image=0
 			hilight_image="${image[$i]}"
@@ -4797,9 +4798,11 @@ for file in "${image[@]}"; do
 			fi
 		fi
 		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
+		[ -n "${subtitle1[$i]}" ] && myecho "[dvd-slideshow] Subtitle1= ${subtitle1[$i]}"
 		if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 			subtitle "${subtitle1[$i]}" $i transparent # just creates the .png file for overlay
 			composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
+		# else?
 		fi
 		if [ "$frames_to_render" -ge 1 ] ; then
 			encode "$tmpdir/slide_$i.ppm" $frames_to_render
@@ -6056,8 +6059,8 @@ exit
 		# look for semicolon, indicating multiple subtitle tracks:
 		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 		subtitle2[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $2}' )"
-#		echo "subtitle1=${subtitle1[$i]}"
-#		echo "subtitle2=${subtitle2[$i]}"
+		[ $debug -gt 1 ] && myecho "[dvd-slideshow] subtitle1=${subtitle1[$i]}"
+		[ $debug -gt 1 ] && myecho "[dvd-slideshow] subtitle2=${subtitle2[$i]}"
 		if [ -n "${subtitle2[$i]}" ] ; then
 			has_subtitles2=1
 			subtitle "${subtitle2[$i]}" $i  # just creates the .png file for overlay
@@ -6066,33 +6069,55 @@ exit
 		if [ -n "${subtitle1[$i]}" ] ; then
 			has_subtitles=1
 			subtitle "${subtitle1[$i]}" $i  # just creates the .png file for overlay
-#		else
-#			cp "$transparent_bg" "$tmpdir"/subtitle_$i.png
 		fi
 	fi
 
 	## let's assume the subtitle stays on the whole duration of the slide?
 	subtitle_start=`hms "$slide_start_time"`
 	subtitle_end=`hms "$slide_end_time"`
+	[ $debug -gt 1 ] && myecho "[dvd-slideshow] subtitle_start=$subtitle_start subtitle_end=$subtitle_end"
 
         ### Fix by AW.  Check to see if last subtitle was the same as this one!
 	## if so, then display it continuously:
-	if [ "$i" -gt 0 ] ; then
+	if [ "$i" -eq 0 ] ; then
+		# first line.  check for subtitle?
+	        if [ -n "${subtitle1[$i]}" ] ; then
+			write_last_subtitle=1
+			continuous_subtitle_start="$subtitle_start"
+			continuous_subtitle_end="$subtitle_end"  # update end point every time
+		fi
+	        if [ -n "${subtitle2[$i]}" ] ; then
+			write_last_subtitle2=1
+			continuous_subtitle_start2="$subtitle_start"
+			continuous_subtitle_end2="$subtitle_end"  # update end point every time
+		fi
+	elif [ "$i" -gt 0 ] ; then
 		# subtitle track 1:
-	        if [ "${subtitle1[$i]}" != "${subtitle1[$(($i-1))]}" ] ; then
-			## subtitles different:
-#			myecho "subtitles different i=${subtitle1[$i]} i-1=${subtitle1[$(($i-1))]}"
-			## so, we have three cases here:  
-		        if [ -n "${subtitle1[$i]}" -a -z "${subtitle1[$(($i-1))]}" ] ; then
-				# Current subtitle is nonzero, and previous subtitle is empty:
-				# Just update values, don't write out yet!
-				write_last_subtitle=1
-			else	## need to write out subtitle in all other cases:
-				write_last_subtitle=0
-				echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
-				echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
-				echo '		' >> "$tmpdir/$slideshow_name".spumux
-			fi
+		if [ -n "${subtitle1[$i]}" -a -z "${subtitle1[$(($i-1))]}" ] ; then
+			# Current subtitle is nonzero, and previous subtitle is empty:
+			# Just update values, don't write out yet!
+			write_last_subtitle=1
+			continuous_subtitle_start="$subtitle_start"
+		elif [ -z "${subtitle1[$i]}" -a -z "${subtitle1[$(($i-1))]}" ] ; then
+			# no subtitles.  don't do anything.
+			write_last_subtitle=0
+			continuous_subtitle_start="$subtitle_start"
+		elif [ -z "${subtitle1[$i]}" -a -n "${subtitle1[$(($i-1))]}" ] ; then
+			# Current subtitle is empty, and previous subtitle is nonzero:
+			# write out subtitle
+			write_last_subtitle=0
+			echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
+			echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
+			echo '		' >> "$tmpdir/$slideshow_name".spumux
+			continuous_subtitle_start="$subtitle_start"
+	        elif [ "${subtitle1[$i]}" != "${subtitle1[$(($i-1))]}" ] ; then
+			## subtitles different, but both not empty:
+			# write out results
+			myecho "subtitles different i=${subtitle1[$i]} i-1=${subtitle1[$(($i-1))]}"
+			write_last_subtitle=1
+			echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
+			echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
+			echo '		' >> "$tmpdir/$slideshow_name".spumux
 			# set new subtitle starting point:
 			continuous_subtitle_start="$subtitle_start"
 		else
@@ -6106,25 +6131,36 @@ exit
 		continuous_subtitle_end="$subtitle_end"  # update end point every time
 
 		# subtitle track 2:
-	        if [ "${subtitle2[$i]}" != "${subtitle2[$(($i-1))]}" ] ; then
-			## subtitles different:
-#			myecho "subtitles different i=${subtitle2[$i]} i-1=${subtitle2[$(($i-1))]}"
-			## so, we have three cases here:  
-		        if [ -n "${subtitle2[$i]}" -a -z "${subtitle2[$(($i-1))]}" ] ; then
-				# Current subtitle is nonzero, and previous subtitle is empty:
-				# Just update values, don't write out yet!
-				write_last_subtitle2=1
-			else	## need to write out subtitle in all other cases:
-				write_last_subtitle2=0
-				echo '		<spu start="'$continuous_subtitle_start2'" end="'$continuous_subtitle_end2'" transparent="'$transparent_color'" image="'$tmpdir/subtitle2_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux2
-				echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux2
-				echo '		' >> "$tmpdir/$slideshow_name".spumux2
-			fi
+		if [ -n "${subtitle2[$i]}" -a -z "${subtitle2[$(($i-1))]}" ] ; then
+			# Current subtitle is nonzero, and previous subtitle is empty:
+			# Just update values, don't write out yet!
+			write_last_subtitle2=1
+			continuous_subtitle_start2="$subtitle_start"
+		elif [ -z "${subtitle2[$i]}" -a -z "${subtitle2[$(($i-1))]}" ] ; then
+			# no subtitles.  don't do anything.
+			write_last_subtitle2=0
+			continuous_subtitle_start2="$subtitle_start"
+		elif [ -z "${subtitle2[$i]}" -a -n "${subtitle2[$(($i-1))]}" ] ; then
+			# Current subtitle is empty, and previous subtitle is nonzero:
+			# write out subtitle
+			write_last_subtitle2=0
+			echo '		<spu start="'$continuous_subtitle_start2'" end="'$continuous_subtitle_end2'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux2
+			echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux2
+			echo '		' >> "$tmpdir/$slideshow_name".spumux2
+			continuous_subtitle_start2="$subtitle_start"
+	        elif [ "${subtitle2[$i]}" != "${subtitle2[$(($i-1))]}" ] ; then
+			## subtitles different, but both not empty:
+			# write out results
+			myecho "subtitles different i=${subtitle2[$i]} i-1=${subtitle2[$(($i-1))]}"
+			write_last_subtitle2=1
+			echo '		<spu start="'$continuous_subtitle_start2'" end="'$continuous_subtitle_end2'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux2
+			echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux2
+			echo '		' >> "$tmpdir/$slideshow_name".spumux2
 			# set new subtitle starting point:
 			continuous_subtitle_start2="$subtitle_start"
 		else
 			# subtitles are the same.  Don't write it out yet!
-			# save the continuous_subtitle_end variable until done...
+			# save the continuous_subtitle_end2 variable until done...
 			if [ -n "${subtitle2[$i]}" ] ; then
 				write_last_subtitle2=1
 				# subtitles are the same AND the current one is not empty
@@ -6142,6 +6178,7 @@ done
 if [ -f "$tmpdir/$slideshow_name".spumux ] && [ "$subtitle_type" != 'render' ] ; then
 	if [ "$write_last_subtitle" -eq 1 ] ; then
 		# write out last subtitle:
+		echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">'
 		echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
 		echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
 		echo '		' >> "$tmpdir/$slideshow_name".spumux

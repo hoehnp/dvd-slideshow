@@ -3670,6 +3670,8 @@ do
 		effect1[$i]=`echo "${thisline}" | cut -d: -f4 | awk -F':#' '{print $1}' | awk -F' #' '{print $1}'`
 	else
 		effect1[$i]=`echo "${thisline}" | cut -d: -f4 | awk -F' #' '{print $1}'`
+		# effect1 is used for the titlebar line 2, so we need to escape colons here also:
+        	effect1[$i]=`echo ${effect1[$i]} | sed -e 's/xxx_xxx/:/g'`
 	fi
 	if [ "${filetype[$i]}" == 'musictitle' ] || [ "${filetype[$i]}" == 'title' ] || [ "${filetype[$i]}" == 'Title' ] ; then
 		effect1_params[$i]=`echo "${thisline}" | cut -d: -f5 | awk -F' #' '{print $1}'`
@@ -6178,7 +6180,6 @@ done
 if [ -f "$tmpdir/$slideshow_name".spumux ] && [ "$subtitle_type" != 'render' ] ; then
 	if [ "$write_last_subtitle" -eq 1 ] ; then
 		# write out last subtitle:
-		echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">'
 		echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
 		echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
 		echo '		' >> "$tmpdir/$slideshow_name".spumux

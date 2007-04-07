@@ -53,6 +53,7 @@ echo 'Changes:
 	Added -logo <logofile> option to add a logo to each slide. (does not work with transitions yet)
 	Added -mpg output for creating alternate-sized mpeg output that does not conform to dvd standards (very alpha)
 	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
+	Better handling of very long subtitles.  (up to 3 lines and reduced font size)
     Bug fixes:
 	Fixed problem with subtitles- last one was not being displayed.
 	Added "k" to audio bitrate arguments to ffmpeg (thanks Tony!)
@@ -1151,13 +1152,10 @@ fi
 
 encode_fade ()
 {
-echo "yuvfirstfile=$yuvfirstfile"
 if [ "$yuvfirstfile" -eq 1 ]; then
 	yuvfirstfile=0
-	echo ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p 
 	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | cat >&3
 else
-	echo ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p 
 	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | yuvstrip >&3
 fi
 }
@@ -3260,6 +3258,7 @@ subtitle ()  # SUBTITLE
 	# output is $tmpdir/subtitle_$i.png
 	## fix any special characters:
 	local index="$2"
+	local strokewidth=3
 	transparent_color="ff0101"
 	if [ -z "$3" ] ; then	
 		local bg_color="$transparent_color"
@@ -3273,19 +3272,69 @@ subtitle ()  # SUBTITLE
 		logecho "[dvd-slideshow] Found \\n in subtitle"
 		# user entered a \n to force line wraps
 		# break lines at line wraps
+		f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 		subtitle_line1=`echo "$mysubtitle" | awk -F'\\' '{print $1}'`
 		subtitle_line2=`echo "$mysubtitle" | awk -F'\\' '{print $2}' | cut -c 2-`
+		subtitle_line3=`echo "$mysubtitle" | awk -F'\\' '{print $3}' | cut -c 2-`
+		if [ -n "$subtitle_line3" ] ; then
+			# user small font size
+			f_subtitle_font_size=$(( $subtitle_font_size * 3 / 4 * $dvd_height / 480 ))
+		fi
+		[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle_line1"
+		[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle_line2"
+		[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line3=$subtitle_line3"
 	else	# no forced line wraps.  Check for long lines:	
 		## make the subtitle break up into up to 4 different lines?
-		font_width=15  # actually it's 14.4, but this should give us some margin
+		f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
+		font_width=$(( $f_subtitle_font_size * 2 / 3 - 1 ))
+#		font_width=15  # actually it's 14.4, but this should give us some margin
 		characters="${#mysubtitle}"
 		line_width=$(( $font_width * $characters ))
-		if [ "$line_width" -gt "$dvd_width" ] ; then # $dvd_width=720
+		if [ "$line_width" -gt "$(( 2 * $dvd_width ))" ] ; then # $dvd_width=720
+			## need to split the line into 3 lines:
+			# make font size smaller
+			strokewidth=2
+			f_subtitle_font_size=$(( $subtitle_font_size * 3 / 4 * $dvd_height / 480 ))
+			font_width=$(( $f_subtitle_font_size * 2 / 3 -1 ))
+			characters="${#mysubtitle}"
+			line_width=$(( $font_width * $characters ))
+			characters2=$(( $characters / 3 + 1))
+			characters3=$(( 2 * $characters2 ))
+			# try cutting in the middle:
+			subtitle_line1="${mysubtitle:0:$characters2}"
+			subtitle_line2="${mysubtitle:$characters2:$characters2}" 
+			subtitle_line3="${mysubtitle:$characters3:$characters2}" 
+			# now re-join a potential broken word:
+			if [ "${mysubtitle:$characters2:1}" != ' ' ] ; then	
+				# break occurred in the middle of a word. re-join the word:
+				wordend=`echo "$subtitle_line2" | awk '{print $1}'`
+				wordend_length=${#wordend}
+				subtitle_line1="$subtitle_line1$wordend"
+				subtitle_line2="${subtitle_line2:$wordend_length}"
+			fi
+			if [ "${mysubtitle:$characters3:1}" != ' ' ] ; then	
+				# break occurred in the middle of a word. re-join the word:
+				wordend=`echo "$subtitle_line3" | awk '{print $1}'`
+				wordend_length=${#wordend}
+				subtitle_line2="$subtitle_line2$wordend"
+				subtitle_line3="${subtitle_line3:$wordend_length}"
+			fi
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow] Splitting long subtitle... New values:"
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle_line1"
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle_line2"
+			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line3=$subtitle_line3"
+			subtitle_line1=`echo "$subtitle_line1" | sed -e 's/\\\!/\!/g' `
+			subtitle_line2=`echo "$subtitle_line2" | sed -e 's/\\\!/\!/g' `
+			subtitle_line3=`echo "$subtitle_line3" | sed -e 's/\\\!/\!/g' `
+			subtitle2_location_y=$(( $subtitle_location_y * 2 / 3 ))
+			subtitle3_location_y=$(( $subtitle_location_y * 1 / 3 ))
+		elif [ "$line_width" -gt "$dvd_width" ] ; then # $dvd_width=720
 			## need to split the line:
 			characters2=$(( $characters / 2 + 1))
 			# try cutting in the middle:
 			subtitle_line1="${mysubtitle:0:$characters2}"
 			subtitle_line2="${mysubtitle:$characters2:$characters2}" 
+			subtitle_line3=""
 			# now re-join a potential broken word:
 			if [ "${mysubtitle:$characters2:1}" != ' ' ] ; then	
 				# break occurred in the middle of a word. re-join the word:
@@ -3297,19 +3346,23 @@ subtitle ()  # SUBTITLE
 			[ $debug -ge 1 ] && myecho "[dvd-slideshow] Splitting long subtitle... New values:"
 			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle_line1"
 			[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle_line2"
-		else
+			subtitle_line1=`echo "$subtitle_line1" | sed -e 's/\\\!/\!/g' `
+			subtitle_line2=`echo "$subtitle_line2" | sed -e 's/\\\!/\!/g' `
+			subtitle2_location_y=$(( $subtitle_location_y / 2 ))
+			subtitle3_location_y=0
+		else  # single line
 			subtitle_line1=""
 			subtitle_line2="$mysubtitle"
+			subtitle_line3=""
+			subtitle_line2=`echo "$subtitle_line2" | sed -e 's/\\\!/\!/g' `
+			subtitle2_location_y=$(( $subtitle_location_y / 2 ))
+			subtitle3_location_y=0
 		fi
 	fi	
 #	myecho "[dvd-slideshow] $index subtitle_line1=$subtitle_line1 subtitle_line2=$subtitle_line2"
 	
 	## render subtitles, if necessary:
 	## let dvd-slideshow render its own subtitles:
-	subtitle_line1=`echo "$subtitle_line1" | sed -e 's/\\\!/\!/g' `
-	subtitle_line2=`echo "$subtitle_line2" | sed -e 's/\\\!/\!/g' `
-#	echo "[dvd-slideshow]  Line1=$subtitle_line1"
-#	echo "[dvd-slideshow]  Line2=$subtitle_line2"
 	if [ "$subtitle_location" == 'top' ] ; then
 		gravity="North"
 	elif [ "$subtitle_location" == 'bottom' ] ; then
@@ -3317,13 +3370,10 @@ subtitle ()  # SUBTITLE
 	else 
 		gravity="South"
 	fi
-	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
-	subtitle2_location_y=$(( $subtitle_location_y / 2 ))
 	if [ "$subtitle_type" == 'render' ] ; then
-#	       	echo convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -stroke none -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
-	       	convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -blur 0x2 -stroke none -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
+	       	convert -size $dvd_width"x"$dvd_height xc:transparent -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth $strokewidth -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -draw "text 0,$subtitle3_location_y \"$subtitle_line3\"" -blur 0x2 -stroke none -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -draw "text 0,$subtitle3_location_y \"$subtitle_line3\"" -quality 100 "$tmpdir/subtitle_$index.png"
 	else
-       		convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth 3 -colors 3 +antialias -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -stroke none -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -quality 100 "$tmpdir/subtitle_$index.png"
+       		convert -size $dvd_width"x"$dvd_height xc:'#'$bg_color -font "$subtitle_font" -pointsize "$f_subtitle_font_size" -gravity $gravity -fill "$subtitle_color" -stroke "$subtitle_outline_color" -strokewidth $strokewidth -colors 3 +antialias -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -draw "text 0,$subtitle3_location_y \"$subtitle_line3\"" -stroke none -draw "text 0,$subtitle_location_y \"$subtitle_line1\"" -draw "text 0,$subtitle2_location_y \"$subtitle_line2\"" -draw "text 0,$subtitle3_location_y \"$subtitle_line3\"" -quality 100 "$tmpdir/subtitle_$index.png"
 	fi
 }
 
@@ -4800,7 +4850,7 @@ for file in "${image[@]}"; do
 			fi
 		fi
 		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
-		[ -n "${subtitle1[$i]}" ] && myecho "[dvd-slideshow] Subtitle1= ${subtitle1[$i]}"
+#		[ -n "${subtitle1[$i]}" ] && myecho "[dvd-slideshow] Subtitle1= ${subtitle1[$i]}"
 		if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 			subtitle "${subtitle1[$i]}" $i transparent # just creates the .png file for overlay
 			composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
@@ -4949,7 +4999,6 @@ for file in "${image[@]}"; do
 		if [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
 			rm "$tmpdir"/kb_????.ppm
 		fi
-exit
 		rm "$tmpdir"/fade_????.ppm
 	elif [ "$file" == 'crossfade' ] ; then  # CROSSFADE
 		## ok, for crossfades, we need to fade both the foreground and background.
@@ -6115,7 +6164,7 @@ exit
 	        elif [ "${subtitle1[$i]}" != "${subtitle1[$(($i-1))]}" ] ; then
 			## subtitles different, but both not empty:
 			# write out results
-			myecho "subtitles different i=${subtitle1[$i]} i-1=${subtitle1[$(($i-1))]}"
+#			myecho "subtitles different i=${subtitle1[$i]} i-1=${subtitle1[$(($i-1))]}"
 			write_last_subtitle=1
 			echo '		<spu start="'$continuous_subtitle_start'" end="'$continuous_subtitle_end'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux
 			echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux
@@ -6153,7 +6202,7 @@ exit
 	        elif [ "${subtitle2[$i]}" != "${subtitle2[$(($i-1))]}" ] ; then
 			## subtitles different, but both not empty:
 			# write out results
-			myecho "subtitles different i=${subtitle2[$i]} i-1=${subtitle2[$(($i-1))]}"
+#			myecho "subtitles different i=${subtitle2[$i]} i-1=${subtitle2[$(($i-1))]}"
 			write_last_subtitle2=1
 			echo '		<spu start="'$continuous_subtitle_start2'" end="'$continuous_subtitle_end2'" transparent="'$transparent_color'" image="'$tmpdir/subtitle_$(($i-1)).png'">' >> "$tmpdir/$slideshow_name".spumux2
 			echo '		</spu>' >> "$tmpdir/$slideshow_name".spumux2

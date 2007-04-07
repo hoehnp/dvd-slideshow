@@ -18,11 +18,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.7.5'
+version='0.8.1'
 
 changes () 
 {
 echo 'Changes:
+0.8.1
+	Escape colons in subtitles	
 0.7.5	
 	No changes
 0.7.4	
@@ -295,7 +297,7 @@ for i in `seq 2 $total_pictures`; do
 		albumitem=`cat "$album_path/photos.dat" | tr '\n' '\a' | awk -F'albumitem' '{print $'"$i"'}'`
 	fi
 	filename[$j]=`echo "${albumitem}" | awk -F'"name"' '{print $2}' | awk -F'"' '{print $2}'`
-	comment[$j]=`echo "${albumitem}" | awk -F'"caption"' '{print $2}' | awk -F':"' '{print $2}' | awk -F'";' '{print $1}' | tr '\a' ' ' | sed -e 's/\r/\\\\n/' | sed -e 's/<a href.*">//' | sed -e 's/<\/a>//'`
+	comment[$j]=`echo "${albumitem}" | awk -F'"caption"' '{print $2}' | awk -F':"' '{print $2}' | awk -F'";' '{print $1}' | tr '\a' ' ' | sed -e 's/\r/\\\\n/' | sed -e 's/<a href.*">//' | sed -e 's/<\/a>//' | sed -e 's/\:/\\\:/g'`
 	hidden[$j]=`echo "${albumitem}" | awk -F'"hidden"' '{print $2}' | awk -F';' '{print $2}'`
 	if [ "${hidden[$j]}" == 'N' ] || [ -z "${hidden[$j]}" ] ; then  ## only include this picture if it's shown in the gallery
 		new_filename="${album_path}/${filename[$j]}.jpg"

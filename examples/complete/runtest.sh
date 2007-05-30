@@ -33,7 +33,7 @@ cp -a ../images/flower4.jpg my_pictures/.
 echo "[runtest.sh] Executing command:"
 echo "[runtest.sh] dir2slideshow -n 'Complete example' -s filename -t 5 -c 1 -a '../audio/strojovna_07-TEXEMPO-30s.ogg' $* my_pictures"
 echo " "
-dir2slideshow -n 'Complete example' -t 5 -s filename -c 1 -r -a '../audio/strojovna_07-TEXEMPO-30s.ogg' $* my_pictures
+dir2slideshow -n 'Complete example' -t 5 -s filename -c 1 -a '../audio/strojovna_07-TEXEMPO-30s.ogg' $* my_pictures
 
 if [ ! -f "Complete_example.txt" ] ; then
         echo "[runtest.sh] ERROR: No output files found from dir2slideshow!"

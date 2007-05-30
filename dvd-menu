@@ -18,7 +18,7 @@
 #
 
 name='dvd-menu'
-version='0.8.1'
+version='0.8.1-svn'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
@@ -37,7 +37,11 @@ changes ()
 {
 echo 'Changes:
 0.8.1
+	AC3 audio created with ffmpeg needs k added to bitrate
+	Changed -depth 16 to -depth 8 in background gradient creation.
 	Fix embedded image help text.
+	Default layout will switch to two columns of buttons (no embedded image) if the button
+	list is long.
 0.8.0
 	pre9:
 	Added 6image layout option.  It can also read the title and icon from
@@ -235,7 +239,7 @@ Variables:
 	menu_title_location_y=50
 	menu_panel_height=28  # height of each button.  Default is slightly bigger than font size
 	menu_panel_width=400  # goes all the way to the right of the screen
-	menu_panel_location_x=360
+	menu_panel_location_x=420
 	menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
 	menu_button_font_size=21
 	menu_title_justify=left
@@ -810,12 +814,13 @@ default_font2='helb____.ttf' # helvetica bold truetype
 
 ## other cool colors:  cadetblue cornflowerblue midnightblue
 bg_color='steelblue'  # imagemagick colors
-panel_width=400
+# panel_width=400
+panel_width=''
 panel_height=''  # will be set later from the button_font_size
 button_font_size=21
 button_font_color="black"
 button_hilight_color="red"
-menu_panel_location_x=360
+menu_panel_location_x=420
 menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
 title_font_size=40
 title_font_color="black"
@@ -1014,10 +1019,6 @@ if [ -n "$theme" ] && [ "$theme" != 'default' ] ; then
 	read_theme "$theme" 0
 fi
 
-if [ -z "$panel_height" ] ; then
-	panel_height="$(( $button_font_size * 125 / 100 ))"
-fi
-
 # button_text_location=$(( $panel_height/2 + $button_font_size/2 ))
 menu_button_location_y=$(( $menu_panel_location_y + $button_font_size/2 ))  # y-location of first button
 
@@ -1088,6 +1089,15 @@ else  ## NTSC
                 dvd_width='720' ; dvd_height='480'
                 resolution='720x480'
         fi
+fi
+
+if [ -z "$panel_width" ] ; then
+	panel_width="$(( $dvd_width - $menu_panel_location_x ))"
+	logecho "menu_panel_location_x=$menu_panel_location_x"
+	logecho "panel_width=$panel_width"
+fi
+if [ -z "$panel_height" ] ; then
+	panel_height="$(( $button_font_size * 125 / 100 ))"
 fi
 
 #######################################################3
@@ -1267,7 +1277,7 @@ if [ "$no_menu" -eq 0 ] ; then
 		fi
 	        ## need to write out a blank image of the given size:
 	        echo "[dvd-menu] Creating background image gradient"
-	        convert -depth 16 -size "$dvd_width"'x'"$dvd_height" gradient:white-$bg_color -type TrueColor "$tmpdir/menu.ppm"
+	        convert -depth 8 -size "$dvd_width"'x'"$dvd_height" gradient:white-$bg_color -type TrueColor "$tmpdir/menu.ppm"
 	fi
 	## save this menu background as the "background" for fadin/fadeout:
 	cp "$tmpdir/menu.ppm" "$tmpdir/slideshow_background.ppm"
@@ -1310,6 +1320,12 @@ if [ "$no_menu" -eq 0 ] ; then
 			i=$(( $i + 1 ))
 		done
 	fi
+	number_of_titles="$i"
+	if [ $number_of_titles -gt 10 ] && [ "$menu_type" == 'textbar' ] ; then
+		# use two-column layout by default:
+		menu_type='2textbar'
+		echo "using 2textbar layout"
+	fi	
 	## case 1:  old layout:
 	if [ "$menu_type" == 'textbar' ] ; then  # plain text on right side
 		menuright=$(( $menu_panel_location_x + $panel_width))
@@ -1376,6 +1392,68 @@ if [ "$no_menu" -eq 0 ] ; then
 			let menu_button_location_y=$menu_button_location_y+$panel_height
 			let i=$i+1
 		done
+	elif [ "$menu_type" == '2textbar' ] ; then  # two columns of text.  no hilight?
+		menuright=$(( $menu_panel_location_x + $panel_width))
+		menubottom=$(( $dvd_height + 50 ))  ## add 50 so we can chop off the bottom later
+		menuh=$(( $dvd_height + 50 ))
+		if [ "$no_white" -eq 0 ] ; then
+		        echo "[dvd-menu] Creating white button mask"
+			white_button_mask "$tmpdir/button_background_mask.png"
+			composite -compose src-over -type TrueColor -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+			convert "$tmpdir/button_background_mask.png" -flop "$tmpdir/button_background_mask.png"
+			composite -compose src-over -type TrueColor -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+		fi
+		# split the titles between the left and right:
+		menu_panel_location_x_l=0
+		menu_panel_location_x_r=$menu_panel_location_x
+		menu_panel_location_x=$menu_panel_location_x_l  # default starting point
+		menu_button_location_y_orig=$menu_button_location_y
+		button_alignment="East"
+		## loop over each title:
+		let i=0
+		for this_title in "${total_titles[@]}"; do
+			echo "[dvd-menu] Title $i = ${title[$i]}"
+			# make each individual button:
+			# to be fancy, let's add the button layers in two steps.  first the
+			# button background, then the text:
+			if [ "$i" -eq "$(( $number_of_titles / 2 + 1 ))" ] ; then
+				# switch to right panel and reset the height:
+				menu_panel_location_x=$menu_panel_location_x_r
+				menu_button_location_y=$menu_button_location_y_orig
+				button_alignment="West"
+			fi
+			if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
+				# add numbers to each line for VCD
+				convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -gravity $button_alignment -fill "$button_font_color" -draw "text 20,0 \"$(( $i + 1 )). ${title[$i]}\"" "$tmpdir"/button_text.png
+			else
+				convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -gravity $button_alignment -fill "$button_font_color" -draw "text 20,0 \"${title[$i]}\"" "$tmpdir"/button_text.png
+			fi
+			# make each individual button mask (for when it's selected)
+			convert -size "$panel_width"x"$panel_height" xc:transparent -quality 100 -font "$button_font" -pointsize $button_font_size -fill $button_hilight_color -gravity $button_alignment +antialias -colors 3 -draw "text 20,0 \"${title[$i]}\"" "$tmpdir"/button_mask.png
+	
+			## add each button as necessary, and increment the location downward
+			echo "[dvd-menu] adding title button ${title[$i]} at $menu_panel_location_x , $menu_button_location_y"
+			composite -compose src-over -depth 8 -geometry +$menu_panel_location_x+$menu_button_location_y "$tmpdir/button_text.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+			## add each overlay mask for the selection of buttons:
+			composite -compose src-over -depth 8 -colors 3 -quality 100 -geometry +$menu_panel_location_x+$menu_button_location_y "$tmpdir/button_mask.png" "$tmpdir/menu_mask.png" "$tmpdir/menu_mask.png"
+		
+			## now record the button location:
+			right[$i]="$(( $menu_panel_location_x + $panel_width ))"
+			[ "${right[$i]}" -gt "$dvd_width" ] && right[$i]=$(( $dvd_width - 10 ))
+			left[$i]="$(( $menu_panel_location_x ))"
+			top[$i]="$(( $menu_button_location_y ))"
+			bottom[$i]="$(( $menu_button_location_y + $panel_height ))"
+			[ "${bottom[$i]}" -gt "$dvd_height" ] && bottom[$i]=$(( $dvd_height - 10 ))
+
+			echo "[dvd-menu] setting button mask l,r,t,b = ${left[$i]} ${right[$i]} ${top[$i]} ${bottom[$i]}"
+	
+			vts="$(( $i + 1 ))"
+#			echo "[dvd-menu] i=$i vts=$vts"
+				
+			let menu_button_location_y=$menu_button_location_y+$panel_height
+			let i=$i+1
+		done
+
 	elif [ "$menu_type" == '6images' ] ; then   ### don't use this yet!
 		## loop over each title:
 		let i=0
@@ -1495,6 +1573,8 @@ if [ "$no_menu" -eq 0 ] ; then
 
 	## now convert the menu background to a mpg
 	ppmtoy4m -v 0 -n "$frames" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$tmpdir/menu.ppm" | mpeg2enc $mpeg2enc_params -o "$tmpdir/menu.mpg" 
+	## or, for a background video, cat all the frame through a composite call to add the button text and mask
+	## all at once.  (and, use transparent background for button text)
 
 
 	if [ "$fade_to_image" == 'black' ] ; then
@@ -1577,9 +1657,9 @@ echo "song=$audiofile"
 	        checkforprog ffmpeg
 	        echo "[dvd-menu] Creating ac3 audio..."
 	        check_rm "$tmpdir/audio.ac3"
-	        ffmpeg -i "$tmpdir/audio.wav" -vn -y -ab 192 -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio.ac3" >> "$logfile" 2>&1
+	        ffmpeg -i "$tmpdir/audio.wav" -vn -y -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio.ac3" >> "$logfile" 2>&1
 		if [ "$fadein" -eq 1 ] || [ "$fadeout" -eq 1 ] ; then
-	        	ffmpeg -i "$tmpdir/fade_audio.wav" -vn -y -ab 192 -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/fade_audio.ac3" >> "$logfile" 2>&1
+	        	ffmpeg -i "$tmpdir/fade_audio.wav" -vn -y -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/fade_audio.ac3" >> "$logfile" 2>&1
 		fi
 	else
 		## toolame is way faster! (3x in my test)

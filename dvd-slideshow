@@ -1,6 +1,6 @@
 #!/bin/bash
 #    dvd-slideshow
-#    Copyright 2003 Scott Dylewski  <scott at dylewski.com>
+#    Copyright 2003-2007 Scott Dylewski  <scott at dylewski.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,11 +18,11 @@
 #
 
 name='dvd-slideshow'
-version='0.8.1'
+version='0.8.1-svn'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
-echo "[dvd-slideshow]            Copyright 2003-2006 by Scott Dylewski"
+echo "[dvd-slideshow]            Copyright 2003-2007 by Scott Dylewski"
 echo "[dvd-slideshow]            "
 
 ## todo: (sorted by priority?)
@@ -3258,7 +3258,7 @@ subtitle ()  # SUBTITLE
 	# output is $tmpdir/subtitle_$i.png
 	## fix any special characters:
 	local index="$2"
-	local strokewidth=3
+	local strokewidth=2
 	transparent_color="ff0101"
 	if [ -z "$3" ] ; then	
 		local bg_color="$transparent_color"
@@ -3266,13 +3266,20 @@ subtitle ()  # SUBTITLE
 		local bg_color="transparent"
 	fi
 	local mysubtitle="$( echo "$1" | sed -e 's/"/\\\\"/g' | sed -e 's/\!/\\\!/g')"
+	f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
+	characters="${#mysubtitle}"
+	local limit=200
+	if [ "$characters" -gt "$limit" ] ; then 
+		# REALLY long subtitle!  need to truncate it!
+		myecho "[dvd-slideshow] WARNING: subtitle is longer than $limit characters! Truncating"
+		mysubtitle="${mysubtitle:0:$limit}"
+	fi
 	## check to see if we find any user-specified breaks \n
 	it=`echo "$mysubtitle" | awk -F'\\' '{print $2}' | cut -c 1`
 	if [ "$it" == 'n' ] ; then
 		logecho "[dvd-slideshow] Found \\n in subtitle"
 		# user entered a \n to force line wraps
 		# break lines at line wraps
-		f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 		subtitle_line1=`echo "$mysubtitle" | awk -F'\\' '{print $1}'`
 		subtitle_line2=`echo "$mysubtitle" | awk -F'\\' '{print $2}' | cut -c 2-`
 		subtitle_line3=`echo "$mysubtitle" | awk -F'\\' '{print $3}' | cut -c 2-`
@@ -3285,15 +3292,12 @@ subtitle ()  # SUBTITLE
 		[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line3=$subtitle_line3"
 	else	# no forced line wraps.  Check for long lines:	
 		## make the subtitle break up into up to 4 different lines?
-		f_subtitle_font_size=$(( $subtitle_font_size * $dvd_height / 480 ))
 		font_width=$(( $f_subtitle_font_size * 2 / 3 - 1 ))
-#		font_width=15  # actually it's 14.4, but this should give us some margin
-		characters="${#mysubtitle}"
 		line_width=$(( $font_width * $characters ))
 		if [ "$line_width" -gt "$(( 2 * $dvd_width ))" ] ; then # $dvd_width=720
 			## need to split the line into 3 lines:
 			# make font size smaller
-			strokewidth=2
+			strokewidth=1
 			f_subtitle_font_size=$(( $subtitle_font_size * 3 / 4 * $dvd_height / 480 ))
 			font_width=$(( $f_subtitle_font_size * 2 / 3 -1 ))
 			characters="${#mysubtitle}"

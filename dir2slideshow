@@ -23,7 +23,7 @@ changes ()
 {
 echo 'Changes:
 0.8.1
-	Recursive finds follow symbolic links.
+	Recursive finds follow symbolic links and ignores .thumb directory.
 	Bug fix for spaces in filenames (thanks Ken Zutter)
 0.8.0 	
 	Add audiobook option- looks for audio files and images & adds titles
@@ -549,9 +549,23 @@ fi
 
 ## get the total number of pictures:
 if [ "$recursive_single" == 1 ] ; then
-	find -L "$input_dir" -type f -o -type l -prune \( -name ! ^\.* -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort > "$output_dir"/imagelist.txt
-	find -L "$input_dir" -type f -o -type l -prune \( -name \*.mp3 -o -name \*.ogg \) | sort > "$output_dir"/audiolist.txt
-#	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+	echo "using recursive_single"
+	# need to list all images under this directory.  
+	# put them all in one slideshow
+	# do not display images under .thumbs or .thumbnails directories
+
+	# first, get list of directories:
+	find "$input_dir" -type d ! -name .thumbs ! -name .thumbnails | sort > "$output_dir"/directory_list.txt
+	check_rm "$output_dir"/imagelist.txt
+	check_rm "$output_dir"/audiolist.txt
+#	check_rm "$output_dir"/txtlist.txt
+	while read directory
+	do
+		find "$directory" -maxdepth 1 -type f -o -type l -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort >> "$output_dir"/imagelist.txt
+		find "$directory" -maxdepth 1 -type f -o -type l -prune \( -name \*.mp3 -o -name \*.ogg \) | sort >> "$output_dir"/audiolist.txt
+#		find "$directory" -maxdepth 1 -type f \( -name \*.txt \) -exec ls -1 {} \; | sort >> "$output_dir"/txtlist.txt
+	done < "$output_dir"/directory_list.txt	
+
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
 #	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
@@ -560,11 +574,13 @@ if [ "$recursive_single" == 1 ] ; then
 #	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
 elif [ "$recursive_multiple" == 1 ] ; then
+	echo "using recursive_multiple"
 	echo "not supported yet"; exit 1
 	# do find, then check each file if it is a directory:
 else
-	find -L "$input_dir" -maxdepth 1 -type f -o -type l \( -name ! \^\.* -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort > "$output_dir"/imagelist.txt
-	find -L "$input_dir" -maxdepth 1 -type f -o -type l \( -name \*.mp3 -o -name \*.ogg \) | sort > "$output_dir"/audiolist.txt
+	# ok, we need to follow links, but don't do recursive directory searching
+	find "$input_dir" -maxdepth 1 -type f -o -type l \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort > "$output_dir"/imagelist.txt
+	find "$input_dir" -maxdepth 1 -type f -o -type l \( -name \*.mp3 -o -name \*.ogg \) | sort > "$output_dir"/audiolist.txt
 #	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`

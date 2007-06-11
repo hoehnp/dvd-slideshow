@@ -31,7 +31,8 @@ echo "[dvd-menu]            "
 
 ## Known bugs:
 
-LANG=C
+## set up bash variables
+LANG="POSIX"
 
 changes () 
 {
@@ -42,6 +43,7 @@ echo 'Changes:
 	Fix embedded image help text.
 	Default layout will switch to two columns of buttons (no embedded image) if the button
 	list is long.
+	Change LANG=C to LANG=POSIX to try to fix radix problems with printf
 0.8.0
 	pre9:
 	Added 6image layout option.  It can also read the title and icon from
@@ -170,6 +172,9 @@ Options:
 
  [-e <embedded image>]
 	Embed a jpeg image in the middle of the screen.
+	The image shows up as a thumnail to the left of the
+	menu buttons.
+	Only one image is allowed.
 
  [-a <audiofile>]
 	Audio file to use in the background of the

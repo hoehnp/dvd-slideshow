@@ -23,7 +23,8 @@ changes ()
 {
 echo 'Changes:
 0.8.1
-	Recursive finds follow symbolic links and ignores .thumb directory.
+	Write out pal option to output file if selected in dir2slideshow
+	Recursive finds follow symbolic links and ignores hidden directories.
 	Bug fix for spaces in filenames (thanks Ken Zutter)
 0.8.0 	
 	Add audiobook option- looks for audio files and images & adds titles
@@ -232,6 +233,8 @@ audio_list=''
 recursive_single=0
 recursive_multiple=0
 end=1
+pal=0  # default to ntsc
+sortmethod="name"  # sort by filename as default sort method
 
 for arg
 do
@@ -549,13 +552,12 @@ fi
 
 ## get the total number of pictures:
 if [ "$recursive_single" == 1 ] ; then
-	echo "using recursive_single"
 	# need to list all images under this directory.  
 	# put them all in one slideshow
 	# do not display images under .thumbs or .thumbnails directories
 
 	# first, get list of directories:
-	find "$input_dir" -type d ! -name .thumbs ! -name .thumbnails | sort > "$output_dir"/directory_list.txt
+	find "$input_dir" -type d | grep --invert-match -e '\.' | sort > "$output_dir"/directory_list.txt
 	check_rm "$output_dir"/imagelist.txt
 	check_rm "$output_dir"/audiolist.txt
 #	check_rm "$output_dir"/txtlist.txt
@@ -574,8 +576,7 @@ if [ "$recursive_single" == 1 ] ; then
 #	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
 elif [ "$recursive_multiple" == 1 ] ; then
-	echo "using recursive_multiple"
-	echo "not supported yet"; exit 1
+	echo "[dir2slideshow] -R not supported yet"; exit 1
 	# do find, then check each file if it is a directory:
 else
 	# ok, we need to follow links, but don't do recursive directory searching

@@ -38,12 +38,13 @@ echo "[dvd-slideshow]            "
 # test kenburns coorinates accuracy re: sq_pixel_multiplier
 
 ## known bugs:
+# Kenburns transitions to crossfade is wrong: sizing changes
 # continuous subtitles don't work across non-image/transition lines
-# bug when first line/slide has a subtitle but no others do?
 #  convert image.jpg -bordercolor black -border 0 "$tmpdir/fade_$dj.ppm" works for transparent .png images
 # in ImageMagick > 6.0.6, but not in 6.0.6 for some reason.  (black output).  
 
-LANG=C
+## set up bash variables  http://wiki.sourcemage.org/HOWTO-Locale_problems
+LANG="POSIX"
 
 changes ()
 {
@@ -55,6 +56,8 @@ echo 'Changes:
 	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
 	Better handling of very long subtitles.  (up to 3 lines and reduced font size)
     Bug fixes:
+	Change LANG=C to LANG=POSIX to try to fix radix problems with printf
+	Added some code to only process one crossfade in the background at a time.
 	Fixed problem with subtitles- last one was not being displayed.
 	Added "k" to audio bitrate arguments to ffmpeg (thanks Tony!)
 	Fixed bug where subtitles would not show in crop and kenburns effects.
@@ -3444,6 +3447,8 @@ logecho "[dvd-slideshow] $0 $theargs"
 logecho "[dvd-slideshow] dvd-slideshow version $version" 
 logecho "[dvd-slideshow] `uname -a`"
 logecho "[dvd-slideshow] Output directory=$outdir" 
+logecho "[dvd-slideshow] Locale: "
+logecho "`locale`"
 
 #############################################################
 ## Now, read in the ~/.dvd-slideshow/dvd-slideshowrc file if it exists:
@@ -4443,8 +4448,6 @@ let i=0 # full
 let v=0 # vob
 image_number=1
 for file in "${image[@]}"; do
-	## convert i to a 2-digit text version so we can cat the mpgs together
-	## in the correct order easily:
 	di=`addzeros $i`
 	## check for variable settings first:
 #	echo "i=$i file=$file duration=${duration[$i]}"
@@ -5047,9 +5050,10 @@ for file in "${image[@]}"; do
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 			## number of frames in kenburns effect:
-			start_frame="$(( $previous_frames - $frames  + 1 ))"
+			start_frame="$(( $previous_frames - $frames / 2  + 1 ))"
+			echo kenburns "$window_start" "$window_end" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame" "$previous_frames" "$normal_bg" "."
 			kenburns "$window_start" "$window_end" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame" "$previous_frames" "$normal_bg" "."
-			for (( fr=1 ; fr<=frames ; fr=fr+1 )) ; do
+			for (( fr=1 ; fr<=$frames ; fr=fr+1 )) ; do
 				dj=`addzeros $fr`
 				kb_dj=`addzeros $(( $start_frame + $fr - 1 ))`
 				mv "$tmpdir/fade_$kb_dj.ppm" "$tmpdir/kb_prev_$dj.ppm"
@@ -5059,9 +5063,9 @@ for file in "${image[@]}"; do
 			direction="${effect1_params[$i-$previous_increment]}"
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
-			start_frame="$(( $previous_frames - $frames  + 1 ))"
+			start_frame="$(( $previous_frames - $frames / 2  + 1 ))"
 			scroll "$direction" "${image[$i-$previous_increment]}" "$normal_bg" "$previous_frames" "$start_frame"  "$previous_frames" "."
-			for (( fr=1 ; fr<=frames ; fr=fr+1 )) ; do
+			for (( fr=1 ; fr<=$frames ; fr=fr+1 )) ; do
 				dj=`addzeros $fr`
 				kb_dj=`addzeros $(( $start_frame + $fr - 1 ))`
 				mv "$tmpdir/fade_$kb_dj.ppm" "$tmpdir/kb_prev_$dj.ppm"
@@ -5173,6 +5177,13 @@ for file in "${image[@]}"; do
 		elif [ "$previousslide_effect" == 'kenburns' ] && [ "$nextslide_effect" == 'scroll' ] ; then
 			both=1
 		fi
+		if [ -n "$lastcrossfade_pid" ] ; then
+			# wait for last crossfade process to finish before starting a new one!
+			# this might stop the random hangs in long slideshows...
+# http://sourceforge.net/tracker/index.php?func=detail&aid=1672263&group_id=100188&atid=626615
+#			echo "[dvd-slideshow] Waiting for last crossfade to finish rendering..."
+			wait "$lastcrossfade_pid"
+		fi
 		set_end_frame_time ${duration[$i]}
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		lastbar=0 # required for progressbar reset
@@ -5184,23 +5195,27 @@ for file in "${image[@]}"; do
 			if [ "$both" -eq 1 ] ; then
 				if [ "$smp" -eq 1 ] ; then
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ; rm "$tmpdir/kb_next_$dj.ppm" ) &
+				lastcrossfade_pid="$!"
 				else
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ; rm "$tmpdir/kb_next_$dj.ppm" ) 
 				fi
 			elif [ "$previousslide_effect" == 'kenburns' ] || [ "$previousslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ) &
+				lastcrossfade_pid="$!"
 				else
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ) 
 				fi
 			elif [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ; rm "$tmpdir/kb_next_$dj.ppm" ) &
+				lastcrossfade_pid="$!"
 				else
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ; rm "$tmpdir/kb_next_$dj.ppm" ) 
 				fi
 			elif [ "$smp" -eq 1 ] ; then
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ) &
+				lastcrossfade_pid="$!"
 			else
 				(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames )
 			fi
@@ -5382,9 +5397,9 @@ for file in "${image[@]}"; do
 			previous_duration="${duration[$i-$previous_increment]}" 
 			previous_frames=$( duration2frames $previous_duration )
 			## number of frames in kenburns effect:
-			start_frame="$(( $previous_frames - $frames  + 1 ))"
+			start_frame="$(( $previous_frames - $frames / 2  + 1 ))"
 			kenburns "$window_start" "$window_end" "${image[$i-$previous_increment]}" "$previous_frames" "$start_frame" "$previous_frames" "$transparent_bg" "."
-			for (( fr=1 ; fr<=frames ; fr=fr+1 )) ; do
+			for (( fr=1 ; fr<=$frames ; fr=fr+1 )) ; do
 				dj=`addzeros $fr`
 				kb_dj=`addzeros $(( $start_frame + $fr - 1 ))`
 				mv "$tmpdir/fade_$kb_dj.png" "$tmpdir/kb_prev_$dj.png"
@@ -5394,9 +5409,9 @@ for file in "${image[@]}"; do
 			direction="${effect1_params[$i-$previous_increment]}"
 			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
-			start_frame="$(( $previous_frames - $frames  + 1 ))"
+			start_frame="$(( $previous_frames - $frames / 2  + 1 ))"
 			scroll "$direction" "${image[$i-$previous_increment]}" "$transparent_bg" "$previous_frames" "$start_frame"  "$previous_frames" "."
-			for (( fr=1 ; fr<=frames ; fr=fr+1 )) ; do
+			for (( fr=1 ; fr<=$frames ; fr=fr+1 )) ; do
 				dj=`addzeros $fr`
 				kb_dj=`addzeros $(( $start_frame + $fr - 1 ))`
 				mv "$tmpdir/fade_$kb_dj.png" "$tmpdir/kb_prev_$dj.png"
@@ -5773,7 +5788,7 @@ for file in "${image[@]}"; do
 
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -5785,7 +5800,7 @@ for file in "${image[@]}"; do
 			rendered_time=${duration[$i]}
 			old_rendered_time=$rendered_time
 		fi
-#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -5818,10 +5833,13 @@ for file in "${image[@]}"; do
 			kenburns "$window_start" "$window_end" "$file" "$frames" "$(( $previous_frames + 1 ))" "$(( $previous_frames + $frames_to_render ))" "$normal_bg"
 
 		elif [ "$previous_increment" -ne 0 ] ; then
+			echo kenburns "$window_start" "$window_end" "$file" "$frames" "$(( $previous_frames + 1 ))" "$frames" 
 			kenburns "$window_start" "$window_end" "$file" "$frames" "$(( $previous_frames + 1 ))" "$frames" 
 		elif [ "$next_increment" -ne 0 ] ; then
+			echo kenburns "$window_start" "$window_end" "$file" "$frames" 1 "$(( $frames_to_render ))"
 			kenburns "$window_start" "$window_end" "$file" "$frames" 1 "$(( $frames_to_render ))"
 		else
+			echo kenburns "$window_start" "$window_end" "$file" "$frames" 1 "$frames" "#"
 			kenburns "$window_start" "$window_end" "$file" "$frames" 1 "$frames" "#"
 		fi
 		encode_fade

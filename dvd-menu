@@ -38,6 +38,7 @@ changes ()
 {
 echo 'Changes:
 0.8.1
+	Font path follows links.  Thanks Jim Potter!
 	AC3 audio created with ffmpeg needs k added to bitrate
 	Changed -depth 16 to -depth 8 in background gradient creation.
 	Fix embedded image help text.
@@ -1218,8 +1219,8 @@ checkforprog mkisofs
 ################################################## done finding programs
 
 #Find the fonts
-default_font1=`find $font_dir -name $default_font1 | head -n 1`
-default_font2=`find $font_dir -name $default_font2 | head -n 1`
+default_font1=`find -L $font_dir -name $default_font1 | head -n 1`
+default_font2=`find -L $font_dir -name $default_font2 | head -n 1`
 
 # verify fonts exist:
 if [ -f "$default_font1" ] ; then

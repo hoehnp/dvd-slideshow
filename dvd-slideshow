@@ -53,6 +53,7 @@ echo 'Changes:
 	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
 	Better handling of very long subtitles.  (up to 3 lines and reduced font size)
     Bug fixes:
+	Better (larger) resizing for kenburns in high-quality mode.
 	Smoother scroll effect in normal mode (fixed rounding error)
 	Font search follows links.  Thanks Jim Potter!
 	Change LANG=C to LANG=POSIX to try to fix radix problems with printf
@@ -2236,7 +2237,6 @@ kenburns ()  # KENBURNS
 		local l_window_end="$2"
 		local l_file="$3"
 		local l_frames="$4"
-echo "l_frames=$l_frames"
 		lastbar=0 # required for progressbar to set back to zero
 		[ -z "$5" ] && local l_startframe="1" || local l_startframe="$5"
 		[ -z "$6" ] && local l_endframe="$l_frames" || local l_endframe="$6"
@@ -2293,12 +2293,12 @@ echo "l_frames=$l_frames"
 			stepsize=1
 			interp=1
 			enable_kenburns_resize=1
-			multiple=2
+			multiple=3  # 720x480 x 3 = 2160x1440 or 3M pixels
 		else
 			stepsize=1
 			interp=0  # fix this for now?
 			enable_kenburns_resize=1
-			multiple=2
+			multiple=2  # 720x480 x 2 = 1440x960 or 1.4M pixels
 		fi
 
 		# check original image width and height.  if too large,
@@ -2307,7 +2307,8 @@ echo "l_frames=$l_frames"
 		factory=$(( 1000 * $image_height / $dvd_height ))
 		maxfactor=$( max $factorx $factory )
 		minfactor=$( min $factorx $factory )
-		if [ "$maxfactor" -gt 1500 ] && [ "$minfactor" -gt 1500 ] && [ "$enable_kenburns_resize" == 1 ] ; then
+		factorlimit=$(( $multiple * $dvd_width ))
+		if [ "$maxfactor" -gt "$factorlimit" ] && [ "$minfactor" -gt "$factorlimit" ] && [ "$enable_kenburns_resize" == 1 ] ; then
 			# scale image down for better speed
 			if [ "$maxfactor" == "$factorx" ] ; then	
 				newsize=$(( $multiple * $dvd_width ))
@@ -2350,8 +2351,6 @@ echo "l_frames=$l_frames"
 #		echo 'x0,y0,x1,y1,xcenter,ycenter,xwidth,yheight,xc0,yc0,c_width,c_height' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,iwn,ihn,predicted_resized_width,predicted_resized_height,xc0_dec,yc0_dec' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,predicted_resized_width,predicted_resized_height' > kenburns_coordinates.csv
-echo "xs0=$xs0 xe0=$xe0    ys0=$ys0 ye0=$ye0"
-echo "xs1=$xs1 xe1=$xe1    ys1=$ys1 ye1=$ye1"
 #		if [ $xe0 -gt $xs0 ] ; then
 			xvelocity0=$(( 1000 * ($xe0-$xs0)*($xe0-$xs0) / $l_frames ))
 			xvelocity1=$(( 1000 * ($xe1-$xs1)*($xe1-$xs1) / $l_frames ))
@@ -2418,65 +2417,106 @@ echo "xs1=$xs1 xe1=$xe1    ys1=$ys1 ye1=$ye1"
 #			echo "fr=$fr startframe=$l_startframe endframe=$l_endframe"
 			dj=`addzeros $fr`
 			if [ $fr -le $F1 ] && [ $smoothing -eq 1 ] ; then   # inputs are relatively simple:  make function?
-				# region 1
-				x0=$( echo "scale=3; 1000* $xs0 + 1000* $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				y0=$( echo "scale=3; 1000* $ys0 + 1000* $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				x1=$( echo "scale=3; 1000* $xs1 + 1000* $V1x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
-				y1=$( echo "scale=3; 1000* $ys1 + 1000* $V1y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				# region 1   x0,y0,x1,y1 are floating point numbers
+				x0=$( echo "scale=3; $xs0 + $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				y0=$( echo "scale=3; $ys0 + $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				x1=$( echo "scale=3; $xs1 + $V1x/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
+				y1=$( echo "scale=3; $ys1 + $V1y/2 *($fr - $F1/$pi *s($pi*$fr/$F1))" | bc -l )
 				D1x0=$x0; D1y0=$y0; D1x1=$x1; D1y1=$y1 # distance gone so far
 				D2x0=$x0 ; D2y0=$y0 ; D2x1=$x1 ; D2y1=$y1  # (in case we never get to region2)
-				## Fix numbers without leading zeros:
+				## Get integer portion:
 				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
 				it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1_whole=0 || x1_whole="$it"
 				it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1_whole=0 || y1_whole="$it"
-				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				x0=$x0_whole ; y0=$y0_whole
-				x1=$x1_whole ; y1=$y1_whole
+				## decimals:
+				it=`printf %3.3f "$x0" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && x0_dec=0 || x0_dec="$it"
+				it=`printf %3.3f "$y0" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && y0_dec=0 || y0_dec="$it"
+				it=`printf %3.3f "$x1" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && x1_dec=0 || x1_dec="$it"
+				it=`printf %3.3f "$y1" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && y1_dec=0 || y1_dec="$it"
+#				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				# now, set new x0 and y0 values to rounded results
+				it=$( echo "scale=3; 1000* $x0" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				x0=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $y0" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				y0=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $x1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				x1=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $y1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				y1=$( div1000 $it )	
+#				x0=$x0_whole ; y0=$y0_whole
+#				x1=$x1_whole ; y1=$y1_whole
 				## now, round the results for normal mode:
 				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0_whole.$x0_dec y0=$y0_whole.$y0_dec x0=$x0 y0=$y0 region 1"
 			elif [ $fr -ge $(( $F2 + 1 )) ] && [ $smoothing -eq 1 ] ; then
 				# region 3
 #				echo "D2x0=$D2x0 V0x=$V0x fr=$fr F2=$F2 l_frames=$l_frames pi=$pi"
-				x0=$( echo "scale=3; $D2x0 + 1000* $V0x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
-				y0=$( echo "scale=3; $D2y0 + 1000* $V0y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
-				x1=$( echo "scale=3; $D2x1 + 1000* $V1x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
-				y1=$( echo "scale=3; $D2y1 + 1000* $V1y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
-				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0 y0=$y0 region 3"
-				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				## Fix numbers without leading zeros:
+				x0=$( echo "scale=3; $D2x0 + $V0x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				y0=$( echo "scale=3; $D2y0 + $V0y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				x1=$( echo "scale=3; $D2x1 + $V1x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				y1=$( echo "scale=3; $D2y1 + $V1y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) )" | bc -l )
+				## Get integer portion:
 				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
 				it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1_whole=0 || x1_whole="$it"
 				it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1_whole=0 || y1_whole="$it"
-				x0=$x0_whole ; y0=$y0_whole
-				x1=$x1_whole ; y1=$y1_whole
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0 y0=$y0 region 3"
+				## decimals:
+				it=`printf %3.3f "$x0" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && x0_dec=0 || x0_dec="$it"
+				it=`printf %3.3f "$y0" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && y0_dec=0 || y0_dec="$it"
+				it=`printf %3.3f "$x1" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && x1_dec=0 || x1_dec="$it"
+				it=`printf %3.3f "$y1" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && y1_dec=0 || y1_dec="$it"
+#				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				# now, set new x0 and y0 values to rounded results
+				it=$( echo "scale=3; 1000* $x0" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				x0=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $y0" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				y0=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $x1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				x1=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $y1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				y1=$( div1000 $it )	
+#				x0=$x0_whole ; y0=$y0_whole
+#				x1=$x1_whole ; y1=$y1_whole
 			elif [ $smoothing -eq 1 ] ; then
 				# middle region 2
-				x0=$( echo "scale=3; $D1x0 + 1000* $V0x*($fr-$F1)" | bc )
-				y0=$( echo "scale=3; $D1y0 + 1000* $V0y*($fr-$F1)" | bc )
-				x1=$( echo "scale=3; $D1x1 + 1000* $V1x*($fr-$F1)" | bc )
-				y1=$( echo "scale=3; $D1y1 + 1000* $V1y*($fr-$F1)" | bc )
-				D2x0=$x0 ; D2y0=$y0 ; D2x1=$x1 ; D2y1=$y1  # distance gone so far
-				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0 y0=$y0 region 2"
-				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
-
-				## Fix numbers without leading zeros:
+				x0=$( echo "scale=3; $D1x0 + $V0x*($fr-$F1)" | bc )
+				y0=$( echo "scale=3; $D1y0 + $V0y*($fr-$F1)" | bc )
+				x1=$( echo "scale=3; $D1x1 + $V1x*($fr-$F1)" | bc )
+				y1=$( echo "scale=3; $D1y1 + $V1y*($fr-$F1)" | bc )
+				## Integer portion
 				it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 				it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
 				it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1_whole=0 || x1_whole="$it"
 				it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1_whole=0 || y1_whole="$it"
-				x0=$x0_whole ; y0=$y0_whole
-				x1=$x1_whole ; y1=$y1_whole
+				D2x0=$x0 ; D2y0=$y0 ; D2x1=$x1 ; D2y1=$y1  # distance gone so far
+				[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr x0=$x0 y0=$y0 region 2"
+				## decimals:
+				it=`printf %3.3f "$x0" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && x0_dec=0 || x0_dec="$it"
+				it=`printf %3.3f "$y0" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && y0_dec=0 || y0_dec="$it"
+				it=`printf %3.3f "$x1" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && x1_dec=0 || x1_dec="$it"
+				it=`printf %3.3f "$y1" | awk -F. '{print "0."$2}'` ; [ -z "$it" ] && y1_dec=0 || y1_dec="$it"
+#				x0_dec=$( echo $( printf %3.3f $( echo "scale=3; $x0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				y0_dec=$( echo $( printf %3.3f $( echo "scale=3; $y0 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				x1_dec=$( echo $( printf %3.3f $( echo "scale=3; $x1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+#				y1_dec=$( echo $( printf %3.3f $( echo "scale=3; $y1 / 1000" | bc ) ) | awk -F. '{print "0."$2}')
+				# now, set new x0 and y0 values to rounded results
+				it=$( echo "scale=3; 1000* $x0" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				x0=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $y0" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				y0=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $x1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				x1=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $y1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				y1=$( div1000 $it )	
+#				x0=$x0_whole ; y0=$y0_whole
+#				x1=$x1_whole ; y1=$y1_whole
 			else
 				echo "old method"
 				## old method:
@@ -2491,12 +2531,21 @@ echo "xs1=$xs1 xe1=$xe1    ys1=$ys1 ye1=$ye1"
 		                y0=$( echo "scale=3; 1000 * $ys0 + ($ye0-$ys0) * $logfactor" | bc )
 		                x1=$( echo "scale=3; 1000 * $xs1 + ($xe1-$xs1) * $logfactor" | bc )
 		                y1=$( echo "scale=3; 1000 * $ys1 + ($ye1-$ys1) * $logfactor" | bc )
-		                ## need to round the numbers for bash:
-		                ## these are the "whole" integer portion of the number:
-		                it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0=0 || x0="$it"
-		                it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0=0 || y0="$it"
-		                it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1=0 || x1="$it"
-		                it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1=0 || y1="$it"
+				# now, set new x0 and y0 values to rounded results
+				it=$( echo "scale=3; 1000* $x0" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				x0=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $y0" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				y0=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $x1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				x1=$( div1000 $it )	
+				it=$( echo "scale=3; 1000* $y1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
+				y1=$( div1000 $it )	
+#		                ## need to round the numbers for bash:
+#		                ## these are the "whole" integer portion of the number:
+#		                it=`printf %3f "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0=0 || x0="$it"
+#		                it=`printf %3f "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0=0 || y0="$it"
+#		                it=`printf %3f "$x1" | awk -F. '{print $1}'` ; [ -z "$it" ] && x1=0 || x1="$it"
+#		                it=`printf %3f "$y1" | awk -F. '{print $1}'` ; [ -z "$it" ] && y1=0 || y1="$it"
 			fi
 
 #			[ "$x1" -eq 0 ] && x1="+0"
@@ -2507,7 +2556,7 @@ echo "xs1=$xs1 xe1=$xe1    ys1=$ys1 ye1=$ye1"
 ###########################
 
 #			myecho "x0=$x0 y0=$y0 x1=$x1 y1=$y1 logfactor=$logfactor"
-			myecho "x0=$x0 y0=$y0 x1=$x1 y1=$y1 "
+#			myecho "x0=$x0 y0=$y0 x1=$x1 y1=$y1 "
 			## now optionally do convolution if high-quality is enabled:
 			if [ "$interp" -eq 1 ] ; then
 #				myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec logfactor=$logfactor"
@@ -3019,10 +3068,10 @@ scroll ()  # SCROLL
 			it=`echo "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 			it=`echo "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
 			# round x0 and y0 to nearest integer:
-			it=$( echo "scale=3; 1000*($xs0 + $V0x/2 *($fr - $F1/$pi *s($pi*$fr/$F1)))" | bc -l )
+			it=$( echo "scale=3; 1000* $x0" | bc -l )
 			it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
 			x0=$( div1000 $it )	
-			it=$( echo "scale=3; 1000*($ys0 + $V0y/2 *($fr - $F1/$pi *s($pi*$fr/$F1)))" | bc -l )
+			it=$( echo "scale=3; 1000* $y0" | bc -l )
 			it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
 			y0=$( div1000 $it)	
 		elif [ $fr -ge $F2 ] ; then
@@ -3036,10 +3085,10 @@ scroll ()  # SCROLL
 			it=`echo "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 			it=`echo "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
 			# round x0 and y0 to nearest integer:
-			it=$( echo "scale=3; 1000*($D2x + $V0x/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) ))" | bc -l )
+			it=$( echo "scale=3; 1000* $x0" | bc -l )
 			it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
 			x0=$( div1000 $it )	
-			it=$( echo "scale=3; 1000*($D2y + $V0y/2 *( ($fr-$F2) + ($l_frames-$F2)/$pi*s(($fr-$F2)*$pi/($l_frames-$F2)) ))" | bc -l )
+			it=$( echo "scale=3; 1000* $y0" | bc -l )
 			it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
 			y0=$( div1000 $it )	
 		else
@@ -3054,10 +3103,10 @@ scroll ()  # SCROLL
 			it=`echo "$x0" | awk -F. '{print $1}'` ; [ -z "$it" ] && x0_whole=0 || x0_whole="$it"
 			it=`echo "$y0" | awk -F. '{print $1}'` ; [ -z "$it" ] && y0_whole=0 || y0_whole="$it"
 			# round x0 and y0 to nearest integer:
-			it=$( echo "scale=3; 1000*($D1x + $V0x*($fr-$F1))" | bc )
+			it=$( echo "scale=3; 1000* $x0" | bc )
 			it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
 			x0=$( div1000 $it )	
-			it=$( echo "scale=3; 1000*($D1y + $V0y*($fr-$F1))" | bc )
+			it=$( echo "scale=3; 1000* $y0" | bc )
 			it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
 			y0=$( div1000 $it )	
 		fi
@@ -6070,7 +6119,7 @@ for file in "${image[@]}"; do
 
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -6085,7 +6134,7 @@ for file in "${image[@]}"; do
 			old_rendered_time=$rendered_time
 #			frames_extended=$frames
 		fi
-		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -6099,10 +6148,10 @@ for file in "${image[@]}"; do
 			rendered_time=$rendered_time	
 			old_rendered_time=$old_rendered_time
 		fi
-		echo "frames_extended=${frames_extended[$i]}"
-		echo "rendered_time=$rendered_time"
+#		echo "frames_extended=${frames_extended[$i]}"
+#		echo "rendered_time=$rendered_time"
 		set_end_frame_time $rendered_time
-		echo "rendered_frames=$frames_to_render"
+#		echo "rendered_frames=$frames_to_render"
 		rendered_frames="$frames_to_render"
 		if [ "$rendered_frames" -le 0 ] ; then
 			echo "[dvd-slideshow] WARNING: Frames rendered are less than 1!"
@@ -6119,7 +6168,6 @@ for file in "${image[@]}"; do
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		# kenburns syntax:
 		# Kenburns $window_start $window_end $file $total_frames $startframe $lastframe bg [$char]
-echo "frames_extended=${frames_extended[$i]}"
 		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
 			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$(( $previous_frames + $frames_to_render ))" "$normal_bg"
 

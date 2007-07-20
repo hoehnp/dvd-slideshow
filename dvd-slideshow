@@ -3166,7 +3166,7 @@ scroll ()  # SCROLL
 	finish_progressbar $(( $fr - $l_startframe +1 )) $(( $l_endframe - $l_startframe + 1 )) "$c"
 }
 
-full_path ()   # from Shea Martin
+full_path ()   # from Shea Martin, modified by scott dylewski
 {
 if [ -f "$1" ]; then
         DIR="$(dirname "$1")"
@@ -3176,8 +3176,11 @@ if [ -f "$1" ]; then
         echo "$DIR/$FILE"
         return "$RSLT"
 elif [ -d "$1" ]; then
-        cd "$DIR" && pwd && cd "$OLDPWD"
-        return "$?"
+        DIR="$1"
+	FILE="$( cd "$DIR" && pwd)"
+	RSLT=$?
+        echo "$FILE"
+	return $RSLT
 else
         echo "unknown file: $1"
         return 1

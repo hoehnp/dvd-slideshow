@@ -676,7 +676,7 @@ if [ -n "$theme" ] ; then
 fi
 }
 
-full_path ()   # from Shea Martin
+full_path ()   # from Shea Martin, modified by scott dylewski
 {
 if [ -f "$1" ]; then
         DIR="$(dirname "$1")"
@@ -687,9 +687,11 @@ if [ -f "$1" ]; then
         return $RSLT
 
 elif [ -d "$1" ]; then
-        cd "$DIR" && pwd && cd $OLDPWD
-        return $?
-
+        DIR="$1"
+	FILE="$( cd "$DIR" && pwd)"
+	RSLT=$?
+        echo "$FILE"
+	return $RSLT
 else
         echo "unknown file: $1"
         return 1
@@ -913,7 +915,6 @@ do
 	esac
 done
 
-
 # verify output directory exists:
 if [ -z "$outdir" ] ; then
         if [ -w "`pwd`" ] ; then
@@ -924,6 +925,10 @@ if [ -z "$outdir" ] ; then
                 echo '[dvd-menu] ERROR: Output directory not specified.'
                 exit 1
         fi
+else  # specified output directory.  make sure it exists:
+	mkdir -p "$outdir"
+	outdir="$( full_path "$outdir" )"
+	echo "[dvd-menu] Using output directory $outdir"
 fi
 
 ## dvdbaker doesn't use or need the autual xml or vob files!
@@ -958,13 +963,6 @@ fi
 #	fi
 #fi
 
-## initialize log file:
-logfile="$outdir/$logfilename"
-echo "[dvd-menu] `date`" > "$logfile"
-echo "[dvd-menu] dvd-menu version $version" >> "$logfile"
-echo "[dvd-menu] `uname -a`" >> "$logfile"
-echo "[dvd-menu] Output directory=$outdir" >> "$logfile"
-
 tmpdir="$outdir"/"dvd-menu_temp_$$"
 if [ ! -d "$tmpdir" ] ; then
 	mkdir -p "$tmpdir"
@@ -979,6 +977,13 @@ if [ -d "$dvd_dir" ] ; then
 else
 	mkdir -p "$dvd_dir"
 fi
+
+## initialize log file:
+logfile="$outdir"/"$logfilename"
+echo "[dvd-menu] `date`" > "$logfile"
+echo "[dvd-menu] dvd-menu version $version" >> "$logfile"
+echo "[dvd-menu] `uname -a`" >> "$logfile"
+echo "[dvd-menu] Output directory=$outdir" >> "$logfile"
 
 ############################################################# 
 ## Now, read in the ~/.dvd-slideshow/dvd-slideshowrc file if it exists:
@@ -1103,7 +1108,7 @@ if [ -z "$panel_width" ] ; then
 	logecho "panel_width=$panel_width"
 fi
 if [ -z "$panel_height" ] ; then
-	panel_height="$(( $button_font_size * 125 / 100 ))"
+	panel_height="$(( $button_font_size * 125 / 100 +2 ))" # 25% larger than fontsize
 fi
 
 #######################################################3
@@ -1386,7 +1391,7 @@ if [ "$no_menu" -eq 0 ] ; then
 			right[$i]="$(( $menu_panel_location_x + $panel_width ))"
 			[ "${right[$i]}" -gt "$dvd_width" ] && right[$i]=$(( $dvd_width - 10 ))
 			left[$i]="$(( $menu_panel_location_x ))"
-			top[$i]="$(( $menu_button_location_y ))"
+			top[$i]="$(( $menu_button_location_y +1 ))"
 			bottom[$i]="$(( $menu_button_location_y + $panel_height ))"
 			[ "${bottom[$i]}" -gt "$dvd_height" ] && bottom[$i]=$(( $dvd_height - 10 ))
 
@@ -2063,10 +2068,10 @@ if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 	echo "[dvd-menu] The vcd output is "
 	echo "[dvd-menu] "
 	echo "[dvd-menu] You can play this video using one of the following commands:"
-	echo "[dvd-menu] xine -g -u 0 dvd:\"$dvd_dir\""
+	echo "[dvd-menu] xine -g vcd:\"$dvd_dir\""
 	echo "[dvd-menu] "
 	echo "[dvd-menu] or, if you just want to watch the videos without the menus:"
-	echo "[dvd-menu] mplayer -sid 0 dvd:// -dvd-device $dvd_dir"
+	echo "[dvd-menu] mplayer -sid 0 vcd:// -dvd-device $dvd_dir"
 	echo "[dvd-menu] "
 	echo "[dvd-menu] Burn the video cd using:"
 	echo "[dvd-menu] cdrdao write --device ATA:1,0,0 videocd.cue"
@@ -2074,6 +2079,7 @@ else
 	echo "[dvd-menu] The dvd filesystem is $dvd_dir"
 	echo "[dvd-menu] "
 	echo "[dvd-menu] You can play this video using one of the following commands:"
+	echo "[dvd-menu] gxine -S dvd:\"$dvd_dir\""
 	echo "[dvd-menu] xine -g -u 0 dvd:\"$dvd_dir\""
 	echo "[dvd-menu] "
 	echo "[dvd-menu] or, if you just want to watch the videos without the menus:"

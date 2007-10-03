@@ -53,6 +53,7 @@ echo 'Changes:
 	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
 	Better handling of very long subtitles.  (up to 3 lines and reduced font size)
     Bug fixes:
+	Fixed hms2seconds with leading zeros (thanks Arnd Baecker)
 	Better (larger) resizing for kenburns in high-quality mode.
 	Smoother scroll effect in normal mode (fixed rounding error)
 	Font search follows links.  Thanks Jim Potter!
@@ -1056,11 +1057,10 @@ hms2seconds ()
 	if [ -z "$1" ] ; then
 		echo ''
 	else
-		hours=`echo $1 | cut -d: -f1`
-		minutes=`echo $1 | cut -d: -f2`
-		seconds=`echo $1 | cut -d: -f3 | cut -d. -f1`
+		hours=$( printf %d `echo $1 | cut -d: -f1` )
+		minutes=$( printf %d `echo $1 | cut -d: -f2` )
+		seconds=$( printf %d `echo $1 | cut -d: -f3 | cut -d. -f1` )
 		fraction=`echo $1 | cut -d: -f3 | cut -d. -f2`
-#		characters=`echo "$fraction" | wc --chars`
 		characters=${#fraction}
 		if [ "$characters" -eq 1 ] ; then ## no decimal was specified
 			duration_ms="0"
@@ -2277,11 +2277,11 @@ kenburns ()  # KENBURNS
 
 		s_width=$(( $xs1 - $xs0 )) ; s_height=$(( $ys1 - $ys0 ))
 		e_width=$(( $xe1 - $xe0 )) ; e_height=$(( $ye1 - $ye0 ))
-		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Coordinate system is original image size buffered out to dvd aspect ratio"
-		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] and then rescaled to non-square pixels"
-		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Start: width=$s_width height=$s_height  $xs0,$ys0 : $xs1,$ys1"
-		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] End:   width=$e_width height=$e_height  $xe0,$ye0 : $xe1,$ye1"
-		[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] Image top left corner:   xi=$xi yi=$yi"
+		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] Coordinate system is original image size buffered out to dvd aspect ratio"
+		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] and then rescaled to non-square pixels"
+		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] Start: width=$s_width height=$s_height  $xs0,$ys0 : $xs1,$ys1"
+		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] End:   width=$e_width height=$e_height  $xe0,$ye0 : $xe1,$ye1"
+		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] Image top left corner:   xi=$xi yi=$yi"
 
 		## adjust step size: ##############################
 		if [ "$low_quality" -eq 1 ] ; then
@@ -2300,7 +2300,8 @@ kenburns ()  # KENBURNS
 			enable_kenburns_resize=1
 			multiple=2  # 720x480 x 2 = 1440x960 or 1.4M pixels
 		fi
-#enable_kenburns_resize=0
+		enable_kenburns_resize=0  # force resize to on or off
+
 		# check original image width and height.  if too large,
 		# then make it smaller!
 		factorx=$(( 1000 * $image_width / $dvd_width ))
@@ -2596,6 +2597,7 @@ kenburns ()  # KENBURNS
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] frame_width=$frame_width frame_height=$frame_height"
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] predicted_resized_width=$predicted_resized_width predicted_resized_height=$predicted_resized_height"
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] delta_width=$delta_width delta_height=$delta_height"
+			[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] crop_parameters $c_width x $c_height +$xc0 +$yc0 composite +$(( $xci + $frame_border )) +$(( $yci + $frame_border ))"
 			if [ $delta_width -le 1 ] && [ $delta_height -le 1 ] && [ "$frame_border" -eq 0 ] ; then
 #				echo "[dvd-slideshow:kenburns: delta_width=$delta_width delta_height=$delta_height"
 				# force the output size to be exact:  no composite needed!

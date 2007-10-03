@@ -2350,7 +2350,7 @@ kenburns ()  # KENBURNS
 		############################ end crop/resize large images
 
 #		echo 'x0,y0,x1,y1,xcenter,ycenter,xwidth,yheight,xc0,yc0,c_width,c_height' > kenburns_coordinates.csv
-		echo 'xc0,yc0,c_width,c_height,xci,yci,iwn,ihn,predicted_resized_width,predicted_resized_height,xc0_dec,yc0_dec' > kenburns_coordinates.csv
+#		echo 'xc0,yc0,c_width,c_height,xci,yci,iwn,ihn,predicted_resized_width,predicted_resized_height,xc0_dec,yc0_dec' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,predicted_resized_width,predicted_resized_height' > kenburns_coordinates.csv
 #		if [ $xe0 -gt $xs0 ] ; then
 			xvelocity0=$(( 1000 * ($xe0-$xs0)*($xe0-$xs0) / $l_frames ))
@@ -2584,7 +2584,7 @@ kenburns ()  # KENBURNS
 #			myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec "
 			# outputs correct predicted_resized_width and predicted_resized_height
 
-			echo '$xc0,$yc0,$c_width,$c_height,$xci,$yci,$iwn,$ihn,$predicted_resized_width,$predicted_resized_height,$xc0_dec,$yc0_dec' >> kenburns_coordinates.csv
+#			echo '$xc0,$yc0,$c_width,$c_height,$xci,$yci,$iwn,$ihn,$predicted_resized_width,$predicted_resized_height,$xc0_dec,$yc0_dec' >> kenburns_coordinates.csv
 #			echo "$xc0,$yc0,$c_width,$c_height,$xci,$yci,$predicted_resized_width,$predicted_resized_height" >> kenburns_coordinates.csv
 
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr xc0,yc0=$xc0_whole.$xc0_dec,$yc0_whole.$yc0_dec cw,ch=$c_width,$c_height xci,yci=$xci,$yci"

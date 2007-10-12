@@ -53,6 +53,8 @@ echo 'Changes:
 	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
 	Better handling of very long subtitles.  (up to 3 lines and reduced font size)
     Bug fixes:
+	Allow "widescreen=1" in input file.
+	Changed "sleep 0.1s" to "sleep 1s" for better compatibility.
 	Fixed hms2seconds with leading zeros (thanks Arnd Baecker)
 	Better (larger) resizing for kenburns in high-quality mode.
 	Smoother scroll effect in normal mode (fixed rounding error)
@@ -467,7 +469,7 @@ Options:
 	    crossfade:duration:subtitle
 	    	fades from one picture to the next.
 	    wipe:duration:subtitle:[up|down|left|right]
-	    	wipes from one picture to the next.
+	    	wipes from one picture to the next.  Defaults to left.
 
 	    chapter
 	  	Force manual chapter marker timing.  Chapter markers will
@@ -1169,7 +1171,7 @@ waitforfile ()
 	## wait for the file to exist...
 	while [ ! -f "$1" ] 
 	do
-		sleep 0.2s
+		sleep 1s
 	done
 }
 
@@ -1192,7 +1194,7 @@ waitforfiles ()  # WAITFORFILES
 		[ $debug -ge 2 ] && logecho "waiting for file $newfile_tmp"
 		while [ ! -e "$newfile_tmp" ] 
 		do
-			sleep 0.1s
+			sleep 1s
 		done
 	done
 }
@@ -1237,7 +1239,7 @@ seconds2ms ()
 	echo "$out_duration"
 }
 
-previouseffectincrement ()
+previousTransitionIncrement ()
 {
 	## get previous slide:  we can safely ignore the previous fadeouts because they get applied
 	## only to the previous image
@@ -1263,19 +1265,19 @@ previouseffectincrement ()
 	echo "$previousimage"
 }
 
-nexteffectincrement ()
+nextTransitionIncrement ()
 {
-	## get next effect, but we can safely ignore the fadein
+	## get next transition, but we can safely ignore the fadein
 	local nextimage='0'
 	local increment=1
 	local image1='0' ; local dur1=0 ; local image_file1='0'
 	while [ $(( $i + $increment )) -le ${#image[@]} ] ; do
-#echo "i=$i increment=$increment ${#image[@]} nextimage=$nextimage" 1>&2
 		[ -n "${image[$i+$increment]}" ] && image1="${image[$(($i+$increment))]}" 
 		[ -n "${duration[$i+$increment]}" ] && dur1="${duration[$(($i+$increment))]}" 
 		[ -n "${image_file[$i+$increment]}" ] && image_file1=${image_file[$i+$increment]}
+#		echo "i=$i increment=$increment image1=$image1 nextimage=$nextimage" 1>&2
 		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" != 0 ] ) ; then
-			nextimage="0"  # i.e., not fadein
+			nextimage="0"  # i.e., not a transition
 			break
 		elif [ "$image1" == 'fadeout' ] || [ "$image1" == 'crossfade' ] || [ "$image1" == 'wipe' ] ; then
 			nextimage="$increment"
@@ -2350,7 +2352,7 @@ kenburns ()  # KENBURNS
 		############################ end crop/resize large images
 
 #		echo 'x0,y0,x1,y1,xcenter,ycenter,xwidth,yheight,xc0,yc0,c_width,c_height' > kenburns_coordinates.csv
-#		echo 'xc0,yc0,c_width,c_height,xci,yci,iwn,ihn,predicted_resized_width,predicted_resized_height,xc0_dec,yc0_dec' > kenburns_coordinates.csv
+		echo 'xc0,yc0,c_width,c_height,xci,yci,iwn,ihn,predicted_resized_width,predicted_resized_height,xc0_dec,yc0_dec' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,predicted_resized_width,predicted_resized_height' > kenburns_coordinates.csv
 #		if [ $xe0 -gt $xs0 ] ; then
 			xvelocity0=$(( 1000 * ($xe0-$xs0)*($xe0-$xs0) / $l_frames ))
@@ -2584,7 +2586,7 @@ kenburns ()  # KENBURNS
 #			myecho "$fr x0=$x0 x0_dec=$x0_dec y0=$y0 y0_dec=$y0_dec "
 			# outputs correct predicted_resized_width and predicted_resized_height
 
-#			echo '$xc0,$yc0,$c_width,$c_height,$xci,$yci,$iwn,$ihn,$predicted_resized_width,$predicted_resized_height,$xc0_dec,$yc0_dec' >> kenburns_coordinates.csv
+			echo '$xc0,$yc0,$c_width,$c_height,$xci,$yci,$iwn,$ihn,$predicted_resized_width,$predicted_resized_height,$xc0_dec,$yc0_dec' >> kenburns_coordinates.csv
 #			echo "$xc0,$yc0,$c_width,$c_height,$xci,$yci,$predicted_resized_width,$predicted_resized_height" >> kenburns_coordinates.csv
 
 			[ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] $fr xc0,yc0=$xc0_whole.$xc0_dec,$yc0_whole.$yc0_dec cw,ch=$c_width,$c_height xci,yci=$xci,$yci"
@@ -2840,6 +2842,7 @@ set_system_variables ()
 		theme) theme="$config2" ; [ "$noecho" -eq 0 ] && echo "theme=$theme" ;; 
 		theme_designed_for) theme_designed_for="$config2" ; [ "$noecho" -eq 0 ] && echo "theme_designed_for=$theme_designed_for" ;; 
 		high_quality) high_quality="$config2" ; [ "$noecho" -eq 0 ] && echo "high_quality=$high_quality" ;;  #
+		widescreen) widescreen="$config2" ; [ "$noecho" -eq 0 ] && echo "widescreen=$widescreen" ;;  #
 	esac
 }
 
@@ -3758,6 +3761,7 @@ do
 	progressbar $line $total_lines
         # change @: which is "escaped" : to something else so that
         # it doesn't separate parameters.
+	line[$i]="$line"  # save for debugging later
         thisline=`sed -n "$line"p "$tmpdir/$tmptxtfile" | sed -e 's/\\\:/xxx_xxx/g'`
 	if [ "${thisline:0:1}" == '#' ] ; then
 		line=$(( $line + 1 )); continue # commented line. ignore it.
@@ -3787,7 +3791,7 @@ do
 		line=$(( $line + 1 )) ; continue
 	  fi
 
-	image[$i]=`echo "${thisline}" | awk -F' #' '{print $1}' | cut -d: -f1`
+	image[$i]=`echo "${thisline}" | awk -F' #' '{print $1}' | cut -d: -f1 | tr -d \"`
 	filetype[$i]=`echo "${image[$i]}" | awk -F. '{print tolower($NF)}'`
 	duration[$i]=`echo "${thisline}" | cut -d: -f2 | awk -F' #' '{print $1}'`
 	[ -z "${duration[$i]}" ] && duration[$i]=0
@@ -4385,13 +4389,17 @@ myecho "[dvd-slideshow] Running initial error check..."
 
 
 lastbar=0 # required for progressbar
-echo -n "[dvd-slideshow] "  # for progressbar
+if [ $debug -lt 2 ] ; then
+	echo -n "[dvd-slideshow] "  # for progressbar
+fi
 
 i=0
 for file in "${image[@]}"; do
 	di=`addzeros $i`
-	progressbar $i "${#image[@]}"
-#	echo "i=$i file=$file duration=${duration[$i]}"
+	if [ $debug -lt 2 ] ; then
+		progressbar $i "${#image[@]}"
+	fi
+	[ $debug -ge 2 ] && echo "line ${line[$i]} file=$file duration=${duration[$i]} subtitle=${subtitle[$i]} effect1=${effect1[$i]}"
 	
 	##### Set slide duration
 	if [ -z "${duration[$i]}" ] ; then
@@ -4406,7 +4414,7 @@ for file in "${image[@]}"; do
 		waitforfile "$tmpdir/audio$track"_"$audio_index_padded.wav" # last audio file
 		song_length_ms=`wavlength "$tmpdir/audio$track"_"$audio_index_padded.wav"`
 		if [ -z "$song_length_ms" ] ; then
-			myecho '[dvd-slideshow] ERROR: You must have an audio track before a slide specifying "audio"'
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}. You must have an audio track before a slide specifying 'audio'"
 			cleanup; exit 1
 		fi
 		duration[$i]="$song_length_ms"  # duration in thousandths of a sec.
@@ -4417,7 +4425,7 @@ for file in "${image[@]}"; do
 
         if [ "$file" == 'title' -o "$file" == 'Title' ] ; then # TITLE  #####
                 if [ -z "${subtitle[$i]}" ] && [ -z "${effect1[$i]}" ] ; then
-			myecho "[dvd-slideshow] ERROR: no title text found in line:"
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}. no title text found in line:"
 			myecho "[dvd-slideshow] ${thisline}"
 			cleanup; exit 1
 		fi
@@ -4426,14 +4434,14 @@ for file in "${image[@]}"; do
 	elif [ "$file" == 'musictitle' ] ; then  # MUSICTITLE
 		nothing="nothing"
 	elif [ "${avi_file[$i]}" == 1 ] ; then  # AVI
-		previous_increment="`previouseffectincrement`"
-		next_increment="`nexteffectincrement`"
-		if [ "${image[$i-$previous_increment]}" == 'fadein' ] || [ "${image[$i-$previous_increment]}" == 'crossfade' ] || [ "${image[$i-$previous_increment]}" == 'wipe' ] ; then 
-			myecho "[dvd-slideshow] ERROR: Cannot fadein or crossfade to a .avi file (yet)"
+		previous_transition_increment="`previousTransitionIncrement`"
+		next_transition_increment="`nextTransitionIncrement`"
+		if [ "${image[$i-$previous_transition_increment]}" == 'fadein' ] || [ "${image[$i-$previous_transition_increment]}" == 'crossfade' ] || [ "${image[$i-$previous_transition_increment]}" == 'wipe' ] ; then 
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}. Cannot fadein or crossfade to a .avi file (yet)"
 			exit 1
 		fi
-		if [ "${image[$i+$next_increment]}" == 'fadeout' ] || [ "${image[$i+$next_increment]}" == 'crossfade' ] || [ "${image[$i+$next_increment]}" == 'wipe' ]; then
-			myecho "[dvd-slideshow] ERROR: Cannot fadeout or crossfade from a .avi file (yet)"
+		if [ "${image[$i+$next_transition_increment]}" == 'fadeout' ] || [ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'wipe' ]; then
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}. Cannot fadeout or crossfade from a .avi file (yet)"
 			exit 1
 		fi
 	elif [ "${image_file[$i]}" == 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG
@@ -4442,31 +4450,31 @@ for file in "${image[@]}"; do
 			frames_extended[$i]=$frames
 		fi
 	elif [ "$file" == 'fadein' ] ; then  # FADEIN
-		next_effect_increment="`nexteffectincrement`"
-		if [ "$next_effect_increment" -ne 0 ] ; then
-			myecho "[dvd-slideshow] ERROR: Cannot fadein to another fade!"
+		next_transition_increment="`nextTransitionIncrement`"
+		if [ "$next_transition_increment" -ne 0 ] ; then
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}. Cannot fadein to another fade!"
 			cleanup; exit 1
 		fi
 		increment=`nextslideincrement`
 		if [ -z "$increment" ] ; then
-			myecho "[dvd-slideshow] ERROR: no next slide found to fadein to!"
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: no next slide found to fadein to!"
 			cleanup ; exit 1
 		fi
 	elif [ "$file" == 'crossfade' ] ; then  # CROSSFADE
 		## error checks:
 		nextslide=`nextslidename`
 		if [ -z "$nextslide" ] ; then
-			myecho "[dvd-slideshow] ERROR: No next slide to crossfade to!"
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: No next slide to crossfade to!"
 			cleanup ; exit 1 
 		fi
 		previous_increment="`previousslideincrement`"
 		if [ -z "$previous_increment" ] ; then 
-			myecho "[dvd-slideshow] ERROR: No previous slide to crossfade from!"
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: No previous slide to crossfade from!"
 			cleanup ; exit 1 
 		fi
-		next_effect_increment=`nexteffectincrement`
-		if [ "$next_effect_increment" -ne 0 ] ; then
-			myecho "[dvd-slideshow] ERROR: Cannot crossfade to another fade!"
+		next_transition_increment=`nextTransitionIncrement`
+		if [ "$next_transition_increment" -ne 0 ] ; then
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: Cannot crossfade to another fade!"
 			cleanup; exit 1
 		fi
 
@@ -4501,17 +4509,17 @@ for file in "${image[@]}"; do
 	elif [ "$file" == 'wipe' ] ; then  # WIPE
 		nextslide=`nextslidename`
 		if [ -z "$nextslide" ] ; then
-			myecho "[dvd-slideshow] ERROR: No next slide to wipe to!"
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: No next slide to wipe to!"
 			cleanup ; exit 1 
 		fi
 		previous_increment="`previousslideincrement`"
 		if [ -z "$previous_increment" ] ; then 
-			myecho "[dvd-slideshow] ERROR: No previous slide to wipe from"
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: No previous slide to wipe from"
 			cleanup ; exit 1 
 		fi
-		next_effect_increment=`nexteffectincrement`
-		if [ "$next_effect_increment" -ne 0 ] ; then
-			myecho "[dvd-slideshow] ERROR: Cannot wipe to another fade or wipe!"
+		next_transition_increment=`nextTransitionIncrement`
+		if [ "$next_transition_increment" -ne 0 ] ; then
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: Cannot wipe to another fade or wipe!"
 			cleanup; exit 1
 		fi
 
@@ -4545,27 +4553,27 @@ for file in "${image[@]}"; do
 	elif [ "$file" == 'fadeout' ] ; then  # FADEOUT
 		previous_increment="`previousslideincrement`"
 		if [ -z "$previous_increment" ] ; then 
-			myecho "[dvd-slideshow] ERROR: No previous slide to fadeout from"
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: No previous slide to fadeout from"
 			cleanup ; exit 1 
 		fi
-		next_effect_increment=`nexteffectincrement`
-		if [ "$next_effect_increment" != 0 ] && ([ "${image[$i+$next_effect_increment]}" == 'crossfade' ] || [ "${image[$i+$next_effect_increment]}" == 'fadeout' ]) ; then
-			myecho "[dvd-slideshow] ERROR: Cannot fadeout to a crossfade or another fadeout!"
+		next_transition_increment=`nextTransitionIncrement`
+		if [ "$next_transition_increment" != 0 ] && ([ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'fadeout' ]) ; then
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}: Cannot fadeout to a crossfade or another fadeout!"
 			cleanup; exit 1
 		fi
 	elif [ "${effect1[$i]}" == 'kenburns' ] ; then  # KENBURNS #####
 		if [ -z "${frames_extended[$i]}" ] ; then
 			frames_extended[$i]=$frames
 		fi
-		previous_increment="`previouseffectincrement`"
-		previous_slide="${image[$i-$previous_increment]}"
-		if [ "$previous_increment" -ne 0 ] ; then
-			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		if [ "$previous_transition_increment" -ne 0 ] ; then
+			previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 #			echo "previous_duration=$previous_duration"
 		fi
-		next_increment="`nexteffectincrement`"
-		next_slide="${image[$i+$next_increment]}"
+		next_transition_increment="`nextTransitionIncrement`"
+		next_slide="${image[$i+$next_transition_increment]}"
 #	elif [ "${effect1[$i]}" == 'scroll' ] ; then  # SCROLL check
 #	else  
 #		myecho "[dvd-slideshow] Unrecognized or malformed line in your input file:"
@@ -4575,7 +4583,9 @@ for file in "${image[@]}"; do
 	fi
 	i=$(( $i + 1 ))
 done  ## end of error checking loop
-finish_progressbar $i "${#image[@]}"
+if [ $debug -lt 2 ] ; then
+	finish_progressbar $i "${#image[@]}"
+fi
 ######################################################################3
 
 ## convert command-line audio files to wav format first, so we know how long they are:
@@ -4809,15 +4819,15 @@ for file in "${image[@]}"; do
 #			hilight_image="$image"
 		fi
 		# calculate actual frames rendered:
-		previous_increment="`previouseffectincrement`"
-		previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-		previous_slide="${image[$i-$previous_increment]}"
-		next_increment="`nexteffectincrement`"
-		next_duration="${duration[$i+$next_increment]}" # already in thousandths.
-		next_slide="${image[$i+$next_increment]}"
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		next_transition_increment="`nextTransitionIncrement`"
+		next_duration="${duration[$i+$next_transition_increment]}" # already in thousandths.
+		next_slide="${image[$i+$next_transition_increment]}"
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+#		echo "duration=${duration[$i]}  previous_inc=$previous_transition_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -4829,7 +4839,7 @@ for file in "${image[@]}"; do
 			rendered_time=${duration[$i]}
 			old_rendered_time=$rendered_time
 		fi
-#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+#		echo "duration=${duration[$i]}  next_transition_increment=$next_transition_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -4877,15 +4887,15 @@ for file in "${image[@]}"; do
 		myecho "[dvd-slideshow]         Title2=$title2"
 
 		# calculate actual frames rendered:
-		previous_increment="`previouseffectincrement`"
-		previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-		previous_slide="${image[$i-$previous_increment]}"
-		next_increment="`nexteffectincrement`"
-		next_duration="${duration[$i+$next_increment]}" # already in thousandths.
-		next_slide="${image[$i+$next_increment]}"
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		next_transition_increment="`nextTransitionIncrement`"
+		next_duration="${duration[$i+$next_transition_increment]}" # already in thousandths.
+		next_slide="${image[$i+$next_transition_increment]}"
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+#		echo "duration=${duration[$i]}  previous_inc=$previous_transition_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -4897,7 +4907,7 @@ for file in "${image[@]}"; do
 			rendered_time=${duration[$i]}
 			old_rendered_time=$rendered_time
 		fi
-#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+#		echo "duration=${duration[$i]}  next_transition_increment=$next_transition_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -4948,15 +4958,15 @@ for file in "${image[@]}"; do
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle""= ${subtitle[$i]}"
 
 		# calculate actual frames rendered:
-		previous_increment="`previouseffectincrement`"
-		previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-		previous_slide="${image[$i-$previous_increment]}"
-		next_increment="`nexteffectincrement`"
-		next_duration="${duration[$i+$next_increment]}" # already in thousandths.
-		next_slide="${image[$i+$next_increment]}"
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		next_transition_increment="`nextTransitionIncrement`"
+		next_duration="${duration[$i+$next_transition_increment]}" # already in thousandths.
+		next_slide="${image[$i+$next_transition_increment]}"
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+#		echo "duration=${duration[$i]}  previous_inc=$previous_transition_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -4968,7 +4978,7 @@ for file in "${image[@]}"; do
 			rendered_time=${duration[$i]}
 			old_rendered_time=$rendered_time
 		fi
-#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+#		echo "duration=${duration[$i]}  next_transition_increment=$next_transition_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -5011,15 +5021,15 @@ for file in "${image[@]}"; do
 		myecho "[dvd-slideshow] AVI file passed."
 		[ "$manual_chapter_markers" -eq 0 ] && write_chap=1
 		# check for bad syntax:
-		previous_increment="`previouseffectincrement`"
-		previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-		next_increment="`nexteffectincrement`"
-		next_duration="${duration[$i+$next_increment]}" # already in thousandths.
-		if [ "${image[$i-$previous_increment]}" == 'fadein' ] || [ "${image[$i-$previous_increment]}" == 'crossfade' ] || [ "${image[$i-$previous_increment]}" == 'wipe' ] ; then 
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
+		next_transition_increment="`nextTransitionIncrement`"
+		next_duration="${duration[$i+$next_transition_increment]}" # already in thousandths.
+		if [ "${image[$i-$previous_transition_increment]}" == 'fadein' ] || [ "${image[$i-$previous_transition_increment]}" == 'crossfade' ] || [ "${image[$i-$previous_transition_increment]}" == 'wipe' ] ; then 
 			myecho "[dvd-slideshow] ERROR: Cannot fadein or crossfade to a .avi file (yet)"
 			exit 1
 		fi
-		if [ "${image[$i+$next_increment]}" == 'fadeout' ] || [ "${image[$i+$next_increment]}" == 'crossfade' ] || [ "${image[$i+$next_increment]}" == 'wipe' ]; then
+		if [ "${image[$i+$next_transition_increment]}" == 'fadeout' ] || [ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'wipe' ]; then
 			myecho "[dvd-slideshow] ERROR: Cannot fadeout or crossfade from a .avi file (yet)"
 			exit 1
 		fi
@@ -5080,15 +5090,15 @@ for file in "${image[@]}"; do
 		fi
 
 		# calculate actual frames rendered:
-		previous_increment="`previouseffectincrement`"
-		previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-		previous_slide="${image[$i-$previous_increment]}"
-		next_increment="`nexteffectincrement`"
-		next_duration="${duration[$i+$next_increment]}" # already in thousandths.
-		next_slide="${image[$i+$next_increment]}"
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		next_transition_increment="`nextTransitionIncrement`"
+		next_duration="${duration[$i+$next_transition_increment]}" # already in thousandths.
+		next_slide="${image[$i+$next_transition_increment]}"
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+#		echo "duration=${duration[$i]}  previous_inc=$previous_transition_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -5100,7 +5110,7 @@ for file in "${image[@]}"; do
 			rendered_time=${duration[$i]}
 			old_rendered_time=$rendered_time
 		fi
-#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+#		echo "duration=${duration[$i]}  next_transition_increment=$next_transition_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -5116,7 +5126,7 @@ for file in "${image[@]}"; do
 		set_end_frame_time "$rendered_time"
 		rendered_frames="$frames_to_render"
 
-		[ $debug -ge 3 ] && echo "[dvd-slideshow] previous_increment=$previous_increment next_increment=$next_increment"
+		[ $debug -ge 3 ] && echo "[dvd-slideshow] previous_transition_increment=$previous_transition_increment next_transition_increment=$next_transition_increment"
 		[ $debug -ge 3 ] && echo "[dvd-slideshow] previous_duration=$previous_duration next_duration=$next_duration"
 		[ $debug -ge 3 ] && echo "[dvd-slideshow] rendered_frames=$rendered_frames frames=$frames"
 		[ $debug -ge 1 ] && echo "[dvd-slideshow] Rendering $rendered_frames frames at this time."
@@ -5157,7 +5167,7 @@ for file in "${image[@]}"; do
 		image_number=$(( $image_number + 1 ))
 		[ "$manual_chapter_markers" -eq 0 ] && write_chap=1
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
-#		if [ "${image[$i+$next_increment]}" == 'fadeout' ] ; then
+#		if [ "${image[$i+$next_transition_increment]}" == 'fadeout' ] ; then
 #                	echo -n ""
 #		else
                 	myecho "[dvd-slideshow]############################################################"
@@ -5165,10 +5175,10 @@ for file in "${image[@]}"; do
 	elif [ "$file" == 'fadein' ] ; then  # FADEIN
 		## ok, let's copy the background and just fade the foreground:
 		## check to make sure the next slide is an image:
-		next_effect_increment="`nexteffectincrement`"
+		next_transition_increment="`nextTransitionIncrement`"
 		myecho "[dvd-slideshow] Applying Fadein to next image `hms ${duration[$i]}`"
 		# we should check this while parsing the .txt file!
-		if [ "$next_effect_increment" -ne 0 ] ; then
+		if [ "$next_transition_increment" -ne 0 ] ; then
 			myecho "[dvd-slideshow] ERROR: Cannot fadein to another fade!"
 			cleanup; exit 1
 		fi
@@ -5316,10 +5326,10 @@ for file in "${image[@]}"; do
 			cleanup ; exit 1 
 		fi
 		previousslide_effect="${effect1[$i-$previous_increment]}"
-		next_effect_increment=`nexteffectincrement`
+		next_transition_increment=`nextTransitionIncrement`
 		previous_frames=0; next_frames=0;
 		# this should be done while parsing the .txt file!
-		if [ "$next_effect_increment" -ne 0 ] ; then
+		if [ "$next_transition_increment" -ne 0 ] ; then
 			myecho "[dvd-slideshow] ERROR: Cannot crossfade to another fade!"
 			cleanup; exit 1
 		fi
@@ -5523,8 +5533,8 @@ for file in "${image[@]}"; do
 		fi
 		previousslide_effect="${effect1[$i-$previous_increment]}"
 		previous_frames=0; 
-		next_effect_increment=`nexteffectincrement`
-		if [ "$next_effect_increment" != 0 ] && ([ "${image[$i+$next_effect_increment]}" == 'crossfade' ] || [ "${image[$i+$next_effect_increment]}" == 'fadeout' ]) ; then
+		next_transition_increment=`nextTransitionIncrement`
+		if [ "$next_transition_increment" != 0 ] && ([ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'fadeout' ]) ; then
 			myecho "[dvd-slideshow] ERROR: Cannot fadeout to a crossfade or another fadeout!"
 			cleanup; exit 1
 		fi
@@ -5634,10 +5644,10 @@ for file in "${image[@]}"; do
 		fi
 		previousslide_effect="${effect1[$i-$previous_increment]}"
 		previousslide="${image[$i-$previous_increment]}"
-		next_effect_increment=`nexteffectincrement`
+		next_transition_increment=`nextTransitionIncrement`
 		previous_frames=0; next_frames=0;
 		# this should be done while parsing the .txt file!
-		if [ "$next_effect_increment" -ne 0 ] ; then
+		if [ "$next_transition_increment" -ne 0 ] ; then
 			myecho "[dvd-slideshow] ERROR: Cannot wipe to another fade or wipe!"
 			cleanup; exit 1
 		fi
@@ -5969,15 +5979,15 @@ for file in "${image[@]}"; do
 		fi
 
 		# calculate actual frames rendered:
-		previous_increment="`previouseffectincrement`"
-		previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-		previous_slide="${image[$i-$previous_increment]}"
-		next_increment="`nexteffectincrement`"
-		next_duration="${duration[$i+$next_increment]}"  # duration in thousandths of sec
-		next_slide="${image[$i+$next_increment]}"
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		next_transition_increment="`nextTransitionIncrement`"
+		next_duration="${duration[$i+$next_transition_increment]}"  # duration in thousandths of sec
+		next_slide="${image[$i+$next_transition_increment]}"
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+#		echo "duration=${duration[$i]}  previous_inc=$previous_transition_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -5989,7 +5999,7 @@ for file in "${image[@]}"; do
 			rendered_time=${duration[$i]}
 			old_rendered_time=$rendered_time
 		fi
-#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+#		echo "duration=${duration[$i]}  next_transition_increment=$next_transition_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -6065,22 +6075,22 @@ for file in "${image[@]}"; do
 		window_start=`echo "${effect1_params[$i]}" | awk -F';' '{print $1";"$2}'`
 		window_end=`echo "${effect1_params[$i]}" | awk -F';' '{print $3";"$4}'`
 
-		previous_increment="`previouseffectincrement`"
-		previous_slide="${image[$i-$previous_increment]}"
-		if [ "$previous_increment" -ne 0 ] ; then
-			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		if [ "$previous_transition_increment" -ne 0 ] ; then
+			previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 		fi
-		next_increment="`nexteffectincrement`"
-		next_slide="${image[$i+$next_increment]}"
-		if [ "$next_increment" -ne 0 ] ; then
-			next_duration=${duration[$i+$next_increment]}  # duration in thousandths of sec
+		next_transition_increment="`nextTransitionIncrement`"
+		next_slide="${image[$i+$next_transition_increment]}"
+		if [ "$next_transition_increment" -ne 0 ] ; then
+			next_duration=${duration[$i+$next_transition_increment]}  # duration in thousandths of sec
 			next_frames=$( duration2frames $next_duration )  # frames for next slide
 		fi
 
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+#		echo "duration=${duration[$i]}  previous_inc=$previous_transition_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -6095,7 +6105,7 @@ for file in "${image[@]}"; do
 			old_rendered_time=$rendered_time
 #			frames_extended=$frames
 		fi
-#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+#		echo "duration=${duration[$i]}  next_transition_increment=$next_transition_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -6129,12 +6139,12 @@ for file in "${image[@]}"; do
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		# kenburns syntax:
 		# Kenburns $window_start $window_end $file $total_frames $startframe $lastframe bg [$char]
-		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
+		if [ "$previous_transition_increment" -ne 0 ] && [ "$next_transition_increment" -ne 0 ] ; then
 			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$(( $previous_frames + $frames_to_render ))" "$normal_bg"
 
-		elif [ "$previous_increment" -ne 0 ] ; then
+		elif [ "$previous_transition_increment" -ne 0 ] ; then
 			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$frames" 
-		elif [ "$next_increment" -ne 0 ] ; then
+		elif [ "$next_transition_increment" -ne 0 ] ; then
 			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" 1 "$(( $frames_to_render ))"
 		else
 			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" 1 "$frames" "#"
@@ -6157,21 +6167,21 @@ for file in "${image[@]}"; do
 		fi
 		direction="${effect1_params[$i]}"
 
-		previous_increment="`previouseffectincrement`"
-		previous_slide="${image[$i-$previous_increment]}"
-		if [ "$previous_increment" -ne 0 ] ; then
-			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		if [ "$previous_transition_increment" -ne 0 ] ; then
+			previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
 			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 		fi
-		next_increment="`nexteffectincrement`"
-		next_slide="${image[$i+$next_increment]}"
-		if [ "$next_increment" -ne 0 ] ; then
-			next_duration=${duration[$i+$next_increment]}  # duration in thousandths of sec
+		next_transition_increment="`nextTransitionIncrement`"
+		next_slide="${image[$i+$next_transition_increment]}"
+		if [ "$next_transition_increment" -ne 0 ] ; then
+			next_duration=${duration[$i+$next_transition_increment]}  # duration in thousandths of sec
 			next_frames=$( duration2frames $next_duration )  # frames for next slide
 		fi
 		[ -z "$previous_slide" ] && previous_slide=0
 		[ -z "$next_slide" ] && next_slide=0
-#		echo "duration=${duration[$i]}  previous_inc=$previous_increment previous_slide=$previous_slide previous_duration=$previous_duration"
+#		echo "duration=${duration[$i]}  previous_inc=$previous_transition_increment previous_slide=$previous_slide previous_duration=$previous_duration"
 		if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
@@ -6183,7 +6193,7 @@ for file in "${image[@]}"; do
 			rendered_time=${duration[$i]}
 			old_rendered_time=$rendered_time
 		fi
-#		echo "duration=${duration[$i]}  next_increment=$next_increment next_slide=$next_slide next_duration=$next_duration"
+#		echo "duration=${duration[$i]}  next_transition_increment=$next_transition_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
 			# subtract time from rendered time:
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
@@ -6205,13 +6215,14 @@ for file in "${image[@]}"; do
 		# scroll syntax is: 
 		# scroll $direction $file $bg $total_frames [$startframe] [$lastframe] [$char]
 		#
-		if [ "$previous_increment" -ne 0 ] && [ "$next_increment" -ne 0 ] ; then
+		if [ "$previous_transition_increment" -ne 0 ] && [ "$next_transition_increment" -ne 0 ] ; then
 			scroll "$direction" "$file" "$normal_bg" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$(( $previous_frames + $rendered_frames ))"
-		elif [ "$previous_increment" -ne 0 ] ; then
+		elif [ "$previous_transition_increment" -ne 0 ] ; then
 			scroll "$direction" "$file" "$normal_bg" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$frames" '#'
-		elif [ "$next_increment" -ne 0 ] ; then
+		elif [ "$next_transition_increment" -ne 0 ] ; then
 			scroll "$direction" "$file" "$normal_bg" "${frames_extended[$i]}" 1 "$(( $rendered_frames ))" '#'
 		else
+			echo scroll "$direction" "$file" "$normal_bg" "$frames" 1 "$frames" "#"
 			scroll "$direction" "$file" "$normal_bg" "$frames" 1 "$frames" "#"
 		fi
 		if [ "$rendered_frames" -le 0 ] ; then

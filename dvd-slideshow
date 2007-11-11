@@ -52,6 +52,8 @@ echo 'Changes:
 	Added -mpg output for creating alternate-sized mpeg output that does not conform to dvd standards (very alpha)
 	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
 	Better handling of very long subtitles.  (up to 3 lines and reduced font size)
+	No subtitles are rendered during fades.
+	Log file now uses the slideshow name instead of dvd-slideshow.log
     Bug fixes:
 	Allow "widescreen=1" in input file.
 	Changed "sleep 0.1s" to "sleep 1s" for better compatibility.
@@ -121,205 +123,7 @@ echo 'Changes:
 	Fixed bug in seconds2ms that mishandled durations of 0.080 ms (thanks Eric)
 	Remove wc --chars calls for compatibility with FreeBSD
 	Remove seq calls for compatibility with FreeBSD
-	Add FreeBSD font path so fonts are found.
-0.7.5	
-    New features & Changes:	
-	Use "\n" to force line breaks up to two lines in title text (not titlebar yet).
-	Fixed code to rotate images.  (not public yet)
-	  Use image.jpg:duration:subtitle:[effect1:effect1_params:]rotate:angle
-	Configuration variables will be read in sequence now.  So you can configure font
-	  colors and sizes throughout the input file.
-	Allow comments in all lines.  Everything after <space># will be ignored.
-	Scroll effect is MUCH smoother for slow scrolls in high-quality mode! (takes 3x longer)
-	Slideshow name -n is optional now.  Defaults to the base name of the input file.
-        * Changed old "title" keyword to "titlebar:duration:toptitle:bottomtitle"
-        * Added "title:duration:title_text" function where a single title is rendered in the middle of the screen.
-	Add check for missing subtitle syntax in crop/scroll/kenburns.
-	Longer progress bar.
-	Reads ~/.dvd-slideshowrc in a loop for better debugging and security.
-    Bug fixes: 	
-	Added "+repage" in convert lines after cropping when using internal .mpc image format. 
-	   ( Fixes kenburns and crop errors with ImageMagick > 6.2.2 )
-	Fixed kenburns problems with black backgrounds. 
-	Fixed "geometry does not contain image" problem with kenburns effect.
-	Works for slide or transition duration > 35 seconds now.
-	Add quotes around yuv fifo to allow for spaces in output directory.
-	Fixed "squishing" when fading out or crossfading to a scroll effect. 
-	Fixed problem where audio "fadein" was being rendered as a subtitle.
-	Traps bad duration=0 for images and effects.
-0.7.4	
-    Bug fixes: 	
-	Changed mpeg2enc process file descriptor from 55 to 3 for
-	compatibility with bash >= 3.1 (fixes hang at wait for mpeg2enc to finish)
-	Echos details to logfile about mpeg2enc process for future debugging.
-	Output directory gets created if it does not exist.
-	Fixed bug in kenburns positioning with black background.
-	Better error messages when no oggdec or lame found.
-	Fixed error where kenburns intermediate files were not being deleted.
-0.7.3	
-    New features:	
-	Fixed kenburns zoom in adjusted to a "constant" velocity!  
-	You can include other .txt files by using a line include:filename.txt in your input .txt file. Thanks Thomas Weber!
-	User can manually add chapter markers by using the "chapter" keyword alone on one line of the input .txt file.
-	Added variable "mpeg2enc_params" so advanced users can easily change the parameters.
-	All timing accurate to 0.001 (1 ms) now.  
-	Added -smp option to process faster on high-end machines. 
-	Added -writechaps option to write out chapter markers to <slideshow_name>.chap
-    Bug fixes: 	
-	Fixed bugs causing errors when spaces were in paths.
-	Fixed bugs in the audio processing: error on last audio file.
-	Changed mpeg2enc -M 3 (use multiprocessors) to -M 0 because 1.8.0 was crashing on athlon 64 X2 machines.
-	Added "-compose src-over" option to composite calls for compatibility with Debian Etch.
-	Fixed bug when passing a single audio file longer than the slideshow.
-	Removed rpm check for supporting applications.
-	Checks for crossfade duration = 0 and handles it correctly.
-	Checks that audio and image files exist while parsing .txt file.
-	Fixed minor bug where an extra (non-existant) subtitle was rendered.
-	Fixed bug when fading in to a first slide that is a scroll effect.
-	Subtitle timing bug fixed!
-	Small fix in displaying total number of pictures processed
-	Better logging to logfile.
-	Fixed ignored line if last line does not contain a line break.
-0.7.2	
-	Faster kenburns effect rendering when using black background.
-	Allow multiple sequential audio files in input .txt file.
-	Changed "head -1" to "head -n 1"
-	Allow .png and .jpeg extensions.
-	allow \n in subtitles to designate end-of line breakpoints
-	Checks for required program version better now.
-	Fixed ppmtoy4m compatibility error for compatibility with
-	mjpegtools >= 1.6.3-0.1
-	Allow "exit" keyword in .txt file (for easier debugging).
-	Fixed pixel aspect ratio problem. (hopefully)
-	Add option to render subtitles with spumux and .srt files (beta)
-	Cleans up old temporary files if they exist.
-	Better logfile output.  Hopefully catches program call errors.
-	Title2 text and bar locations referenced to bottom of frame
-	for better PAL/NTSC compatibility.
-	Subtitle stays constant between slides if they both
-	have the same subtitle (thanks Andre Weilert)	
-	All temporary files are created in a temporary directory now.
-	Fixed bug when fading in to a scroll effect. (remove tab at EOL).
-	Changed progress indicator slightly.
-0.7.1	
-	Added log file output to dvd-slideshow.log
-	Updated documentation and examples.
-	Background color can now take a #RRGGBB value.
-	Nicer progress indicator.
-	AC3 audio is now the default.  Pass -mp2 to force MP2 audio.
-	Autocrop works on background images now also.
-	Added code to check for all temporary fade_xxxx.ppm images
-	before proceeding to encode mpeg video.  
-	Fadein or crossfade to a scroll effect works correctly now.
-0.7.0	
-	Default variables can be set in a ${HOME}/.dvd-slideshowrc file
-	Default variables can be set in the input .txt file
-	Crossfade and fadein to kenburns effect correctly fades
-	 to the first frame geometry instead of the whole image.
-	New keywords for the start and end points in kenburns effect:
-	 topleft/middle/middleright etc.  See docs for details.
-	New keywords for the crop function also.
-	9999 audio files possible now. Used to be a limit of 9
-	Fixed bug when fading in to a cropped image.
-	Removed -R 2 and -c options in mpeg2enc because
-	 some people had problems.
-	Fixed subtitle timing bug, so now the subtitles appear
-	 and disappear closer to the correct time.
-	Changed encoded audio bitrate from 224kb/s to 128kb/s
-	Works with toolame 0.2m beta and 0.2L now
-        Got rid of calls to NetPBM functions, so it is no longer required...
-	Changed "wc -m" call to "wc --chars" for better compatibility.
-	Fixed syntax so spaces should be allowed in input files now.
-	Changed "seq 2 1" to "seq 2 -1 1" for better compatibility
-	Added option to "autocrop" images (-c) that are close to the
-		output aspect ratio, but not quite.
-	Title syntax changed... (see documentation)
-	Fadein/crossfade to a title or background slide works now.
-	Fadein/fadeout/crossfade works when previous/next slide is not
-	 actually an image/title/background. The next real slide will
-	 be used instead.
-	Fixed bug in Low quality mode (-L) (extracopies bug)
-	Fixed bug with subtitles with new versions of imagemagick.
-	White can be used a a background keyword for white backgrounds.
-
-0.6.0	
-	Fixed major bug/error when generating long slideshows. 
-		Now all video gets piped in YUV fomat through mpeg2enc
-		in one single block. (fix by Mike Beller)
-	Added option to generate AC3 audio files (requires ffmpeg)
-	Fixed title slide when using -L (low quality mode)	
-	Allow for slide durations to be specified in hundreths of a second: 5.23
-	Reports total audio and video lengths at the beginning of the code.
-	Fixed bug when using subtitles. (no subtitles were generated)
-	Changed output files to be .vob extension instead of .mpg	
-	Better font searching (thanks Jim Crumley)
-	Use backslash to escape a colon in subtitles (thanks Jim Crumley)
-	Allow avi input files.  pre-alpha support.  (thanks Jim Crumley)
-0.5.4	
-	Added option to re-define background image from text file input.
-	Code cleanup (slightly)
-	Added support for two audio tracks.  
-	Added audio effects:  fadein/fadeout	
-	Default command-line audio fadein/fadeout time is 3 seconds.
-0.5.2	
-	Fixed bug in musictitle Title info parsing.
-	Checks to make sure a slidshow name is passed.
-	Added low-quality mode (-L) for testing.  Speeds things up about 4x.
-	Reduced verbosity.
-	Checks for required fonts. Subtitles look much better now.
-	Word-wraps long subtitle lines into two lines.
-0.5.0	
-	Added KenBurns effect!  See docs for usage.
-	Added scroll effect!  See docs for usage.
-	Added crop effect.  See docs for usage.
-	Audio can be started and stoped for multiple files within
-		the text file.  See docs for usage.
-	Added "musictitle" option for displaying audio info.
-	You can now comment out lines in the textfile by using the # character.
-	Also ignores blank lines in textfile.
-	Fades can now have up to 9999 frames.
-	Total slides can now be 9999.  You guys are crazy.
-	fixed small bug when no chapters are specified.
-	Chapter markers are now rounded up to the next full second due to
-		a bug in some versions of dvdauthor.
-	Only checks for oggdec or lame if you pass an ogg or mp3 file.
-	Changed syntax of command line input for files and audio.
-	Passing images on the command line is no longer "public". 
-		Use the text file in put instead.
-	Fixed audio problem with some mp3 files getting pops in them.
-0.4.8   
-	Changed audio to process raw (headerless) audio files before 
-		joining them.
-        Fixed bug when passing multiple audio files (again).
-        Fixed audio fadein/fadeout time to 1 second
-        Fixed bug in audio where it plays to fast when burned on dvd.
-        Checks to make sure audio files exist before processing.
-0.4.6	Fixed bug when passing multiple audio files. (thanks Scott Merrill)
-	Removed -t option from toolame command for better support for old versions.
-0.4.4	Only writes chapter markers when there is a picture or title
-	First chapter marker is now fixed at time 0
-	Max number of chapter markers is now 99 (thanks Jens Gecius)
-	Fixed bug when checking for toolame (thanks Jens Gecius)
-	Added "crossfade" option!
-	Will use mpeg3cat from libmpeg3 to join mpegs if available.
-	Small fix to allow semicolons in subtitles (thanks Jim Crumley)
-	Added -s option to mpeg2enc calls for (maybe?) better compatibility.
-0.4.2	Current working directory will be used if -o not specified.
-	Allow "background" keyword in text file to insert background.
-	Make sure all ImageMagick calls have -depth 8 to make ppmtoy4m happy.
-	No font is specified in ImageMagick calls, so it should use the default.
-	Changed default menu to a steelblue gradient when no image is passed.
-0.4	Fixed bug when no background specified (again).
-	Added error checking to make sure image files exist.
-	Ogg audio format supported (you must have oggdec).
-	Uses toolame for mp2 audio encoding when available.
-	Audio timing improved.
-	Fixed bug when double-quotes were in subtitle.
-	Added black, fadein, and fadeout options in txtfile!
-	-p  (PAL format option) added. Not tested, but should work.
-0.3	Fixed error when no background specified.  Now default is black
-	Added checking for required programs before running.
-0.2	Initial release'
+	Add FreeBSD font path so fonts are found. '
 }
 
 help ()
@@ -718,7 +522,6 @@ default_fontname2='helb____.ttf' # helvetica bold truetype
 	  bottomtitle_text_location_x=0
 	  bottomtitle_text_location_y=155
 
-logfile='dvd-slideshow.log'
 themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant.  see: http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
 local_themedir=~/.dvd-slideshow/themes  # local theme directory
 
@@ -3551,6 +3354,7 @@ fi
 mkdir "$tmpdir"
 
 ## initialize log file:
+logfile="$slideshow_name".log
 echo "[dvd-slideshow] `date`" > "$outdir/$logfile"
 logecho "[dvd-slideshow] Command line was:"
 logecho "[dvd-slideshow] $0 $theargs"
@@ -4530,6 +4334,7 @@ for file in "${image[@]}"; do
 #		echo "frames=$frames previous_frames_extended=${frames_extended[$i-$previous_increment]}"
 #		echo "frames=$frames next_frames_extended=${frames_extended[$i+$next_increment]}"
 
+
 	elif [ "$file" == 'wipe' ] ; then  # WIPE
 		nextslide=`nextslidename`
 		if [ -z "$nextslide" ] ; then
@@ -4671,7 +4476,7 @@ for file in "${image[@]}"; do
 		else
 			myecho "[dvd-slideshow] ERROR:  Unknown audio file format.  Must be mp3, ogg, mp4/aac, wav, or silence"
 		fi
-		echo "created $tmpdir/audio$track"_"$audio_index_padded.wav"
+#		echo "created $tmpdir/audio$track"_"$audio_index_padded.wav"
 #	else  
 #		myecho "[dvd-slideshow] Unrecognized or malformed line in your input file:"
 #		myecho "[dvd-slideshow] $file. effect=${effect1[$i]} effect_params=${effect1_params[$i]}"
@@ -5534,7 +5339,6 @@ for file in "${image[@]}"; do
 			read_next_variables
 			create_slide "$nextslide" "$tmpdir/slide_$(($i+$increment)).ppm"
 			subtitle1[$i+$increment]="$( echo "${subtitle[$i+$increment]}" | awk -F';' '{print $1}' )"
-#			echo "subtitle1=${subtitle1[$i+$increment]}"
 			if [ -n "${subtitle1[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i+$increment]}" "$(( $i + $increment))" transparent # creates subtitle_$(($i+$increment)).png
 				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/subtitle_"$(($i+$increment))".png "$tmpdir"/slide_"$(($i+$increment))".ppm "$tmpdir"/slide_"$(($i+$increment))".ppm
@@ -6429,7 +6233,7 @@ for file in "${image[@]}"; do
 		increment=`nextslideincrement`
 		next_duration="${duration[$i+$increment]}"
 #		[ "$next_duration" == 'audio' ] && audiosmp=0 || audiosmp=$smp
-		echo "$tmpdir/audio$track"_"$audio_index_padded.wav"
+#		echo "$tmpdir/audio$track"_"$audio_index_padded.wav"
 		if [ ! -f "$tmpdir/audio$track"_"$audio_index_padded.wav" ] ; then
 			if [ "$suffix" == "mp3" ] ; then
 				myecho "[dvd-slideshow] decoding mp3 audio file... be patient..."
@@ -6467,12 +6271,31 @@ for file in "${image[@]}"; do
 		fi
 		## now set the starting and ending point of this audio track:
 #		myecho "audio_track=${audio_track[$i]} "
+		# ignore time added by fades if there are any between the last audio file end
+		# and the start of the next track!
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		if [ "$previous_transition_increment" -ne 0 ] ; then
+			previous_duration="${duration[$i-$previous_transition_increment]}" # already in thousandths.
+			if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
+				# subtract time from audio time:
+				audio_time=$(( $slide_end_time - $previous_duration / 2 )) 
+			elif [ "$previous_slide" == 'fadein' ] ; then
+				audio_time=$(( $slide_end_time - $previous_duration )) 
+			else  # no previous fade
+				audio_time=$slide_end_time	
+			fi
+		else  # no previous transition.  no need to adjust timing: 
+			audio_time=$slide_end_time	
+		fi
+#		myecho "slide_end_time=$slide_end_time audio_time=$audio_time"
 		if [ "${audio_track[$i]}" -eq 1 ] ; then
 			audio1_start[$audio_index]="$slide_start_time"   # in ms
 			## set ending point of the audio track:
 			if [ "$audio_index" -gt 0 ] ; then # not first audio track
-				audio1_end[$(($audio_index-1))]="$slide_end_time"   # in ms from last slide
-#				myecho "[dvd-slideshow] Set end time for audio file $audio_index to `hms $slide_end_time`"
+#				audio1_end[$(($audio_index-1))]="$slide_end_time"   # in ms from last slide
+				audio1_end[$(($audio_index-1))]="$audio_time"   # in ms from last slide
+				myecho "[dvd-slideshow] Set end time for audio file $audio_index to `hms $audio_time`"
 			else # set audio end to zero for now...
 				audio1_end[$audio_index]=0   # in ms from last slide
 			fi
@@ -6480,7 +6303,8 @@ for file in "${image[@]}"; do
 			audio2_start[$audio_index]="$slide_start_time"   # in ms
 			## set ending point of the audio track:
 			if [ "$audio_index" -gt 0 ] ; then
-				audio2_end[$(($audio_index-1))]="$slide_end_time"   # in ms from last slide
+#				audio2_end[$(($audio_index-1))]="$slide_end_time"   # in ms from last slide
+				audio2_end[$(($audio_index-1))]="$audio_time"   # in ms from last slide
 #				myecho "[dvd-slideshow] Set end time for audio file $audio_index to `hms $slide_end_time`"
 			else # set audio end to zero for now...
 				audio2_end[$audio_index]=0   # in ms from last slide
@@ -6715,11 +6539,10 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 		i_padded=`addzeros $i`
 		myecho "[dvd-slideshow] Working on track 1 audio file $i"
 		myecho "[dvd-slideshow] $file"
-		fade_in_time="3000" # default 3 second
-		fade_out_time="3000"
+		fade_in_time="2000" # default 2 second
+		fade_out_time="2000"
 		fade_in_hms=`hms "$fade_in_time"`
 		fade_out_hms=`hms "$fade_out_time"`
-		myecho "[dvd-slideshow] fade_in_time=$fade_in_hms fade_out_time=$fade_out_hms"
 		track=1
 		song_length=`wavlength "$tmpdir/audio1_$i_padded.wav"`
 		if [ "$song_length" -lt "$(( $fade_in_time + $fade_out_time ))" ] ; then
@@ -6727,6 +6550,7 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 			fade_out_time="$fade_in_time"
 		fi
 		song_length_hms=`hms "$song_length"`
+		myecho "[dvd-slideshow] fade_in_time=$fade_in_hms fade_out_time=$fade_out_hms"
 		total_audio_length="$(( $total_audio_length + $song_length ))"
 		myecho "[dvd-slideshow] total_audio_length=`hms $total_audio_length`"
 		sox -v 0.95 "$tmpdir/audio$track"_"$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
@@ -6862,14 +6686,12 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			fade_in_hms=`hms "$fade_in_time"`
 			fade_out_hms=`hms "$fade_out_time"`
 			myecho "[dvd-slideshow] Fade in time=$fade_in_hms Fade out time=$fade_out_hms"
-
-			if [ "$song_length_ms" -lt "$(( $fade_in_time + $fade_out_time ))" ] ; then
+			if [ "$song_length_ms" -le "$(( $fade_in_time + $fade_out_time ))" ] ; then
 				myecho "[dvd-slideshow] WARNING: Audio length is shorter than the combined fadein and fadeout times"
-				fade_in_time=$(( ( $song_length - 1 ) / 2 ))
+				fade_in_time=$(( $song_length / 4 ))
 				fade_out_time="$fade_in_time"
 				myecho "[dvd-slideshow]          Setting fadein and fadeout time to `hms $fade_in_time`"
 			fi
-
 			song_end_ms=$(( ${audio1_end[$i]} - ${audio1_start[$i]} ))
 			[ "$song_end_ms" -lt 0 ] && song_end_ms=0
 			song_end_hms=`hms $song_end_ms`
@@ -6927,7 +6749,12 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 				myecho "[dvd-slideshow] Audio length < song_end   `hms $song_length_ms` < `hms $song_end_ms`"
 				# video is longer than audio.  need to add silence to end.
 				# fade only to the end of song length now, because we may have to add silence:
-				sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
+				# We should probably eventually add the silence first, and then chop the song?
+				if [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw"
+				else
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
+				fi
 #				sox -t raw -w -s -c 2 -r "$audio_sample_rate" "$tmpdir/audio1_$i_padded.raw" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
 #				mv "$tmpdir/audio.raw" "$tmpdir/audio1_$i_padded.raw"
 #				thetime_hms=`hms $(( $song_end_ms - $song_length_ms + 1000 ))` #plus 1s so sox actually crops.
@@ -6941,7 +6768,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 				# at the end, so we'll add one extra step to make the coding easier:
 #				sox -t raw -s -w -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" "$tmpdir/audio1_$i_padded.wav"
 				rm "$tmpdir"/silence.raw
-			else
+			else # desired song length is shorter than actual song length. need to cut it:
 				if [ "$debug" -ge 2 ] ; then
 					length=`wavlength "$tmpdir/audio1_$i_padded.wav"`
 					myecho "[dvd-slideshow] Actual length of .raw file=`hms $length`"
@@ -6949,7 +6776,11 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 					myecho "[dvd-slideshow] Song End: $song_end_hms"
 					myecho "[dvd-slideshow] Fadeout: $fade_out_hms"
 				fi
-				sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
+				if [ "$song_end_ms" -eq "$song_end_ms"  ] && [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw"
+				else
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
+				fi
 			fi
 			# now, audio should span to the end mark
 		fi

@@ -15,7 +15,7 @@ check_rm () {
 echo "[runtest.sh] Removing old files..."
 check_rm my_slideshow.xml
 check_rm my_slideshow.vob
-check_rm dvd-slideshow.log
+check_rm my_slideshow.log
 check_rm dvd-menu.log
 check_rm vmgm.xml
 check_rm menu.vob
@@ -24,7 +24,7 @@ check_rm menu.xml
 echo "[runtest.sh] Executing command:"
 echo "[runtest.sh] dvd-slideshow -H -f my_slideshow.txt $*"
 echo " "
-time dvd-slideshow -f my_slideshow.txt $*
+dvd-slideshow -f my_slideshow.txt $*
 echo " "
 
 if [ ! -f "my_slideshow.vob" ] ; then

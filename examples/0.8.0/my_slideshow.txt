@@ -11,7 +11,7 @@
 # First, set some variables:
 debug=0 # debug
 pal=0 # use ntsc mode
-ac3=1 # use ac3 audio instead of mp2
+ac3=1 # use ac3 audio (default) instead of mp2
 copy=0 # copy all images into a directory in output dvd filesystem directory.
 autocrop=0 # make images that are very near the dvd aspect ratio fill the screen.
 #  Note that autocrop doesn't have an effect on portrait-orientation pictures.
@@ -39,11 +39,11 @@ autocrop=0 # make images that are very near the dvd aspect ratio fill the screen
 
 #background:0::background.jpg
 # note that tenths or hundredths or thousandths of seconds can be specified:
-fadein:2.582
+fadein:1.582
 # Just display the top title.  Lower titlebar will not show:
-titlebar:2:Top Title   # add another comment if you want.
+titlebar:4:Top Title   # add another comment if you want.
 # Just show the lower title.  Top title will not show.
-titlebar:2::Lower Title  
+titlebar:4::Lower Title  
 
 # show both titles:
 toptitle_font_color=green  # change the top font color
@@ -51,7 +51,7 @@ toptitle_bar_height=0  # no white background this time.
 # note that variables need to get set BEFORE the crossfade because
 # crossfade actually renders the title slide in order to use it.
 crossfade:1
-titlebar:2.72:Top Title:Lower Title  
+titlebar:3.72:Top Title:Lower Title  
 fadeout:1
 
 # now let's start playing the audio on track 1:
@@ -70,7 +70,7 @@ fadeout:2
 
 fadein:2
 # The simple title can have \n characters to mark newlines:
-title:2.72:Second part of\nmy slideshow
+title:5.72:Second part of\nmy slideshow
 
 crossfade:2
 # set another chapter marker
@@ -92,13 +92,13 @@ chapter
 crossfade:3
 chapter
 # you can force a newline in subtitles by using \n
-../images/picture2.jpg:3:First subtitle line\nSecond subtitle line
+../images/picture2.jpg:4:First subtitle line\nSecond subtitle line
 
 # note, that if you specify the same subtitle for adjacent slides, the
 # subtitle will stay the same now.
-../images/picture1.jpg:2:My trip was great!
+../images/picture1.jpg:3:My trip was great!
 crossfade:1:My trip was great!
-../images/picture2.jpg:2:My trip was great!
+../images/picture2.jpg:3:My trip was great!
 crossfade:1
 ../images/pano.jpg:4:My trip was great! 
 # so, the subtitle will be displayed constantly for 6 seconds, then turn off for one

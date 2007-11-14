@@ -15,7 +15,7 @@ check_rm () {
 echo "[runtest.sh] Removing old files..."
 check_rm complex.xml
 check_rm complex.vob
-check_rm dvd-slideshow.log
+check_rm complex.log
 check_rm dvd-menu.log
 check_rm vmgm.xml
 check_rm menu.vob
@@ -25,7 +25,7 @@ rm -rf dvd_fs
 echo "[runtest.sh] Executing command:"
 echo "[runtest.sh] dvd-slideshow -f complex.txt $*"
 echo " "
-time dvd-slideshow -f complex.txt $*
+dvd-slideshow -f complex.txt $*
 echo " "
 
 if [ ! -f "complex.xml" ] ; then

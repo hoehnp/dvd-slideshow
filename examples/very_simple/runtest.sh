@@ -17,7 +17,7 @@ check_rm verysimple.xml
 check_rm verysimple.vob
 check_rm verysimple.mpg
 check_rm verysmiple.flv
-check_rm dvd-slideshow.log
+check_rm verysimple.log
 check_rm dvd-menu.log
 check_rm vmgm.xml
 check_rm menu.vob

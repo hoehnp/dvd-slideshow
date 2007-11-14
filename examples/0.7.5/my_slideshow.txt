@@ -89,7 +89,6 @@ crossfade:2
 chapter  
 ../images/pano_small.jpg:4:cool panorama picture
 
-debug=3
 # zoom in to left side of panorama  (no chapter marker)
 ../images/pano_small.jpg:8::kenburns:100%;middle;imageheight;left
 ../images/pano_small.jpg:2::crop:imageheight;left  # pause for a second

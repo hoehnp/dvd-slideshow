@@ -31,12 +31,10 @@ echo "[dvd-slideshow]            "
 # explain difference between Low/Medium/High quality modes
 # fast preview mode for slcreator!
 # add hints for smoothest kenburns effects. (no zoom and pan)
-# fix "audio" duration keyword in audio example
 
 ## known bugs:
-# Kenburns transitions to crossfade is wrong: sizing changes
 # continuous subtitles don't work across non-image/transition lines
-#  convert image.jpg -bordercolor black -border 0 "$tmpdir/fade_$dj.ppm" works for transparent .png images
+# convert image.jpg -bordercolor black -border 0 "$tmpdir/fade_$dj.ppm" works for transparent .png images
 # in ImageMagick > 6.0.6, but not in 6.0.6 for some reason.  (black output).  
 
 ## set up bash variables  http://wiki.sourcemage.org/HOWTO-Locale_problems
@@ -69,6 +67,8 @@ echo 'Changes:
 	Fixed bug with audio timing when using scroll & kenburns.
 	removed -size option from crop function because large images were improperly cropped.
 	added -M option to mplex calls (for some reason it was removed)
+	Fix audio when passing an .avi file.
+	Fixed chapter keyword timing.
 0.8.0	
     New features & Changes:	
 	pre10:
@@ -6200,8 +6200,24 @@ for file in "${image[@]}"; do
 		## create a chapter marker at this time, but don't do anything else...
 		manual_chapter_markers=1  # allow manual chapter markers
 		write_chap=1
+		previous_transition_increment="`previousTransitionIncrement`"
+		previous_slide="${image[$i-$previous_transition_increment]}"
+		if [ "$previous_transition_increment" -ne 0 ] ; then
+			previous_duration="${duration[$i-$previous_transition_increment]}"
+			if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
+				# subtract time from audio time:
+				chapter_time=$(( $slide_end_time - $previous_duration / 2 )) 
+			elif [ "$previous_slide" == 'fadein' ] ; then
+				chapter_time=$(( $slide_end_time - $previous_duration )) 
+			else  # no previous fade
+				chapter_time=$slide_end_time	
+			fi
+		else  # no previous transition.  no need to adjust timing: 
+			chapter_time=$slide_end_time	
+		fi
 		subtitle[$i]=''  # set subtitle to nothing so we don't get a subtitle
-		myecho "[dvd-slideshow] Setting chapter marker at $slide_end_hms"
+		myecho "[dvd-slideshow] Setting chapter marker at $( hms $chapter_time)"
+#		myecho "[dvd-slideshow] Setting chapter marker at $slide_end_hms"
 		set_end_frame_time 0
 		myecho "[dvd-slideshow]############################################################"
 	elif [ "`echo $file | tr -d \[:blank:\]`" == 'highlight' ] ; then   # HIGHLIGHT
@@ -6335,8 +6351,8 @@ for file in "${image[@]}"; do
 	thumb_height=$(( ( $dvd_height - 100 ) / 4 ))
 	## setup the chapter markers at the start of each picture:
 	if [ "$write_chap" -eq 1 ] ; then   # and chapter-select =1 
-#		chapter_marker="$(( ( ($slide_start_time / 100) + 1 ) * 100 ))" ## round up chapter marker
-		chapter_marker="$slide_start_time"  # 
+#		chapter_marker="$slide_start_time"  # 
+		chapter_marker="$chapter_time" 
 		chaps[$this_chap]=`hms "$chapter_marker"`
 		## now make a tiny thumbnail for the menu?:
 		thumbs[$this_chap]="$tmpdir/slide_"$i"_thumb.ppm"

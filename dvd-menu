@@ -62,71 +62,6 @@ echo 'Changes:
 	Added -fadein and -fadeout for menus.
 	Remove seq calls for compatibility with FreeBSD (Thanks David Mulcahy)
 	Remove wc --chars calls for compatibility with FreeBSD
-0.7.5	
-	Allow embedded .png to keep transparency	
-	Fix error message quotes when looking for XML file existing.
-0.7.4	no changes
-0.7.3	
-	** Changed output directory option to be the same as dvd-slideshow
-	Spaces in filenames should work now.
-	Checks that xml files exist before proceeding.
-	Added option to pass an embedded image (-e image.jpg). Thanks Marcus Brown
-	Added "upAction" option for use with dvd-bakery. Thanks Marcus Brown!
-	Fixed bug in pal mode variable passing.	 (thanks Marcus Brown)
-	Changed head 4 to head -n 4
-	Added variable "mpeg2enc_params" for easier changing of mpeg2enc parameters.	
-	Get rid of rpm checks.
-	Added low quality mode -L for use with dvd-slideshow.
-	Added -nocleanup option to save files in temp directory for debugging.
-	Added "-compose src-over" to all composite lines for compatibility with Debian Etch.
-	Added -H high-quality option as a placeholder for future use
-	Added -smp option as a dummy option for compatibility with dvd-slideshow
-0.7.2	
-	Better checking for correct versions of required programs.
-	Logfile output to dvd-menu.log
-	Reads default variables from ~/.dvd-slideshowrc	
-	Obeys "autocrop" option	
-	Pixel aspect ratio should be correct now.
-0.7.1	Automatically creates output directory if it does not exist.
-	Added option -nomenu if you do not want to create a menu
-	AC3 is default audio type now.  Pass -mp2 if you want to 
-	force mp2 audio.
-0.7.0	Added option -iso option to create the iso image
-	(requires mkisofs)
-0.6.2	Removed -c and -R 2 options from mpeg2enc because some versions
-	do not have those switches.
-	Works with toolame 0.2m now.
-	Got rid of calls to NetPBM functions, so it is no longer required...
-0.6.0	Added AC3 audio option (requires ffmpeg > 0.4.8).
-	Mplexed files are now correctly labeled with the .vob extension.
-        Better font searching (thanks Jim Crumley)
-0.5.4	No changes.
-0.5.2	Fixed audio bug when no audio was used. (re-mplex error)
-	Added -c continuous play option (<post> jumps to next title).
-	Added -D do not run dvdauthor option.
-	Added -W do not create a 50% white background under menu text.
-	dvdauthor xml structure changed slightly
-	DVD Title (-n) is now optional.
-	Added man page.
-	Checks for nice fonts.
-0.5.0	Changed name to "dvd-menu"
-	Only requires lame or oggdec if you are using that file format.
-	Fixed some audio bugs (sampling) so it should work better.
-	Will automatically delete AUDIO_TS and VIDEO_TS directories
-	in your output directory if they already exist.
-0.4.6	Fixed bug when checking for toolame (thanks Scott Merrill)
-	Removed -t option from toolame for better compatibility with old versions.	
-0.4.2	Changed location of main title slightly lower.
-	Fixed one hardcoded 720x480 image so PAL option should work better.
-	Added -depth 8 to ImageMagick calls to fix ppmtoy4m errors. 
-	Upgraded main menu background when no background is passed.
-0.4	Fixed bug when no background file was passed. Works now.
-	Ogg audio format supported now.
-	Uses toolame for mp2 audio encoding when available.
-	-p (PAL format option) added.  Not tested, but should work.
-	Menu button white background is now 50% transparent.
-0.3	Added section to check for required programs
-	If no background passed, a black one will be used.
 0.2	Initial release'
 }
 
@@ -249,7 +184,7 @@ Variables:
 	menu_panel_location_y=175  # distance of the top of the first menu item to the top of the screen
 	menu_button_font_size=21
 	menu_title_justify=left
-
+	mpeg_encodr='ffmpeg'   # or mpeg2enc
  '
 }
 
@@ -522,6 +457,7 @@ set_variables ()
                 debug) debug="$config2" ; [ "$noecho" -eq 0 ] && echo "debug=$debug" ;;
                 pal) pal="$config2" ; [ "$noecho" -eq 0 ] && echo "pal=$pal" ;;
                 ac3) ac3="$config2" ; [ "$noecho" -eq 0 ] && echo "ac3=$ac3" ;;
+                mpeg_encoder) mpeg_encoder="$config2" ; [ "$noecho" -eq 0 ] && echo "mpeg_encoder=$mpeg_encoder" ;;
 # menus always autocrop?                 autocrop) autocrop="$config2" ; [ "$noecho" -eq 0 ] && echo "autocrop=$autocrop" ;;
                 font) font="$config2" ; [ "$noecho" -eq 0 ] && echo "font=$font" ;;  #global font
                 menu_font) font="$config2" ; [ "$noecho" -eq 0 ] && echo "font=$font" ;;  #global font
@@ -712,7 +648,11 @@ function fade ()
 		percent=$(( 100 * $fr / $frames ))
 		(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$image1" "$image2" "$tmpdir/fade_$dj.ppm" )
 	done
-        find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v 0 -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | mpeg2enc $mpeg2enc_params -o "$tmpdir/fade.mpg" >> "$logfile" 2>&1
+	if [ "$mpeg_encoder" == 'mpeg2enc' ] ; then
+        	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v 0 -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | mpeg2enc $mpeg2enc_params -o "$tmpdir/fade.mpg" >> "$logfile" 2>&1
+	else
+        	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v 0 -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | ffmpeg -f yuv4mpegpipe -i - -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/fade.mpg" >> "$logfile" 2>&1
+	fi
 	find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm
 }
 
@@ -736,30 +676,16 @@ hms ()
 {
         ## pass a number in thousandths of seconds and get back a
         ## time code of the form HR:MM:SS.XXX
-        if [ -z "$1" ] ; then
-                myecho "[dvd-slideshow] Error in hms function"
-                function_error=1
-        else
-                hours=$(( $1 / 3600000 )) ; [ $hours -eq 0 ] && hours="0"
-                it=$(( $1 - $hours * 3600000 ))
-                minutes=$(( $it / 60000 )) ; [ $minutes -eq 0 ] && minutes="0"
-                it=$(( $1 - $minutes * 60000 ))
-                seconds=$(( $it / 1000 )) ; [ $seconds -eq 0 ] && seconds="0"
-                thousandths=$(( $it - $seconds * 1000 )) ;
-#                characters=`echo "$thousandths" | wc --chars`
-		characters=${#thousandths}
-                if [ $characters -eq 1 ] ; then
-                        thousandths_out="000"  # empty string!
-                elif [ $characters -eq 2 ] ; then
-                        thousandths_out="00$thousandths"  # 1 decimal place
-                elif [ $characters -eq 3 ] ; then
-                        thousandths_out="0$thousandths"  # 2 decimal places
-                elif [ $characters -eq 4 ] ; then
-                        thousandths_out="$thousandths"  # 3 decimal places
-                else
-                        myecho "[dvd-slideshow] Error in hms function"
-                        function_error=1
-                fi
+	if [ -z "$1" ] ; then
+		myecho "[dvd-slideshow] Error in hms function"	
+		function_error=1
+	else
+		hours=$(( $1 / 3600000 )) ; [ $hours -eq 0 ] && hours="0" 
+		it=$(( $1 - $hours * 3600000 ))
+		minutes=$(( $it / 60000 )) ; [ $minutes -eq 0 ] && minutes="0" 
+		it=$(( $1 - $minutes * 60000 ))
+		seconds=$(( $it / 1000 )) ; [ $seconds -eq 0 ] && seconds="0" 
+		thousandths_out=$( printf %3.3d $(( $it - $seconds * 1000 )) );
                 it="$hours:$minutes:$seconds.$thousandths_out"
                 echo "${it}"
         fi
@@ -808,6 +734,7 @@ pal=0
 continuous=0 ; continuous_method=0
 no_dvdauthor=0
 ac3=1
+mpeg_encoder='ffmpeg'  # or 'mpeg2enc'
 iso=0
 no_menu=0
 autocrop=1
@@ -1201,21 +1128,34 @@ fi
 checkforprog sox
 checkforprog convert
 checkforprog dvdauthor
+# ffmpeg
+it=`which ffmpeg 2> /dev/null`
+if [ -z "$it" ] ; then
+	# no ffmpeg!  use mp2 audio instead:
+	myecho "[dvd-slideshow] Warning:  no ffmpeg found for AC3 audio encoding."
+	myecho "[dvd-slideshow]           Using MP2 audio instead."
+	myecho "[dvd-slideshow]           MP2 audio is less compatible with DVD player hardware."
+	myecho "[dvd-slideshow]		  http://ffmpeg.sourceforge.net"
+	ac3=0
+	mpeg_encoder='mpeg2enc'
+else
+	# found ffmpeg
+	logecho "`ffmpeg -version 2>&1`"
+	## check to see if we have mpeg2video output option:
+	it=`ffmpeg -f mpeg2video 2>&1 | grep 'Unknown input or output format: mpeg2video'`
+	if [ -z "$it" ] ; then
+		# mpeg2video should be ok
+		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='ffmpeg' 
+	else
+		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='mpeg2enc' 
+		myecho "[dvd-slideshow] Warning:  ffmpeg is not compiled with the mpeg2video option"
+		myecho "[dvd-slideshow] 	  required for making dvds!  Using mpeg2enc instead."
+	fi
+fi
+
 if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 	checkforprog vcdimager
 	ac3=0; mp2=1
-fi
-
-# ffmpeg
-if [ "$ac3" -eq 1 ] ; then
-	it=`which ffmpeg`
-	       if [ -z "$it" ] ; then
-	               # no ffmpeg!  use mp2 audio instead:
-	               myecho "[dvd-menu] Warning:  no ffmpeg found for AC3 audio encoding."
-	               myecho "[dvd-menu]           Using MP2 audio instead."
-	               myecho "[dvd-menu]           MP2 audio is less compatible with DVD player hardware."
-	               ac3=0
-	fi
 fi
 
 # mkisofs
@@ -1583,7 +1523,11 @@ if [ "$no_menu" -eq 0 ] ; then
 	fi	# end of different menu types
 
 	## now convert the menu background to a mpg
-	ppmtoy4m -v 0 -n "$frames" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$tmpdir/menu.ppm" | mpeg2enc $mpeg2enc_params -o "$tmpdir/menu.mpg" 
+	if [ "$mpeg_encoder" == 'mpeg2enc' ] ; then
+		ppmtoy4m -v 0 -n "$frames" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$tmpdir/menu.ppm" | mpeg2enc $mpeg2enc_params -o "$tmpdir/menu.mpg" 
+	else
+		ppmtoy4m -v 0 -n "$frames" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$tmpdir/menu.ppm" | ffmpeg -f yuv4mpegpipe -i - -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/menu.mpg" >> "$logfile" 2>&1
+	fi
 	## or, for a background video, cat all the frame through a composite call to add the button text and mask
 	## all at once.  (and, use transparent background for button text)
 
@@ -1665,7 +1609,6 @@ echo "song=$audiofile"
 	
 
 	if [ "$ac3" -eq 1 ] ; then
-	        checkforprog ffmpeg
 	        echo "[dvd-menu] Creating ac3 audio..."
 	        check_rm "$tmpdir/audio.ac3"
 	        ffmpeg -i "$tmpdir/audio.wav" -vn -y -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio.ac3" >> "$logfile" 2>&1

@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.1-svn'
+version='0.8.1'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -69,6 +69,7 @@ echo 'Changes:
 	added -M option to mplex calls (for some reason it was removed)
 	Fix audio when passing an .avi file.
 	Fixed chapter keyword timing.
+	Increased mplex bitrate to 9500 from 9000 to fix some possible encoding bugs.
 0.8.0	
     New features & Changes:	
 	pre10:
@@ -828,7 +829,7 @@ hms ()  # HMS
 	## pass a number in thousandths of seconds and get back a 
 	## time code of the form HR:MM:SS.XXX
 	if [ -z "$1" ] ; then
-		myecho "[dvd-slideshow] Error in hms function"	
+		logecho "[dvd-slideshow] Error in hms function: no input"	
 		function_error=1
 	else
 		hours=$(( $1 / 3600000 )) ; [ $hours -eq 0 ] && hours="0" 
@@ -837,20 +838,6 @@ hms ()  # HMS
 		it=$(( $1 - $minutes * 60000 ))
 		seconds=$(( $it / 1000 )) ; [ $seconds -eq 0 ] && seconds="0" 
 		thousandths_out=$( printf %3.3d $(( $it - $seconds * 1000 )) );
-#		characters=`echo "$thousandths" | wc --chars`
-#		characters=${#thousandths}
-#		if [ $characters -eq 1 ] ; then
-#			thousandths_out="000"  # empty string!
-#		elif [ $characters -eq 2 ] ; then
-#			thousandths_out="00$thousandths"  # 1 decimal place
-#		elif [ $characters -eq 3 ] ; then
-#			thousandths_out="0$thousandths"  # 2 decimal places
-#		elif [ $characters -eq 4 ] ; then
-#			thousandths_out="$thousandths"  # 3 decimal places
-#		else
-#			myecho "[dvd-slideshow] Error in hms function"	
-#			function_error=1
-#		fi
 		it="$hours:$minutes:$seconds.$thousandths_out"
 		echo "${it}"
 	fi
@@ -3466,7 +3453,7 @@ fi
 
 # ffmpeg
 it=`which ffmpeg 2> /dev/null`
-      if [ -z "$it" ] ; then
+if [ -z "$it" ] ; then
               # no ffmpeg!  use mp2 audio instead:
               myecho "[dvd-slideshow] Warning:  no ffmpeg found for AC3 audio encoding."
               myecho "[dvd-slideshow]           Using MP2 audio instead."
@@ -3486,6 +3473,7 @@ else
 		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='mpeg2enc' 
 		myecho "[dvd-slideshow] Warning:  ffmpeg is not compiled with the mpeg2video option"
 		myecho "[dvd-slideshow] 	  required for making dvds!  Using mpeg2enc instead."
+		mpeg_encoder='mpeg2enc'
 	fi
 fi
 ################################################## done finding programs
@@ -3780,6 +3768,8 @@ do
 			echo ""
 			myecho "[dvd-slideshow] ERROR: no title text found in line:"
 			myecho "[dvd-slideshow] ${thisline}"
+			myecho "[dvd-slideshow] The correct syntax is:"
+			myecho "[dvd-slideshow] image.jpg:duration:title_text"
 			cleanup; exit 1
 		fi
 		if [ "${duration[$i]}" == '0' ] ; then
@@ -3787,6 +3777,8 @@ do
 			myecho "[dvd-slideshow] ERROR: Bad duration time of zero:"
 			myecho "[dvd-slideshow]	$thisline"
 			myecho "[dvd-slideshow] You need to specify a non-zero duration"
+			myecho "[dvd-slideshow] The correct syntax is:"
+			myecho "[dvd-slideshow] image.jpg:duration:title_text"
 			cleanup; exit 1
 		fi
 		image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
@@ -3798,6 +3790,8 @@ do
 			echo ""
 			myecho "[dvd-slideshow] ERROR: no titlebar text found in line:"
 			myecho "[dvd-slideshow] ${thisline}"
+			myecho "[dvd-slideshow] The correct syntax is:"
+			myecho "[dvd-slideshow] image.jpg:duration:Upper_title:Lower_title"
 			cleanup; exit 1
 		fi
                 if [ "${duration[$i]}" == '0' ] ; then
@@ -3805,6 +3799,8 @@ do
                         myecho "[dvd-slideshow] ERROR: Bad duration time of zero:"
                         myecho "[dvd-slideshow] $thisline"
                         myecho "[dvd-slideshow] You need to specify a non-zero duration"
+			myecho "[dvd-slideshow] The correct syntax is:"
+			myecho "[dvd-slideshow] image.jpg:duration:Upper_title:Lower_title"
                         cleanup; exit 1
                 fi
                 image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
@@ -3878,11 +3874,13 @@ do
 		if [ "${effect1[$i]}" != 'fadein' ] && [ -n "${effect1[$i]}" ]; then
 			myecho ""
 			myecho "[dvd-slideshow] ERROR: First audio effect must be fadein"
+                        myecho "[dvd-slideshow] $thisline"
 			cleanup; exit 1
 		fi
 		if [ "${effect2[$i]}" != 'fadeout' ] && [ -n "${effect2[$i]}" ]; then
 			myecho ""
 			myecho "[dvd-slideshow] ERROR: Second audio effect must be fadeout"
+                        myecho "[dvd-slideshow] $thisline"
 			cleanup; exit 1
 		fi
 		## get audio track number:
@@ -4101,6 +4099,7 @@ else  # assume mpeg2 video output (dvd, vcd, svcd or other)
 			ffmpeg_target='ntsc-dvd'
 		fi
 	fi
+	mplex_bitrate=9500
 	if [ "$vcd" -eq 1 ] ; then
 	        ac3=0  # force mp2
        		audio_bitrate=224
@@ -4605,7 +4604,6 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .mp4 file"
-		echo ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" 
 		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$outdir/$logfile" 2>&1 &
 	elif [ "$output_format" == 'mp4_ipod' ] ; then   # NOT TESTED YET
 		# see http://www.ubuntuforums.org/showthread.php?t=114946
@@ -4617,7 +4615,6 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .mpg file"
-		echo ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/video.mpg" 
 		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
 	else  # default mpeg2 video for dvd/vcd
 		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -bf 2 -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
@@ -4994,7 +4991,9 @@ for file in "${image[@]}"; do
 	elif [ "${image_file[$i]}" -eq 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG IMAGE
 		## use real jpeg. 
 		## now the slide may already exist if we had a fadein or crossfade before
+logecho "image"
 		myecho "[dvd-slideshow] $image_number/$imagefiles $(truncate_filename "$file") `hms ${duration[$i]}`"
+logecho "image"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle= ${subtitle[$i]}"
 		if [ "$first_image" == 1 ] && [ "${image[$i]}" != 'background' ] ; then
 			first_image=0
@@ -5245,7 +5244,9 @@ for file in "${image[@]}"; do
 			myecho "[dvd-slideshow] ERROR: Cannot crossfade to another fade!"
 			cleanup; exit 1
 		fi
+logecho "crossfade"
 		myecho "[dvd-slideshow] Applying Crossfade between images `hms ${duration[$i]}`"
+logecho "crossfade"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Crossfade Subtitle= ${subtitle[$i]}"
 #		check_rm "$tmpdir/slide_$(($i+$increment)).ppm"  # make sure it doesn't already exist!
 #		check_rm "$tmpdir/slide_$(($i+1)).cache"  # make sure it doesn't already exist!
@@ -6054,7 +6055,8 @@ for file in "${image[@]}"; do
 			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$(( $previous_frames + $frames_to_render ))" "$normal_bg"
 
 		elif [ "$previous_transition_increment" -ne 0 ] ; then
-			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$frames" 
+			#kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$frames" 
+			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" "$(( $previous_frames + 1 ))" "$(( $previous_frames + $frames_to_render ))" 
 		elif [ "$next_transition_increment" -ne 0 ] ; then
 			kenburns "$window_start" "$window_end" "$file" "${frames_extended[$i]}" 1 "$(( $frames_to_render ))"
 		else
@@ -6206,9 +6208,12 @@ for file in "${image[@]}"; do
 			previous_duration="${duration[$i-$previous_transition_increment]}"
 			if [ "$previous_slide" == 'crossfade' ] || [ "$previous_slide" == 'wipe' ] ; then
 				# subtract time from audio time:
-				chapter_time=$(( $slide_end_time - $previous_duration / 2 )) 
+				#chapter_time=$(( $slide_end_time - $previous_duration / 2 )) 
+				chapter_time=$slide_end_time	
 			elif [ "$previous_slide" == 'fadein' ] ; then
-				chapter_time=$(( $slide_end_time - $previous_duration )) 
+				# set chapter marker at beginning of fadein:
+				#chapter_time=$(( $slide_end_time - $previous_duration )) 
+				chapter_time=$slide_end_time	
 			else  # no previous fade
 				chapter_time=$slide_end_time	
 			fi
@@ -6351,8 +6356,12 @@ for file in "${image[@]}"; do
 	thumb_height=$(( ( $dvd_height - 100 ) / 4 ))
 	## setup the chapter markers at the start of each picture:
 	if [ "$write_chap" -eq 1 ] ; then   # and chapter-select =1 
-#		chapter_marker="$slide_start_time"  # 
-		chapter_marker="$chapter_time" 
+		if [ -z "$chapter_time" ] ; then
+			chapter_marker="$slide_start_time"  # old method works with no manual markers
+		else
+			chapter_marker="$chapter_time" 
+			chapter_time='' # reset it to nothing
+		fi
 		chaps[$this_chap]=`hms "$chapter_marker"`
 		## now make a tiny thumbnail for the menu?:
 		thumbs[$this_chap]="$tmpdir/slide_"$i"_thumb.ppm"
@@ -7164,7 +7173,7 @@ else  # default mpeg2 video for dvd/vcd
 			myecho "[dvd-slideshow] Must be some error with your input audio"
 			myecho "[dvd-slideshow] or the mp2 audio encoder"
 		fi
-		mplex -V -v $verbosity $video_buffer $ignore_seq_end -f $mplex_type -r 9000 -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2  2>> "$outdir/$logfile"
+		mplex -V -v $verbosity $video_buffer $ignore_seq_end -f $mplex_type -r $mplex_bitrate -o "$outdir"/"$slideshow_name".vob "$tmpdir/video.mpg" "$tmpdir"/audio1.mp2  2>> "$outdir/$logfile"
 	fi
 	if [ $? -ne 0 ] ; then
 		## mplex errored
@@ -7207,6 +7216,7 @@ fi
 
 ## build the chapters string for passing to dvdauthor:
 myecho "[dvd-slideshow] total chapters=${#chaps[@]}"
+
 total_chapters="${#chaps[@]}"
 new_total_chapters="$total_chapters"
 factor=1  ;  mod=1

@@ -26,6 +26,7 @@ echo 'Changes:
 	Write out pal option to output file if selected in dir2slideshow
 	Recursive finds follow symbolic links and ignores hidden directories.
 	Bug fix for spaces in filenames (thanks Ken Zutter)
+	Fixed bug where .mp3 files were being treated as images (crossfade error)
 0.8.0 	
 	Add audiobook option- looks for audio files and images & adds titles
 	Allow wipe effect as default between images -w duration
@@ -713,6 +714,8 @@ if [ "$title" -eq 1 ] ; then
 fi
 
 ## write audio list to file:
+# audio_list is passed via the command-line or input file
+# audiolist.txt is created from the directory searching
 if [ -n "$audio_list" ] ; then
 	echo "$audio_list" | sed -e 's/,/\n/g' |
 	while read file
@@ -746,8 +749,8 @@ for (( i=1 ; i<=total_lines ; i++ )) ; do
 			book_title="$name_converted"
 			fileecho "titlebar:audio:$book_title:Chapter $chapter"
 			chapter=$(( $chapter + 1 ))
-		else
-			fileecho "$file:1"
+#		else
+#			fileecho "$file:1"
 		fi
 	elif [ "$filetype" == 'txt' ] ; then
 		echo "found text file"

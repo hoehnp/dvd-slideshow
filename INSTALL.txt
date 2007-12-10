@@ -1,7 +1,7 @@
 Install locations according to LSB:
 http://www.freestandards.org/docs/lsbbook/install-app.html
 
-For dvd-slideshow 0.8.0, we'll install into this location:
+For dvd-slideshow 0.8.1, we'll install into this location:
 /opt/dvd-slideshow/bin  (linked to from /usr/local/bin?)
 /opt/dvd-slideshow/share/man
 /opt/dvd-slideshow/share/doc

@@ -3399,6 +3399,12 @@ fi
 logecho "[dvd-slideshow] Using `which bash` version `bash --version | head -n 1`"
 bashversion=`bash --version | head -n 1 | awk '{print $4}' | awk -F. '{print $1"."$2}'`
 
+if [ $debug -ge 1 ] ; then
+	ffmpeg_out="$outdir"/"$logfile"
+else
+	ffmpeg_out='/dev/null'
+fi
+
 
 ## Check for required programs
 progver=`mplex 2>&1 | grep version | awk '{ print $4 }'`
@@ -4446,9 +4452,9 @@ for file in "${image[@]}"; do
 		if [ "$suffix" == "mp3" ] ; then
 #			myecho "[dvd-slideshow] decoding mp3 audio file... be patient..."
 			if [ "$audiosmp" -eq 1 ] ; then
-				ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1 &
+				ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$ffmpeg_out" 2>&1 &
 			else
-				ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1
+				ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$ffmpeg_out" 2>&1
 			fi
 		elif [ "$suffix" == "m4a" ] || [ "$suffix" == "aac" ] ; then
 #			myecho "[dvd-slideshow] decoding mp4 audio... be patient."
@@ -4509,7 +4515,7 @@ if [ -n "${passed_audio[0]}" ] && [ $audio_inside_txtfile -eq 0 ] ; then  ## onl
 #			checkfor_lame
 			myecho "[dvd-slideshow] Decoding mp3 audio: $file"
 			# use ffmpeg instead of lame!
-			ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1
+			ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$ffmpeg_out" 2>&1
 #			lame --decode "$file" "$tmpdir/audio$track"_"$audio_index_padded.wav" 2> /dev/null
 		elif [ "$suffix" == "ogg" ] ; then
 			checkfor_oggdec
@@ -4594,30 +4600,30 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .flv file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$outdir/$logfile" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'swf' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .swf file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.swf" >> "$outdir/$logfile" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.swf" 1> /dev/null 2>> "$ffmpeg_out" &
 	elif [ "$output_format" == 'mp4' ] ; then   
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .mp4 file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$outdir/$logfile" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'mp4_ipod' ] ; then   # NOT TESTED YET
 		# see http://www.ubuntuforums.org/showthread.php?t=114946
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting ipod .mp4 file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 -maxrate 1000 -b 700 -qmin 3 -qmax 5 -bufsize 4096 -g 300 "$tmpdir/video.mov" >> "$outdir/$logfile" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 -maxrate 1000 -b 700 -qmin 3 -qmax 5 -bufsize 4096 -g 300 "$tmpdir/video.mov" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'mpg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .mpg file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mpeg2video "$tmpdir/video.mpg" >> "$ffmpeg_out" 2>&1 &
 	else  # default mpeg2 video for dvd/vcd
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -bf 2 -f mpeg2video "$tmpdir/video.mpg" >> "$outdir/$logfile" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -bf 2 -f mpeg2video "$tmpdir/video.mpg" >> "$ffmpeg_out" 2>&1 &
 	fi
 else
 	mpeg2enc $mpeg2enc_params -o "$tmpdir/video.mpg" < "$tmpdir"/$yuvfifo >> "$outdir/$logfile" 2>&1 & 
@@ -4939,9 +4945,9 @@ for file in "${image[@]}"; do
 #		myecho "[dvd-slideshow] Encoding ${image[$i]} to video.mpg"
 		# let's re-encode it just to make sure every video works:
 		if [ "$pal" -eq 1 ] ; then
-			ffmpeg -i "${image[$i]}" -target pal-dvd "$tmpdir"/tmp.avi
+			ffmpeg -i "${image[$i]}" -target pal-dvd "$tmpdir"/tmp.avi >> "$ffmpeg_out" 2>&1
 		else
-			ffmpeg -i "${image[$i]}" -target ntsc-dvd "$tmpdir"/tmp.avi
+			ffmpeg -i "${image[$i]}" -target ntsc-dvd "$tmpdir"/tmp.avi >> "$ffmpeg_out" 2>&1
 		fi
 #		encode_video "${image[$i]}"
 		encode_video "$tmpdir"/tmp.avi
@@ -4963,7 +4969,7 @@ for file in "${image[@]}"; do
 #			echo "audio_1=${audio_1[$i_audio]}"
 			i_audio=$(( $i_audio + 1 ))  # increment for next file
 
-			ffmpeg -i "${image[$i]}" -y -vn -ar $audio_sample_rate -ac 2 "$tmpdir/audio1_$audio_index_padded".wav >> "$outdir/$logfile" 2>&1
+			ffmpeg -i "${image[$i]}" -y -vn -ar $audio_sample_rate -ac 2 "$tmpdir/audio1_$audio_index_padded".wav >> "$ffmpeg_out" 2>&1
 			if [ $? -ne 0 ] ; then
 				## ffmpeg errored
 				myecho "[dvd-slideshow] ERROR during ffmpeg execution!"
@@ -4991,9 +4997,7 @@ for file in "${image[@]}"; do
 	elif [ "${image_file[$i]}" -eq 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG IMAGE
 		## use real jpeg. 
 		## now the slide may already exist if we had a fadein or crossfade before
-logecho "image"
 		myecho "[dvd-slideshow] $image_number/$imagefiles $(truncate_filename "$file") `hms ${duration[$i]}`"
-logecho "image"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle= ${subtitle[$i]}"
 		if [ "$first_image" == 1 ] && [ "${image[$i]}" != 'background' ] ; then
 			first_image=0
@@ -5244,9 +5248,7 @@ logecho "image"
 			myecho "[dvd-slideshow] ERROR: Cannot crossfade to another fade!"
 			cleanup; exit 1
 		fi
-logecho "crossfade"
 		myecho "[dvd-slideshow] Applying Crossfade between images `hms ${duration[$i]}`"
-logecho "crossfade"
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Crossfade Subtitle= ${subtitle[$i]}"
 #		check_rm "$tmpdir/slide_$(($i+$increment)).ppm"  # make sure it doesn't already exist!
 #		check_rm "$tmpdir/slide_$(($i+1)).cache"  # make sure it doesn't already exist!
@@ -6270,9 +6272,9 @@ logecho "crossfade"
 			if [ "$suffix" == "mp3" ] ; then
 				myecho "[dvd-slideshow] decoding mp3 audio file... be patient..."
 				if [ "$audiosmp" -eq 1 ] ; then
-					ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1 &
+					ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$ffmpeg_out" 2>&1 &
 				else
-					ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$outdir/$logfile" 2>&1
+					ffmpeg -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$ffmpeg_out" 2>&1
 				fi
 			elif [ "$suffix" == "m4a" ] || [ "$suffix" == "aac" ] ; then
 				if [ "$audiosmp" -eq 1 ] ; then
@@ -6612,7 +6614,7 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 	if [ "$ac3" -eq 1 ] && [ "$output_format" != 'flv' ] ; then
 		checkforprog ffmpeg
 		myecho "[dvd-slideshow] Creating ac3 audio for $file..."
-		ffmpeg -i "$tmpdir/audio1.wav" -y -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
+		ffmpeg -i "$tmpdir/audio1.wav" -y -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$ffmpeg_out" 2>&1
 		if [ $? -ne 0 ] ; then
 			## ffmpeg errored
 			myecho "[dvd-slideshow] ERROR during ffmpeg execution!"
@@ -6843,7 +6845,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 		checkforprog ffmpeg
 		check_rm "$tmpdir/audio1.ac3"
 	#	find "$tmpdir" -name audio1_\?\?\?\?.raw -print0 | xargs -0 sox -t raw -w -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
-		cat "$tmpdir"/audio1_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null |  ffmpeg -i - -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
+		cat "$tmpdir"/audio1_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null |  ffmpeg -i - -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$ffmpeg_out" 2>&1
 #		ffmpeg -i "$tmpdir/audio1.wav" -vn -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
 		if [ $? -ne 0 ] ; then
 			## ffmpeg errored
@@ -7080,7 +7082,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 		myecho "[dvd-slideshow] Creating ac3 audio..."
 		checkforprog ffmpeg
 		check_rm "$tmpdir/audio2.ac3"
-		ffmpeg -i "$tmpdir/audio2.wav" -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio2.ac3" >> "$outdir/$logfile" 2>&1
+		ffmpeg -i "$tmpdir/audio2.wav" -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio2.ac3" >> "$ffmepg_out" 2>&1
 		if [ $? -ne 0 ] ; then
 			## ffmpeg errored
 			myecho "[dvd-slideshow] ERROR during ffmpeg execution!"
@@ -7128,23 +7130,23 @@ logecho '[dvd-slideshow] Some sequence marker warnings here are normal'
 verbosity=0
 if [ "$output_format" == 'flv' ] ; then  # only one audio track for .flv, .swf, and .mp4, etc...
 	myecho "[dvd-slideshow] Adding audio to .flv file"
-	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir/video.flv" -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir/video1.flv" >> "$outdir"/"$logfile" 2>&1 
+	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir/video.flv" -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir/video1.flv" >> "$ffmpeg_out" 2>&1 
 	mv "$tmpdir/video1.flv" "$outdir"/"$slideshow_name".flv
 	myecho "[dvd-slideshow] Generating video thumbnail..."
-	ffmpeg -y -i "$outdir"/"$slideshow_name".flv -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$outdir"/"$logfile" 2>&1
+	ffmpeg -y -i "$outdir"/"$slideshow_name".flv -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$ffmpeg_out" 2>&1
 	if [ -f "/usr/bin/flvtool2" ] ; then
 		myecho "[dvd-slideshow] Running flvtool2 -U $slideshow_name".flv
 		/usr/bin/flvtool2 -U "$outdir"/"$slideshow_name".flv
 	fi
 elif [ "$output_format" == 'swf' ] ; then
 	myecho "[dvd-slideshow] Adding audio to .swf file"
-	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.swf -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir"/video1.swf >> "$outdir"/"$logfile" 2>&1 
+	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.swf -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir"/video1.swf >> "$ffmpeg_out" 2>&1 
 	mv "$tmpdir"/video1.swf "$outdir"/"$slideshow_name".swf
 	myecho "[dvd-slideshow] Generating video thumbnail..."
-	ffmpeg -y -i "$outdir"/"$slideshow_name".swf -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$outdir"/"$logfile" 2>&1
+	ffmpeg -y -i "$outdir"/"$slideshow_name".swf -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$ffmpeg_out" 2>&1
 elif [ "$output_format" == 'mp4' ] ; then   # lightly tested
 	myecho "[dvd-slideshow] Adding audio to .mp4 file"
-	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.mp4 -vcodec copy -f mp4 -ar 22050 -ab 48 -ac 1 "$tmpdir"/video1.mp4 >> "$outdir"/"$logfile" 2>&1 
+	ffmpeg -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.mp4 -vcodec copy -f mp4 -ar 22050 -ab 48 -ac 1 "$tmpdir"/video1.mp4 >> "$ffmpeg_out" 2>&1 
 	mv "$tmpdir"/video1.mp4 "$outdir"/"$slideshow_name".mp4
 #	ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$outdir/$logfile" 2>&1
 elif [ "$output_format" == 'mp4_ipod' ] ; then   # NOT TESTED YET

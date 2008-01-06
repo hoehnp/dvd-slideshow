@@ -6807,15 +6807,15 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 					myecho "[dvd-slideshow] Song End: $song_end_hms"
 					myecho "[dvd-slideshow] Fadeout: $fade_out_hms"
 				fi
-				echo "song_length_ms=$song_length_ms song_end_ms=$song_end_ms fade_in_time=$fade_in_time fade_out_time=$fade_out_time"
+#				echo "song_length_ms=$song_length_ms song_end_ms=$song_end_ms fade_in_time=$fade_in_time fade_out_time=$fade_out_time"
 				if [ "$song_length_ms" -ne "$song_end_ms"  ] && [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
-					echo "cropping"
+#					echo "cropping"
 					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" trim 0 "$song_end_hms"
 				elif [ "$fade_out_time" -ne 0 ] || [ "$fade_in_time" -ne 0 ] ; then
-					echo "fading"
+#					echo "fading"
 					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
 				else
-					echo "converting"
+#					echo "converting"
 					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" 
 				fi
 			fi
@@ -6845,7 +6845,15 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 		checkforprog ffmpeg
 		check_rm "$tmpdir/audio1.ac3"
 	#	find "$tmpdir" -name audio1_\?\?\?\?.raw -print0 | xargs -0 sox -t raw -w -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
-		cat "$tmpdir"/audio1_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null |  ffmpeg -i - -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$ffmpeg_out" 2>&1
+#		cat "$tmpdir"/audio1_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null |  ffmpeg -i - -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$ffmpeg_out" 2>&1
+		cat "$tmpdir"/audio1_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null >"$tmpdir/audio1.wav"
+		if [ $? -ne 0 ] ; then
+			## sox errored
+			myecho "[dvd-slideshow] ERROR during sox execution!"
+			myecho "[dvd-slideshow] see $outdir/$logfile for details"
+			cleanup; exit 1
+		fi
+		ffmpeg -i "$tmpdir/audio1.wav" -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$ffmpeg_out" 2>&1
 #		ffmpeg -i "$tmpdir/audio1.wav" -vn -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$outdir/$logfile" 2>&1
 		if [ $? -ne 0 ] ; then
 			## ffmpeg errored
@@ -6854,7 +6862,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			cleanup; exit 1
 		fi
 	else
-		myecho "[dvd-slideshow] Concatenating all audio files..."
+		myecho "[dvd-slideshow] Concatenating all track 1 audio files..."
 		## cat all the audio files together: 
 	#	ls "$tmpdir"/audio1_????.raw | xargs -0 cat | sox -t raw -w -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
 	#	find "$tmpdir" -name audio1_\?\?\?\?.raw -print0 | xargs -0 sox -t raw -w -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
@@ -7041,13 +7049,13 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 				myecho "[dvd-slideshow] Fadeout: $fade_out_hms"
 			fi
 			if [ "$song_length_ms" -ne "$song_end_ms"  ] && [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
-				echo "cropping"
+#				echo "cropping"
 				sox -v $volume "$tmpdir/audio2_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" trim 0 "$song_end_hms"
 			elif [ "$fade_out_time" -ne 0 ] || [ "$fade_in_time" -ne 0 ] ; then
-				echo "fading"
+#				echo "fading"
 				sox -v $volume "$tmpdir/audio2_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
 			else
-				echo "converting"
+#				echo "converting"
 				sox -v $volume "$tmpdir/audio2_$i_padded.wav" -w -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" 
 			fi
 		fi  # end of if silence or not
@@ -7069,7 +7077,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 		myecho "[dvd-slideshow] ###############"
 	done
 		
-	myecho "[dvd-slideshow] Concatenating all audio files..."
+	myecho "[dvd-slideshow] Concatenating all track 2 audio files..."
 	## cat all the audio files together: 
 #	find "$tmpdir" -name audio2_????.raw -print0 | xargs -0 sox -t raw -w -s -c 2 -r $audio_sample_rate - "$tmpdir/audio2.wav"
 	cat "$tmpdir"/audio2_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - "$tmpdir/audio2.wav"
@@ -7082,7 +7090,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 		myecho "[dvd-slideshow] Creating ac3 audio..."
 		checkforprog ffmpeg
 		check_rm "$tmpdir/audio2.ac3"
-		ffmpeg -i "$tmpdir/audio2.wav" -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio2.ac3" >> "$ffmepg_out" 2>&1
+		ffmpeg -i "$tmpdir"/audio2.wav -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio2.ac3" >> "$ffmpeg_out" 2>&1
 		if [ $? -ne 0 ] ; then
 			## ffmpeg errored
 			myecho "[dvd-slideshow] ERROR during ffmpeg execution!"

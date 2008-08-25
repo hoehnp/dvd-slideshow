@@ -3,95 +3,95 @@
 ## cleanup files in . directory:
 # remove extra files in examples dirs:
 cd very_simple
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
 cd ..
 ######################################
 cd simple
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
 cd ..
 ######################################
 cd audio
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
 cd ..
 ######################################
 cd complex
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
 cd ..
 ######################################
 cd 0.7.5
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
 cd ..
 ######################################
 cd 0.8.0
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
 cd ..
 ######################################
 cd complete
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r "Complete_example.txt"
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
-rm -r my_slideshow_pics*
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r "Complete_example.txt"
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
+rm -f -r my_slideshow_pics*
 cd ..
 ######################################
 cd simple
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
-rm *.iso
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
+rm -f *.iso
 cd ..
 ######################################
 cd cool
-rm *.xml *.wav *.flv
-rm *.mpg ; rm *.vob
-rm *.log
-rm *.cue ; rm *.bin
-rm -r dvd_fs
-rm -r dvd-slideshow_temp*
-rm -r dvd-menu_temp*
-rm *.iso
+rm -f *.xml *.wav *.flv
+rm -f *.mpg ; rm -f *.vob
+rm -f *.log
+rm -f *.cue ; rm -f *.bin
+rm -f -r dvd_fs
+rm -f -r dvd-slideshow_temp*
+rm -f -r dvd-menu_temp*
+rm -f *.iso
 cd ..

@@ -18,7 +18,7 @@ First, you'll need all of the required packages in order to create
 and burn a dvd:
 
 ImageMagick > 5.5.4
-Sox
+Sox > 13
 dvdauthor > 0.6.11
 lame [required for mp3 decoding]
 oggdec [required for ogg decoding]

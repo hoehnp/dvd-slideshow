@@ -1,6 +1,6 @@
 #!/bin/bash
 #    dvd-menu
-#    Copyright 2003-2006 Scott Dylewski  <scott at dylewski.com>
+#    Copyright 2003-2008 Scott Dylewski  <scott at dylewski.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -38,6 +38,8 @@ changes ()
 {
 echo 'Changes:
 0.8.1
+	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
+	Sox v. > 13 changes -w to -2 (thanks Ludovic)
 	Font path follows links.  Thanks Jim Potter!
 	AC3 audio created with ffmpeg needs k added to bitrate
 	Changed -depth 16 to -depth 8 in background gradient creation.
@@ -224,55 +226,55 @@ myechon ()
 }
 
 
-check_rm () # check_rm checks to see if the file exists before it's deleted:
-{
-	if [ -f "${1}" ] ; then
-		rm "${1}"
-	fi
-}
+#check_rm () # check_rm checks to see if the file exists before it's deleted:
+#{
+#	if [ -f "${1}" ] ; then
+#		rm "${1}"
+#	fi
+#}
 
 cleanup ()
 {
 if [ "$nocleanup" -eq 0 ] ; then
 	## clean up temporary files
 	myecho "[dvd-menu] cleanup..."
-	check_rm "$tmpdir/slideshow_background.ppm"
-#	check_rm "$tmpdir/silence.mp2"
-	check_rm "$tmpdir/title_background_mask.png"
-	check_rm "$tmpdir/button_background_mask.png"
-	check_rm "$tmpdir/button_text.png"
-	check_rm "$tmpdir/button_mask.png"
-	check_rm "$tmpdir/button_mask_trans.png"
-	check_rm "$tmpdir/menu.ppm"
-	check_rm "$tmpdir/fadein.mpg"
-	check_rm "$tmpdir/bg_fade.ppm"
-	check_rm "$tmpdir/fadeout.mpg"
-	check_rm "$tmpdir/menu.mpg"
-	check_rm "$tmpdir/menu.spumux"
-	check_rm "$tmpdir/menu_mask.png"
-	check_rm "$tmpdir/menu_t.vob"
-	check_rm "$tmpdir/menu_audio.wav"
-	check_rm "$tmpdir/fade_audio.wav"
-	check_rm "$tmpdir/fade_audio.ac3"
-	check_rm "$tmpdir/fade_audio.mp2"
-	check_rm "$tmpdir/audio.mp2"
-	check_rm "$tmpdir/audio.wav"
-	check_rm "$tmpdir/audio.ac3"
-	check_rm "$tmpdir/embed.jpg"
-	check_rm "$tmpdir/dvd_title.png"
-	check_rm "$tmpdir/titles_vmgm.xml"
-	check_rm "$tmpdir/embed.png"
-	check_rm "$tmpdir/black.ppm"
+	rm -f "$tmpdir/slideshow_background.ppm"
+#	rm -f "$tmpdir/silence.mp2"
+	rm -f "$tmpdir/title_background_mask.png"
+	rm -f "$tmpdir/button_background_mask.png"
+	rm -f "$tmpdir/button_text.png"
+	rm -f "$tmpdir/button_mask.png"
+	rm -f "$tmpdir/button_mask_trans.png"
+	rm -f "$tmpdir/menu.ppm"
+	rm -f "$tmpdir/fadein.mpg"
+	rm -f "$tmpdir/bg_fade.ppm"
+	rm -f "$tmpdir/fadeout.mpg"
+	rm -f "$tmpdir/menu.mpg"
+	rm -f "$tmpdir/menu.spumux"
+	rm -f "$tmpdir/menu_mask.png"
+	rm -f "$tmpdir/menu_t.vob"
+	rm -f "$tmpdir/menu_audio.wav"
+	rm -f "$tmpdir/fade_audio.wav"
+	rm -f "$tmpdir/fade_audio.ac3"
+	rm -f "$tmpdir/fade_audio.mp2"
+	rm -f "$tmpdir/audio.mp2"
+	rm -f "$tmpdir/audio.wav"
+	rm -f "$tmpdir/audio.ac3"
+	rm -f "$tmpdir/embed.jpg"
+	rm -f "$tmpdir/dvd_title.png"
+	rm -f "$tmpdir/titles_vmgm.xml"
+	rm -f "$tmpdir/embed.png"
+	rm -f "$tmpdir/black.ppm"
 	[ -f "$tmpdir"/fade_0001.ppm ] && rm "$tmpdir"/fade_*.ppm
         k=0
         dk=0
         for file in "${title[@]}"; do
                 [ $k -lt 10 ] && dk="0$k" || dk=$k
 #              	echo "k=$k  dk=$dk"
-                check_rm "$tmpdir"/title_"$dk"_mask.png
-                check_rm "$tmpdir"/title_"$k"_mask.png
-                check_rm "$tmpdir/title_$dk.ppm"
-                check_rm "$tmpdir/title_$k.ppm"
+                rm -f "$tmpdir"/title_"$dk"_mask.png
+                rm -f "$tmpdir"/title_"$k"_mask.png
+                rm -f "$tmpdir/title_$dk.ppm"
+                rm -f "$tmpdir/title_$k.ppm"
                 let k=$k+1
         done
 	rmdir "$tmpdir"
@@ -416,31 +418,31 @@ background ()
                        if [ "$do_autocrop_w" -eq 1 ]; then   
                                # autocrop background image width (width too large)
                                convert "${bg}" -resize "$sq_to_dvd_pixels" -resize x"$dvd_height" \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColor -depth 8 "$outfile_bg"
+                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColorMatte -depth 8 "$outfile_bg"
                        elif [ "$do_autocrop_h" -eq 1 ]; then
                                # autocrop background image height (height too large)
                                convert "${bg}" -resize "$sq_to_dvd_pixels" -resize "$dvd_width"x \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!'  -type TrueColor -depth 8 "$outfile_bg"
+                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!'  -type TrueColorMatte -depth 8 "$outfile_bg"
                        else
 echo "no autocrop background"
                                #don't autorop
                                convert "${bg}" -resize "$sq_to_dvd_pixels" -resize x"$dvd_height" -bordercolor black -border "$dvd_width"x240 \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColor -depth 8 "$outfile_bg"
+                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColorMatte -depth 8 "$outfile_bg"
                        fi
 			bgfile="$bg"
 		elif [ "$bg" == 'black' ] ; then  # I guess we could add other types of backgrounds here!
 			## use plain black background with no picture
 			myecho "[dvd-menu] Creating black background"
-			convert -size "$dvd_width"'x'"$dvd_height" xc:black -type TrueColor -depth 8 "$outfile_bg"
+			convert -size "$dvd_width"'x'"$dvd_height" xc:black -type TrueColorMatte -depth 8 "$outfile_bg"
 			bgfile="black"
 		elif [ "$bg" == 'white' ] ; then  # I guess we could add other types of backgrounds here!
 			## use plain white background with no picture
 			myecho "[dvd-menu] Creating white background"
-			convert -size "$dvd_width"'x'"$dvd_height" xc:white -type TrueColor -depth 8 "$outfile_bg"
+			convert -size "$dvd_width"'x'"$dvd_height" xc:white -type TrueColorMatte -depth 8 "$outfile_bg"
 			bgfile="white"
 		elif [ "${bg:0:1}" == '#' ] ; then  # user passed a #RRGGBB hex color
 			myecho "[dvd-menu] Creating $bg color background"
-			convert -size "$dvd_width"'x'"$dvd_height" xc:"$bg" -type TrueColor -depth 8 "$outfile_bg"
+			convert -size "$dvd_width"'x'"$dvd_height" xc:"$bg" -type TrueColorMatte -depth 8 "$outfile_bg"
 			bgfile="hex"
 		fi
 }
@@ -646,7 +648,7 @@ function fade ()
 	for (( fr=1 ; fr<=frames ; fr++ )) ; do
 		dj=`addzeros $fr`
 		percent=$(( 100 * $fr / $frames ))
-		(composite -compose src-over -gravity center -type TrueColor -depth 8 -dissolve $percent "$image1" "$image2" "$tmpdir/fade_$dj.ppm" )
+		(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$image1" "$image2" "$tmpdir/fade_$dj.ppm" )
 	done
 	if [ "$mpeg_encoder" == 'mpeg2enc' ] ; then
         	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v 0 -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | mpeg2enc $mpeg2enc_params -o "$tmpdir/fade.mpg" >> "$logfile" 2>&1
@@ -1228,7 +1230,7 @@ if [ "$no_menu" -eq 0 ] ; then
 		fi
 	        ## need to write out a blank image of the given size:
 	        echo "[dvd-menu] Creating background image gradient"
-	        convert -depth 8 -size "$dvd_width"'x'"$dvd_height" gradient:white-$bg_color -type TrueColor "$tmpdir/menu.ppm"
+	        convert -depth 8 -size "$dvd_width"'x'"$dvd_height" gradient:white-$bg_color -type TrueColorMatte "$tmpdir/menu.ppm"
 	fi
 	## save this menu background as the "background" for fadin/fadeout:
 	cp "$tmpdir/menu.ppm" "$tmpdir/slideshow_background.ppm"
@@ -1240,9 +1242,9 @@ if [ "$no_menu" -eq 0 ] ; then
 	if [ -n "$dvd_title" ] ; then
 	        echo "[dvd-menu] Creating white title mask"
 		white_title_mask "$tmpdir/title_background_mask.png"
-		composite -compose src-over -type TrueColor -depth 8 -dissolve 60 "$tmpdir/title_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+		composite -compose src-over -type TrueColorMatte -depth 8 -dissolve 60 "$tmpdir/title_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 		title_text "$tmpdir/dvd_title.png"
-		composite -compose src-over -depth 8 -type TrueColor "$tmpdir/dvd_title.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+		composite -compose src-over -depth 8 -type TrueColorMatte "$tmpdir/dvd_title.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 	fi
 
 	## so, we have a few different layouts:
@@ -1285,7 +1287,7 @@ if [ "$no_menu" -eq 0 ] ; then
 		if [ "$no_white" -eq 0 ] ; then
 		        echo "[dvd-menu] Creating white button mask"
 			white_button_mask "$tmpdir/button_background_mask.png"
-			composite -compose src-over -type TrueColor -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+			composite -compose src-over -type TrueColorMatte -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 		fi
 		## create embedded image if defined:
 	        if [ -f "${embedfile[0]}" ]; then  # only one embedfile possible
@@ -1303,7 +1305,7 @@ if [ "$no_menu" -eq 0 ] ; then
 	                # Add embed image to menu background
 	                embed_offset_y=$[ ( ($dvd_height-$menu_panel_location_y) - $(identify -format %h "$tmpdir"/embed.png) ) / 3 ]
 	                embed_offset_x=$[ ( ($dvd_width-$menu_panel_location_x) - $(identify -format %w "$tmpdir"/embed.png) ) /2 ]
-	                composite -compose src-over -geometry +$embed_offset_x+$[$menu_panel_location_y+$embed_offset_y] -type TrueColor -depth 8 -dissolve 100 "$tmpdir"/embed.png "$tmpdir"/menu.ppm "$tmpdir"/menu.ppm
+	                composite -compose src-over -geometry +$embed_offset_x+$[$menu_panel_location_y+$embed_offset_y] -type TrueColorMatte -depth 8 -dissolve 100 "$tmpdir"/embed.png "$tmpdir"/menu.ppm "$tmpdir"/menu.ppm
 	        fi
 		## loop over each title:
 		let i=0
@@ -1350,9 +1352,9 @@ if [ "$no_menu" -eq 0 ] ; then
 		if [ "$no_white" -eq 0 ] ; then
 		        echo "[dvd-menu] Creating white button mask"
 			white_button_mask "$tmpdir/button_background_mask.png"
-			composite -compose src-over -type TrueColor -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+			composite -compose src-over -type TrueColorMatte -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 			convert "$tmpdir/button_background_mask.png" -flop "$tmpdir/button_background_mask.png"
-			composite -compose src-over -type TrueColor -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+			composite -compose src-over -type TrueColorMatte -depth 8 -dissolve 50 "$tmpdir/button_background_mask.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 		fi
 		# split the titles between the left and right:
 		menu_panel_location_x_l=0
@@ -1461,10 +1463,10 @@ if [ "$no_menu" -eq 0 ] ; then
 				text_width=$(( $hilight_width + $hilight_spacing_x / 2 ))
 				convert -size "$text_width"x$text_height xc:transparent -depth 8 "$tmpdir"/button_mask_trans.png
 				convert -size "$text_width"x$text_height xc:transparent -depth 8 -fill white -draw "roundRectangle 0,0,$text_width,$text_height $button_radius,$button_radius" -background none -blur 0x3 "$tmpdir"/button_mask.png
-				composite -compose src-over -type TrueColor -depth 8 -dissolve 60 "$tmpdir"/button_mask.png "$tmpdir"/button_mask_trans.png "$tmpdir"/button_mask.png
+				composite -compose src-over -type TrueColorMatte -depth 8 -dissolve 60 "$tmpdir"/button_mask.png "$tmpdir"/button_mask_trans.png "$tmpdir"/button_mask.png
 
 				convert -size ${text_width}x$text_height xc:transparent -quality 100 -font "$button_font" -fill "$button_font_color" -pointsize $button_font_size -gravity center -draw "text 0,0 \"${title[$i]}\"" "$tmpdir"/button_text.png
-				composite -compose src-over -type TrueColor -depth 8 "$tmpdir"/button_text.png "$tmpdir"/button_mask.png "$tmpdir"/button_text.png
+				composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/button_text.png "$tmpdir"/button_mask.png "$tmpdir"/button_text.png
 			fi
 #echo "buttonfile=${buttonfile[$i]}".
 		        if [ -e "${buttonfile[$i]}" ]; then
@@ -1494,7 +1496,7 @@ if [ "$no_menu" -eq 0 ] ; then
 				echo "[dvd-menu] r,c=$embed_row,$embed_col hilight_x_loc=$hilight_x hilight_y_loc=$hilight_y"
 				
 				## add each button as necessary, and increment the location 
-				composite -compose src-over -type TrueColor -depth 8 -geometry +$button_text_location_x+$button_text_location_y "$tmpdir/button_text.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+				composite -compose src-over -type TrueColorMatte -depth 8 -geometry +$button_text_location_x+$button_text_location_y "$tmpdir/button_text.png" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 
 		                # Add embed image to menu background
 				difference_x=$(( ( $hilight_width - $actual_hilight_width )/2 ))
@@ -1502,7 +1504,7 @@ if [ "$no_menu" -eq 0 ] ; then
 				## adjust hilight location:
 				hilight_x=$(( $hilight_x + $difference_x ))
 				hilight_y=$(( $hilight_y + $difference_y ))
-				composite -compose src-over -type TrueColor -depth 8 -geometry +$hilight_x+$hilight_y "$tmpdir/embed.jpg" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
+				composite -compose src-over -type TrueColorMatte -depth 8 -geometry +$hilight_x+$hilight_y "$tmpdir/embed.jpg" "$tmpdir/menu.ppm" "$tmpdir/menu.ppm"
 				## add each overlay mask for the selection of buttons:
 				composite -compose src-over -depth 8 -colors 3 -quality 100 -geometry +$hilight_x+$hilight_y "$tmpdir/button_mask.png" "$tmpdir/menu_mask.png" "$tmpdir/menu_mask.png"
 	
@@ -1599,18 +1601,18 @@ echo "song=$audiofile"
 		## create silence:  
 		echo "[dvd-menu] creating silent audio track"
 		## create audio for 1 second:
-		sox -t raw -s -w -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:01.000 > "$tmpdir/audio.wav" 
+		sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:01.000 > "$tmpdir/audio.wav" 
 	fi
 
 	if [ "$fadein" -eq 1 ] || [ "$fadeout" -eq 1 ] ; then
 		# create slience .wav file for 1 second for fadein/fadeout
-		sox -t raw -s -w -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:02.000 > "$tmpdir/fade_audio.wav" 
+		sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:02.000 > "$tmpdir/fade_audio.wav" 
 	fi
 	
 
 	if [ "$ac3" -eq 1 ] ; then
 	        echo "[dvd-menu] Creating ac3 audio..."
-	        check_rm "$tmpdir/audio.ac3"
+	        rm -f "$tmpdir/audio.ac3"
 	        ffmpeg -i "$tmpdir/audio.wav" -vn -y -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/audio.ac3" >> "$logfile" 2>&1
 		if [ "$fadein" -eq 1 ] || [ "$fadeout" -eq 1 ] ; then
 	        	ffmpeg -i "$tmpdir/fade_audio.wav" -vn -y -ab "$audio_bitrate"k -acodec ac3 -ar $audio_sample_rate -ac 6 "$tmpdir/fade_audio.ac3" >> "$logfile" 2>&1
@@ -1848,7 +1850,7 @@ let title=1
 let m=1   
 
 ## get rid of existing files:
-#check_rm "$tmpdir/menus_vmgm.xml"
+#rm -f "$tmpdir/menus_vmgm.xml"
 
 total_files="${#xmlfile[*]}"
 #for it in `seq 1 1 $total_files` ; do

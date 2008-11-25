@@ -2144,7 +2144,7 @@ kenburns ()  # KENBURNS
 		elif [ $( echo "$kenburns_acceleration" | awk -F% '{print NF}' ) -gt 1 ] ; then
 			kb_acceleration_percent=$( echo "$kenburns_acceleration" | awk -F% '{print $1}' )
 			F1=$(( $l_frames * $kb_acceleration_percent / 100 ))
-			if ( $kb_acceleration_percent -eq 0 ) ; then
+			if [ $kb_acceleration_percent -eq 0 ] ; then
 				F1=1
 				# D1x0=0; D1y0=0; D1x1=0; D1y1=0 # distance gone so far # not needed since we force one frame of region 1
 			else

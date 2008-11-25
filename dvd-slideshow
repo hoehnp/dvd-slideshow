@@ -4087,9 +4087,10 @@ else  # assume mpeg2 video output (dvd, vcd, svcd or other)
 	fi
 fi
 
-resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}'`
+resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}' | sed 's/,/\./g'`
+#resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}'`
 # resize_factor is 93.75 for PAL
-# resize_factor is  for NTSC
+# resize_factor is 112.50 for NTSC
 sq_to_dvd_pixels="${resize_factor}x100%"
 #sq_pixel_multiplier=$( printf %5.0f $( echo "scale=0; 10 * $resize_factor" | bc ) )
 [ $debug -ge 2 ] && myecho "[dvd-slideshow] sq_to_dvd_pixels=$sq_to_dvd_pixels"

@@ -18,7 +18,7 @@
 #
 
 name='dvd-menu'
-version='0.8.1'
+version='0.8.1-svn'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"

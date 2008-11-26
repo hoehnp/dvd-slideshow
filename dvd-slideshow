@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.1'
+version='0.8.1-svn'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"

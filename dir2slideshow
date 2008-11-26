@@ -17,7 +17,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.1'
+version='0.8.1-svn'
 
 changes () 
 {
@@ -553,7 +553,6 @@ if [ 1 ] ; then
 fi
 
 ## get the total number of pictures:
-echo "recursive_single=$recursive_single"
 
 if [ "$recursive_single" == 1 ] ; then
 	# need to list all images under this directory.  
@@ -736,6 +735,23 @@ if [ -n "$audio_list" ] ; then
 		fi
 		fileecho "$audio_file"':1:fadein:2:fadeout:2'
 	done
+elif [ -f "$output_dir/audiolist.txt" ] ; then
+	# command-line audio supercedes audio in directory at this point!
+	while read file
+	do
+		if [ -f "$file" ] ; then
+			audio_file="$( full_path "$file" )"
+		else 
+			# assume it's in the theme direcotry:
+			audio_file="$themedir"/"$file"
+			if [ ! -f "$audio_file" ] ; then
+				echo "[dir2slideshow] ERROR! Audio file not found:"
+				echo "[dir2slideshow] $file"
+			fi
+		fi
+		fileecho "$audio_file"':1:fadein:2:fadeout:2'
+	done < "$output_dir/audiolist.txt"
+
 fi
 fileecho "fadein:1"
 

@@ -3975,6 +3975,9 @@ if [ "$output_format" == 'flv' ] ; then
 	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
 	dvd_width='320' ; dvd_height='240'
+	aspect_ratio="4:3"
+	audio_sample_rate=44100
+	audio_bitrate=128
 elif [ "$output_format" == 'swf' ] ; then
 	video_bitrate=100
 	video_suffix='swf'
@@ -3985,6 +3988,9 @@ elif [ "$output_format" == 'swf' ] ; then
 	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
 	dvd_width='320' ; dvd_height='240'  # default
+	aspect_ratio="4:3"
+	audio_sample_rate=44100
+	audio_bitrate=128
 elif [ "$output_format" == 'mp4' ] ; then
 	video_bitrate=1000
 	video_suffix='mp4'
@@ -3995,6 +4001,9 @@ elif [ "$output_format" == 'mp4' ] ; then
 	ppmtoy4m_aspect='10:11'  # 4:3
 		# see http://www.uwasa.fi/~f76998/video/conversion
 	dvd_width='320' ; dvd_height='240'  # default
+	aspect_ratio="4:3"
+	audio_sample_rate=44100
+	audio_bitrate=128
 else  # assume mpeg2 video output (dvd, vcd, svcd or other)
 	video_suffix='mpg'
 	if [ "$pal" -eq 1 ] ; then
@@ -6126,7 +6135,7 @@ for file in "${image[@]}"; do
 				myecho "[dvd-slideshow] Subtitle=${subtitle[$i]}"
 			fi
 			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
-			myecho "[dvd-slideshow] Track ${audio_track[$i]} audiofile $audio_index $( truncate_filename "$file")"
+#			myecho "[dvd-slideshow] Track ${audio_track[$i]} audiofile $audio_index $( truncate_filename "$file")"
 #			echo "subtitle1=${subtitle1[$i]}"
 			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i]}" $i transparent # creates subtitle_$i.png

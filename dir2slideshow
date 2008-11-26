@@ -1,6 +1,6 @@
 #!/bin/bash
 #    dir2slideshow
-#    Copyright 2004-2005 Scott Dylewski  <scott at dylewski.com>
+#    Copyright 2004-2008 Scott Dylewski  <scott at dylewski.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ echo 'Changes:
 	Recursive finds follow symbolic links and ignores hidden directories.
 	Bug fix for spaces in filenames (thanks Ken Zutter)
 	Fixed bug where .mp3 files were being treated as images (crossfade error)
+	Fixed bug where other file formats would be included in the listing (thanks Mridul)
 0.8.0 	
 	Add audiobook option- looks for audio files and images & adds titles
 	Allow wipe effect as default between images -w duration
@@ -552,6 +553,8 @@ if [ 1 ] ; then
 fi
 
 ## get the total number of pictures:
+echo "recursive_single=$recursive_single"
+
 if [ "$recursive_single" == 1 ] ; then
 	# need to list all images under this directory.  
 	# put them all in one slideshow
@@ -564,8 +567,8 @@ if [ "$recursive_single" == 1 ] ; then
 #	check_rm "$output_dir"/txtlist.txt
 	while read directory
 	do
-		find "$directory" -maxdepth 1 -type f -o -type l -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort >> "$output_dir"/imagelist.txt
-		find "$directory" -maxdepth 1 -type f -o -type l -prune \( -name \*.mp3 -o -name \*.ogg \) | sort >> "$output_dir"/audiolist.txt
+		find "$directory" -maxdepth 1 -type f -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort >> "$output_dir"/imagelist.txt
+		find "$directory" -maxdepth 1 -type f -prune \( -name \*.mp3 -o -name \*.ogg \) | sort >> "$output_dir"/audiolist.txt
 #		find "$directory" -maxdepth 1 -type f \( -name \*.txt \) -exec ls -1 {} \; | sort >> "$output_dir"/txtlist.txt
 	done < "$output_dir"/directory_list.txt	
 
@@ -576,14 +579,15 @@ if [ "$recursive_single" == 1 ] ; then
 	echo "[dir2slideshow] Total audio files found = $audiofiles"
 #	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
+
 elif [ "$recursive_multiple" == 1 ] ; then
 	echo "[dir2slideshow] -R not supported yet"; exit 1
 	# do find, then check each file if it is a directory:
 else
 	# ok, we need to follow links, but don't do recursive directory searching
-	find "$input_dir" -maxdepth 1 -type f -o -type l \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort > "$output_dir"/imagelist.txt
-	find "$input_dir" -maxdepth 1 -type f -o -type l \( -name \*.mp3 -o -name \*.ogg \) | sort > "$output_dir"/audiolist.txt
-#	find "$input_dir" -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+	find "$input_dir" -maxdepth 1 -type f \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort > "$output_dir"/imagelist.txt
+	find "$input_dir" -maxdepth 1 -type f \( -name \*.mp3 -o -name \*.ogg \) | sort > "$output_dir"/audiolist.txt
+
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
 #	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`

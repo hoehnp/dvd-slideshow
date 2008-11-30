@@ -18,7 +18,7 @@
 #
 
 name='dvd-menu'
-version='0.8.1-svn'
+version='0.8.1-svn85'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
@@ -37,9 +37,9 @@ LANG="POSIX"
 changes () 
 {
 echo 'Changes:
-0.8.1
+0.8.2
 	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
-	Sox v. > 13 changes -w to -2 (thanks Ludovic)
+	Sox v. > 13 changes -w to -2 and -e to -n (thanks Ludovic)
 	Font path follows links.  Thanks Jim Potter!
 	AC3 audio created with ffmpeg needs k added to bitrate
 	Changed -depth 16 to -depth 8 in background gradient creation.
@@ -697,7 +697,7 @@ wavlength ()
 # wavlength $file
 # returns song length in ms
 {
-                sox "$1" -e stat 2> "$tmpdir"/trash.txt
+                sox "$1" -n stat 2> "$tmpdir"/trash.txt
                 song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d [:blank:]`
                 song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
                 if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi

@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.1-svn'
+version='0.8.2'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -44,7 +44,7 @@ LANG="POSIX"
 changes ()
 {
 echo 'Changes:
-0.8.1
+0.8.1-svn85
     New features:
 	Error check code BEFORE running full script.
 	Added -logo <logofile> option to add a logo to each slide. (does not work with transitions yet)
@@ -56,7 +56,7 @@ echo 'Changes:
     Bug fixes:
 	Removed old "smoothing=0" option in kenburns
 	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
-	Sox v. > 13 changes -w to -2 (thanks Ludovic)
+	Sox v. > 13 changes -w to -2 and -e to -n (thanks Ludovic)
 	Allow "widescreen=1" in input file.
 	Changed "sleep 0.1s" to "sleep 1s" for better compatibility.
 	Fixed hms2seconds with leading zeros (thanks Arnd Baecker)
@@ -1415,16 +1415,33 @@ background () # BACKGROUND
 			checkforautocrop "$bg"
                        if [ "$do_autocrop_w" -eq 1 ]; then   
                                # autocrop background image width (width too large)
-                               convert "${bg}" -filter $filtermethod -resize "$sq_to_dvd_pixels" -resize x"$dvd_height" \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColorMatte -depth 8 "$tmpdir"/slideshow_background.ppm
+                               convert "${bg}" -filter $filtermethod \
+						-resize "$sq_to_dvd_pixels" \
+						-resize x"$dvd_height" \
+                               			-gravity center \
+						-crop "$dvd_width"x"$dvd_height"'+0!+0!' \
+						-type TrueColorMatte -depth 8 \
+						"$tmpdir"/slideshow_background.ppm
                        elif [ "$do_autocrop_h" -eq 1 ]; then
                                # autocrop background image height (height too large)
-                               convert "${bg}" -filter $filtermethod -resize "$sq_to_dvd_pixels" -resize "$dvd_width"x \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColorMatte -depth 8 "$tmpdir"/slideshow_background.ppm
+                               convert "${bg}" -filter $filtermethod \
+						-resize "$sq_to_dvd_pixels" \
+						-resize "$dvd_width"x \
+                               			-gravity center \
+						-crop "$dvd_width"x"$dvd_height"'+0!+0!' \
+						-type TrueColorMatte -depth 8 \
+						"$tmpdir"/slideshow_background.ppm
                        else
                                #don't autorop
-                               convert "${bg}" -filter $filtermethod -resize "$sq_to_dvd_pixels" -resize x"$dvd_height" -bordercolor black -border "$dvd_width"x240 \
-                               -gravity center -crop "$dvd_width"x"$dvd_height"'+0!+0!' -type TrueColorMatte -depth 8 "$tmpdir"/slideshow_background.ppm
+                               convert "${bg}" -filter $filtermethod \
+						-resize "$sq_to_dvd_pixels" \
+						-resize x"$dvd_height" \
+						-bordercolor black \
+						-border "$dvd_width"x240 \
+                               			-gravity center \
+						-crop "$dvd_width"x"$dvd_height"'+0!+0!' \
+						-type TrueColorMatte -depth 8 \
+						"$tmpdir"/slideshow_background.ppm
                        fi
 			bgfile="$bg"
 		elif [ "$bg" == 'black' ] ; then  # I guess we could add other types of backgrounds here!
@@ -2442,7 +2459,7 @@ wavlength ()
 # wavlength $file 
 # returns song length in ms
 {
-		sox "$1" -e stat 2> "$tmpdir"/trash.txt 
+		sox "$1" -n stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
 		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
 		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
@@ -2456,7 +2473,7 @@ wavlength ()
 
 rawlength ()
 {
-		sox -t raw -r $audio_sample_rate -2 -s -c 2 "$1" -e stat 2> "$tmpdir"/trash.txt 
+		sox -t raw -r $audio_sample_rate -2 -s -c 2 "$1" -n stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
 		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
 		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
@@ -2698,11 +2715,37 @@ create_slide ()
 	fi
 	checkforautocrop "$file"	
 	if [ "$do_autocrop_h" -eq 1 ] ; then
-		convert -size "$frame_width"x"$frame_height" "$file" -filter $filtermethod -resize "$sq_to_dvd_pixels" -resize "$frame_width"x -type TrueColorMatte -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen $postprocess +repage miff:- | composite -compose src-over -gravity center -type TrueColorMatte -depth 8 - "$bg" "$output_file"
+		convert -size "$frame_width"x"$frame_height" "$file" \
+			-filter $filtermethod \
+			-resize "$sq_to_dvd_pixels" \
+			-resize "$frame_width"x \
+			-type TrueColorMatte -depth 8 \
+			-gravity center \
+			-crop "$frame_width"x"$frame_height"'+0!+0!' \
+			$sharpen $postprocess +repage miff:- \
+		| composite -compose src-over \
+			-gravity center \
+			-type TrueColorMatte -depth 8 - "$bg" "$output_file"
 	elif [ "$do_autocrop_w" -eq 1 ] ; then
-		convert -size "$frame_width"x"$frame_height" "$file" -filter $filtermethod -resize "$sq_to_dvd_pixels" -resize x"$frame_height" -type TrueColorMatte -depth 8 -gravity center -crop "$frame_width"x"$frame_height"'+0!+0!' $sharpen $postprocess +repage miff:- | composite -compose src-over -gravity center -type TrueColorMatte -depth 8 - "$bg" "$output_file"
+		convert -size "$frame_width"x"$frame_height" "$file" \
+			-filter $filtermethod \
+			-resize "$sq_to_dvd_pixels" \
+			-resize x"$frame_height" \
+			-type TrueColorMatte -depth 8 \
+			-gravity center \
+			-crop "$frame_width"x"$frame_height"'+0!+0!' \
+			$sharpen $postprocess +repage miff:- \
+		| composite -compose src-over \
+			-gravity center -type TrueColorMatte -depth 8 - "$bg" "$output_file"
 	else
-		convert -size "$frame_width"x"$frame_height" "$file" -filter $filtermethod -resize "$sq_to_dvd_pixels" -resize "$frame_width"x"$frame_height" -type TrueColorMatte -depth 8 $sharpen $postprocess miff:- | composite -compose src-over -gravity center -type TrueColorMatte -depth 8 - "$bg" "$output_file"
+		convert -size "$frame_width"x"$frame_height" "$file" \
+			-filter $filtermethod \
+			-resize "$sq_to_dvd_pixels" \
+			-resize "$frame_width"x"$frame_height" \
+			-type TrueColorMatte -depth 8 \
+			$sharpen $postprocess miff:- \
+		| composite -compose src-over \
+			-gravity center -type TrueColorMatte -depth 8 - "$bg" "$output_file"
 	fi
 }
 
@@ -6522,7 +6565,7 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 	myecho "[dvd-slideshow] Processing command-line audio..."
 	for file in "${passed_audio[@]}"; do
 		i_padded=`addzeros $i`
-		myecho "[dvd-slideshow] Working on track 1 audio file $i"
+		myecho "[dvd-slideshow] Working on track 1 audio file $(($i+1))"
 		myecho "[dvd-slideshow] $file"
 		fade_in_time="2000" # default 2 second
 		fade_out_time="2000"
@@ -6619,7 +6662,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			continue
 		fi
 		i_padded=`addzeros $i`
-		myecho "[dvd-slideshow] Working on track 1 audio file $i"
+		myecho "[dvd-slideshow] Working on track 1 audio file $(($i+1))"
 		myecho "[dvd-slideshow] $file"
 		
 		if [ "${audio1_end[$i]:-0}" -eq 0 ] || [ -z "$audio1_end[$i]}" ] ; then
@@ -6652,7 +6695,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			# reducing the volume a little should help.
 			volume="0.95"
 			waitforfile "$tmpdir/audio1_$i_padded.wav"
-			volume_sox=`sox "$tmpdir/audio1_$i_padded.wav" -e stat -v 2>&1 | tr -d :[blank]:`
+			volume_sox=`sox "$tmpdir"/"audio1_$i_padded.wav" -n stat -v 2>&1 | tr -d :[blank]:`
 			myecho "[dvd-slideshow] Volume adjust=$volume  should be $volume_sox"
 			song_length_ms=`wavlength "$tmpdir/audio1_$i_padded.wav"`
 			song_length_hms=`hms $song_length_ms`
@@ -6791,8 +6834,6 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 		myecho "[dvd-slideshow] Creating ac3 audio..."
 		checkforprog ffmpeg
 		rm -f "$tmpdir/audio1.ac3"
-	#	find "$tmpdir" -name audio1_\?\?\?\?.raw -print0 | xargs -0 sox -t raw -w -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
-#		cat "$tmpdir"/audio1_????.raw | sox -t raw -w -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null |  ffmpeg -i - -vn -ab "$audio_bitrate"k -acodec ac3 -vol "100" -ar $audio_sample_rate -ac 6 "$tmpdir/audio1.ac3" >> "$ffmpeg_out" 2>&1
 		cat "$tmpdir"/audio1_????.raw | sox -t raw -2 -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null >"$tmpdir/audio1.wav"
 		if [ $? -ne 0 ] ; then
 			## sox errored
@@ -6860,7 +6901,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 			continue
 		fi
 		i_padded=`addzeros $i`
-		myecho "[dvd-slideshow] Working on track 2 audio file $i"
+		myecho "[dvd-slideshow] Working on track 2 audio file $(($i+1))"
 		myecho "[dvd-slideshow] $file"
 		
 		if [ "${audio2_end[$i]:-0}" -eq 0 ] || [ -z "$audio2_end[$i]}" ] ; then
@@ -6883,7 +6924,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 			# too low or too high and getting clipped.
 			# reducing the volume a little should help.
 			volume=0.95
-			sox "$tmpdir/audio2_$i_padded.wav" -e stat 2> "$tmpdir"/trash.txt 
+			sox "$tmpdir/audio2_$i_padded.wav" -n stat 2> "$tmpdir"/trash.txt 
 			## need to fix this so it's accurate to 0.01 sec, not just 1 sec
 			## this will get floor(time) now.
 			song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | awk -F. '{print $1}'`

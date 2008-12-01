@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.2'
+version='0.8.1-svn86'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -74,6 +74,7 @@ echo 'Changes:
 	Fix audio when passing an .avi file.
 	Fixed chapter keyword timing.
 	Increased mplex bitrate to 9500 from 9000 to fix some possible encoding bugs.
+	Fix bug with hms handling times longer than 1 hour.  Thanks Michael Crider
 
 0.8.0	
     New features & Changes:	
@@ -787,7 +788,7 @@ hms ()  # HMS
 		hours=$(( $1 / 3600000 )) ; [ $hours -eq 0 ] && hours="0" 
 		it=$(( $1 - $hours * 3600000 ))
 		minutes=$(( $it / 60000 )) ; [ $minutes -eq 0 ] && minutes="0" 
-		it=$(( $1 - $minutes * 60000 ))
+		it=$(( $it - $minutes * 60000 ))
 		seconds=$(( $it / 1000 )) ; [ $seconds -eq 0 ] && seconds="0" 
 		thousandths_out=$( printf %3.3d $(( $it - $seconds * 1000 )) );
 		it="$hours:$minutes:$seconds.$thousandths_out"
@@ -2170,7 +2171,7 @@ kenburns ()  # KENBURNS
 		else
 			F1=$( echo "scale=0; $kenburns_acceleration * $frames_per_ms / 1000" | bc )
 			F1=$( printf %2.0f $F1 )
-			echo "kb_accel = other F1=$F1"
+#			echo "kb_accel = other F1=$F1"
 		fi
 		# make sure the acceleration time is shorter than half of the full kenburns time:
 		if [ "$F1" -gt "$(( $l_frames / 2 ))" ] ; then

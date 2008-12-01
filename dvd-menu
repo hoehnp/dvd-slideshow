@@ -18,7 +18,7 @@
 #
 
 name='dvd-menu'
-version='0.8.1-svn85'
+version='0.8.1-svn86'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
@@ -47,6 +47,7 @@ echo 'Changes:
 	Default layout will switch to two columns of buttons (no embedded image) if the button
 	list is long.
 	Change LANG=C to LANG=POSIX to try to fix radix problems with printf
+	Add menu fix so "dvd menu" button works on dvd players (thanks will guaraldi)
 0.8.0
 	pre9:
 	Added 6image layout option.  It can also read the title and icon from
@@ -1841,6 +1842,14 @@ if [ "$vcd" -eq 0 ] && [ "$svcd" -eq 0 ] ; then ## DVD
 	echo '           </menus>' >> "$outdir/vmgm.xml"
 	echo '        </vmgm>' >> "$outdir/vmgm.xml"
 	echo '        <titleset>' >> "$outdir/vmgm.xml"
+	## add a menu to the vtsm that pops back to the main menu
+	## for DVD players that default to first vtsm menu when you
+	## press the DVD menu button.  (thanks for fix from will guaraldi)
+	echo '           <menus>' >> "$outdir/vmgm.xml"
+	echo '              <pgc>' >> "$outdir/vmgm.xml"
+	echo '              <post> jump vmgm menu; </post>' >> "$outdir/vmgm.xml"
+	echo '              </pgc>' >> "$outdir/vmgm.xml"
+	echo '           </menus>' >> "$outdir/vmgm.xml"
 	## every dvd has at least one title!
 	echo '		<titles>' > "$tmpdir/titles_vmgm.xml"
 	echo '		<subpicture lang="'$subtitle_code'"/>' >> "$tmpdir/titles_vmgm.xml"

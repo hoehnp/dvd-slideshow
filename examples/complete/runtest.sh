@@ -13,9 +13,9 @@ check_rm () {
 }
 
 echo "[runtest.sh] Removing old files..."
-check_rm test_complete.xml
-check_rm test_complete.vob
-check_rm test_complete.log
+check_rm 'test complete.xml'
+check_rm 'test complete.vob'
+check_rm 'test complete.log'
 check_rm dvd-menu.log
 check_rm vmgm.xml
 check_rm menu.vob
@@ -34,7 +34,7 @@ echo "[runtest.sh] dir2slideshow -n 'Complete example' -s filename -t 5 -c 1 -a 
 echo " "
 dir2slideshow -n 'Complete example' -t 5 -s filename -c 1 -a '../audio/strojovna_07-TEXEMPO-30s.ogg' $* my_pictures
 
-if [ ! -f "Complete_example.txt" ] ; then
+if [ ! -f "Complete example.txt" ] ; then
         echo "[runtest.sh] ERROR: No output files found from dir2slideshow!"
         echo "[runtest.sh]      This means something major failed in dir2slideshow"
         echo "[runtest.sh]      You need to fix this before proceeding with the example"
@@ -43,11 +43,11 @@ fi
 
 #############################################
 echo "[runtest.sh] Executing command:"
-echo "[runtest.sh] dvd-slideshow -n 'test complete' -f Complete_example.txt $*"
+echo "[runtest.sh] dvd-slideshow -n 'test complete' -f 'Complete example.txt' $*"
 echo " "
-dvd-slideshow -n 'test complete' -f Complete_example.txt $*
+dvd-slideshow -n 'test complete' -f 'Complete example.txt' $*
 
-if [ ! -f "test_complete.xml" ] ; then
+if [ ! -f "test complete.xml" ] ; then
         echo "[runtest.sh] ERROR: No output files found from dvd-slideshow!"
         echo "[runtest.sh]      This means something major failed in dvd-slideshow"
         echo "[runtest.sh]      You need to fix this before proceeding with the example"
@@ -56,8 +56,8 @@ fi
 
 #################################################3
 echo "[runtest.sh] Executing command:"
-echo "[runtest.sh] dvd-menu -t 'My example' -t 'Slideshow 2' -f test_complete.xml -f test_complete.xml -n 'Complete Example DVD' $*"
-dvd-menu -t 'My example' -t 'Slideshow 2' -f test_complete.xml -f test_complete.xml -n 'Complete Example DVD' $*
+echo "[runtest.sh] dvd-menu -t 'My example' -t 'Slideshow 2' -f 'test_complete.xml' -f 'test complete.xml' -n 'Complete Example DVD' $*"
+dvd-menu -t 'My example' -t 'Slideshow 2' -f 'test complete.xml' -f 'test complete.xml' -n 'Complete Example DVD' $*
 
 if [ ! -f "vmgm.xml" ] ; then
         echo "[runtest.sh] ERROR: No output files found from dvd-menu!"

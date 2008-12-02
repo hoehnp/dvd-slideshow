@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.1-svn86'
+version='0.8.1-svn87'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -44,7 +44,7 @@ LANG="POSIX"
 changes ()
 {
 echo 'Changes:
-0.8.1-svn85
+0.8.1
     New features:
 	Error check code BEFORE running full script.
 	Added -logo <logofile> option to add a logo to each slide. (does not work with transitions yet)
@@ -54,6 +54,7 @@ echo 'Changes:
 	No subtitles are rendered during fades.
 	Log file now uses the slideshow name instead of dvd-slideshow.log
     Bug fixes:
+	Allow spaces in output files (spaces used to be forced to underscores).
 	Removed old "smoothing=0" option in kenburns
 	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
 	Sox v. > 13 changes -w to -2 and -e to -n (thanks Ludovic)
@@ -2462,12 +2463,13 @@ wavlength ()
 {
 		sox "$1" -n stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
-		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
-		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
-		song_length_ms=`echo $song_length | awk -F. '{printf ("%3.3f",$0)}' | awk -F. '{print $2}'`
-		## make sure we have two decimal places?
-		if [ -z "$song_length_ms" ] ; then song_length_ms=0 ; fi
-		song_length=$( echo "scale=0; 1000 * $song_length_seconds + $song_length_ms" | bc )
+#		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
+#		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
+#		song_length_ms=`echo $song_length | awk -F. '{printf ("%3.3f",$0)}' | awk -F. '{print $2}'`
+#		## make sure we have two decimal places?
+#		if [ -z "$song_length_ms" ] ; then song_length_ms=0 ; fi
+#		song_length=$( echo "scale=0; 1000 * $song_length_seconds + $song_length_ms" | bc )
+		song_length=$( echo "scale=0; 1000 * $song_length" | bc | awk -F. '{printf ("%3.0f", $0)}' )
 		rm "$tmpdir"/trash.txt
 		echo "$song_length"
 }
@@ -2476,12 +2478,13 @@ rawlength ()
 {
 		sox -t raw -r $audio_sample_rate -2 -s -c 2 "$1" -n stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
-		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
-		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
-		song_length_ms=`echo $song_length | awk -F. '{printf ("%3.3f",$0)}' | awk -F. '{print $2}'`
-		## make sure we have two decimal places?
-		if [ -z "$song_length_ms" ] ; then song_length_ms=0 ; fi
-		song_length=$( echo "scale=0; 1000 * $song_length_seconds + $song_length_ms" | bc )
+#		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
+#		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
+#		song_length_ms=`echo $song_length | awk -F. '{printf ("%3.3f",$0)}' | awk -F. '{print $2}'`
+#		## make sure we have two decimal places?
+#		if [ -z "$song_length_ms" ] ; then song_length_ms=0 ; fi
+#		song_length=$( echo "scale=0; 1000 * $song_length_seconds + $song_length_ms" | bc )
+		song_length=$( echo "scale=0; 1000 * $song_length" | bc | awk -F. '{printf ("%3.0f", $0)}' )
 		rm "$tmpdir"/trash.txt
 		echo "$song_length"
 }
@@ -4574,11 +4577,11 @@ has_subtitles2=0
 frame_time=0
 total_slideshow_frames=0
 
-orig_slideshow_name="${slideshow_name}"
-slideshow_name=`echo "${slideshow_name}" | sed -e 's/ /_/g'`
-if [ "$orig_slideshow_name" != "$slideshow_name" ] ; then
-	myecho "[dvd-slideshow] Output filename is $slideshow_name"
-fi
+#orig_slideshow_name="${slideshow_name}"
+#slideshow_name=`echo "${slideshow_name}" | sed -e 's/ /_/g'`
+#if [ "$orig_slideshow_name" != "$slideshow_name" ] ; then
+#	myecho "[dvd-slideshow] Output filename is $slideshow_name"
+#fi
 myecho "[dvd-slideshow] Temp dir is $( truncate_filename "$outdir"/"dvd-slideshow_temp_$$" )"
 
 # create the mpeg2enc pipeline here if we are in $yuvcat mode
@@ -4942,6 +4945,8 @@ for file in "${image[@]}"; do
 		fi
 #		encode_video "${image[$i]}"
 		encode_video "$tmpdir"/tmp.avi
+		# now remove the temporary file (thanks for fix by Marc Wäckerlin)
+		rm "$tmpdir"/tmp.avi
 
 		# convert audio to wav format?  
 		echo "audio_track[$i] = ${audio_track[$i]}"

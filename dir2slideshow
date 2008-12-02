@@ -17,7 +17,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.2'
+version='0.8.1-svn87'
 
 changes () 
 {
@@ -29,6 +29,7 @@ echo 'Changes:
 	Fixed bug where .mp3 files were being treated as images (crossfade error)
 	Fixed bug where other file formats would be included in the listing (thanks Mridul)
 	Fixed bug where audio files were not included in output.
+	Allow spaces in output files if spaces is used as filename
 0.8.0 	
 	Add audiobook option- looks for audio files and images & adds titles
 	Allow wipe effect as default between images -w duration
@@ -528,7 +529,8 @@ fi
 # make sure $output_dir has no trailing slash
 output_dir=`echo "$output_dir" | sed -e 's/\/$//'`;
 
-outfile="$output_dir"/"`echo "$name" | sed -e 's/ /_/g'`.txt"
+#outfile="$output_dir"/"`echo "$name" | sed -e 's/ /_/g'`.txt"  
+outfile="$output_dir"/"$name".txt
 
 echo "[dir2slideshow] Input directory = $input_dir"
 echo "[dir2slideshow] Slideshow name = $name"
@@ -554,7 +556,6 @@ if [ 1 ] ; then
 fi
 
 ## get the total number of pictures:
-echo "recursive_single=$recursive_single"
 if [ "$recursive_single" == 1 ] ; then
 	# need to list all images under this directory.  
 	# put them all in one slideshow
@@ -700,6 +701,8 @@ fi
 #[ -n "$subtitle_font" ] && fileecho "subtitle_font=$subtitle_font"
 
 name_converted="$( echo $name | sed -e 's/_/ /g' )"
+#name_converted="$name"
+
 ## if title is wanted:
 if [ "$title" -eq 1 ] ; then
 	[ -n "$title_font_color" ] && fileecho "title_font_color=$title_font_color"

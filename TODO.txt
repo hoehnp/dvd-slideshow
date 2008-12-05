@@ -1,23 +1,30 @@
 Things to work on:
 
+0.8.2 for release:
+Update changelog for release of dvd-slideshow.
+Update man pages?
+Fix examples to have non-copyrighted audio.
+Use stock web photos in public domain for example images.
+Update themes to use freely distributable fonts!
+
 dvd-slideshow:
 fuzzy edges effect?
 old-picture effect?
 sepiatone effect?
 B&W effect?  (or should we have these effects done before?)
-add image overlay function to overlay same image (logo or text?) on each image
-add text overlay function to overlay text on next image.
+add image overlay function to overlay same image (logo or text?) on each image (alpha)
 developer notes summarizing the crop/zoom kenburns effect stuff
 different background types? (gradient, etc)
 bi-linear interpolation for kenburns effect.
-kenburns with rotation
-wrap text on titles
-allow user to pass mpeg, but then we need to resample them! (use tovid?)
+kenburns with rotation (not for a while!)
+wrap text on titles (has this been done?)
+allow user to pass mpeg/avi/etc, but then we need to resample them! (use tovid?)
 chapter selection menus?
+add text overlay function to overlay text on next image.
 text: keyword for overlaying text anywhere on the screen
 	this would use the same keywords as the kenburns effect.
 
-dvd-menu:
+dvd-menu:  ( there will be less emphasis on dvd-menu since there are GUIs that can fill this void)
 setup menu with subtitle selection and/or credits, audio setup, etc.
 more text control: font size and color, placement, etc.
 variable non-button text on the main menu.

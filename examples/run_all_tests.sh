@@ -28,3 +28,6 @@ cd 0.8.0
 sh runtest.sh $*
 cd ..
 
+cd cool
+sh runtest.sh $*
+cd ..

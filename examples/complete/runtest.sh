@@ -54,6 +54,8 @@ if [ ! -f "test complete.xml" ] ; then
         exit 0
 fi
 
+rm -rf my_pictures
+
 #################################################3
 echo "[runtest.sh] Executing command:"
 echo "[runtest.sh] dvd-menu -t 'My example' -t 'Slideshow 2' -f 'test_complete.xml' -f 'test complete.xml' -n 'Complete Example DVD' $*"

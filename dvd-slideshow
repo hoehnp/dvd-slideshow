@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.1-svn87'
+version='0.8.2
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -44,7 +44,7 @@ LANG="POSIX"
 changes ()
 {
 echo 'Changes:
-0.8.1
+0.8.2
     New features:
 	Error check code BEFORE running full script.
 	Added -logo <logofile> option to add a logo to each slide. (does not work with transitions yet)

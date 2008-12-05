@@ -18,11 +18,11 @@
 #
 
 name='dvd-menu'
-version='0.8.2'
+version='0.8.3-svn'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
-echo "[dvd-menu]            Copyright 2003-2006 by Scott Dylewski"
+echo "[dvd-menu]            Copyright 2003-2008 by Scott Dylewski"
 echo "[dvd-menu]            "
 
 ## TODO:
@@ -37,6 +37,8 @@ LANG="POSIX"
 changes () 
 {
 echo 'Changes:
+0.8.3
+	Fix sox arguments to work with both old and new versions of sox.
 0.8.2
 	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
 	Sox v. > 13 changes -w to -2 and -e to -n (thanks Ludovic)
@@ -168,9 +170,10 @@ Options:
 
 Requires:
 	dvdauthor 0.6.11
-	sox
+	sox >= 14.0.0
 	mjpegtools  (mp2enc, mpeg2enc, ppmtoy4m)
 	ImageMagick (convert)
+	ffmpeg
 
 Variables:
 	dvd-menu will read the following variables out of your ~/.dvd-slideshow/dvd-slideshowrc file.
@@ -698,7 +701,7 @@ wavlength ()
 # wavlength $file
 # returns song length in ms
 {
-                sox "$1" -n stat 2> "$tmpdir"/trash.txt
+                sox "$1" $sox_nop stat 2> "$tmpdir"/trash.txt
                 song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d [:blank:]`
                 song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
                 if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
@@ -1116,30 +1119,74 @@ fi
 ## Check for required programs
 
 # ppmtoy4m
-checkforprog ppmtoy4m
+it=`which ppmtoy4m 2> /dev/null`
+if [ -z "$it" ] ; then # no ppmtoy4m
+               myecho "[dvd-menu] ERROR:  no mjpegtools found for audio processing"
+               myecho "[dvd-menu]         You need to download and install mjpegtools."
+               myecho "[dvd-menu]         http://mjpegtools.sourceforge.net"
+                cleanup ; exit 0
+fi
 progver=`mplex 2>&1 | grep version | awk '{ print $4 }'`
 logecho "[dvd-menu] Found mjpegtools version $progver"
 if ppmtoy4m -S 420mpeg2 xxxxx 2>&1 | grep -q xxxxx; then
-        logecho "[dvd-menu] mjpegtools is >= 1.6.3-rc1"
+        logecho "[dvd-menu] Using mjpegtools subsampling -S 420mpeg2"
         subsample='420mpeg2'
 else
-        logecho "[dvd-menu] mjpegtools is <= 1.6.2"
-        # ppmtoy4m did not accept the -S 420mpeg2 option
-        # so it's probably a version older than 1.6.3
+        logecho "[dvd-menu] Using mjpegtools subsampling -S 420_mpeg2"
         subsample='420_mpeg2'
 fi
 
-checkforprog sox
-checkforprog convert
-checkforprog dvdauthor
+# sox
+it=`which sox 2> /dev/null`
+if [ -z "$it" ] ; then # no sox
+               myecho "[dvd-menu] ERROR:  no sox found for audio processing"
+               myecho "[dvd-menu]         You need to download and install sox."
+               myecho "[dvd-menu]         http://sox.sourceforge.net"
+                cleanup ; exit 0
+fi
+progver=`sox -h 2>&1 | head -n 1 | awk '{ print $3 }'`
+logecho "[dvd-menu] Found sox version $progver"
+progver1="$( echo ${progver#v} | awk -F. '{print $1}' )"
+if [ $progver1 -lt 14 ] ; then  # use old sox commands:
+        sox_word='-w'
+        sox_nop='-e'
+else # use new commands ( > 14.0.0 )
+        sox_word='-2'
+        sox_nop='-n'
+fi
+logecho "[dvd-menu] using sox options $sox_word $sox_nop"
+
+# ImageMagick
+it=`which convert 2> /dev/null`
+if [ -z "$it" ] ; then # no convert
+               myecho "[dvd-menu] ERROR:  no ImageMagick found for audio processing"
+               myecho "[dvd-menu]         You need to download and install ImageMagick."
+               myecho "[dvd-menu]         http://ImageMagick.sourceforge.net"
+                cleanup ; exit 0
+fi
+progver=`convert -help | head -n 1 | awk '{ print $3 }'`
+logecho "[dvd-menu] Found ImageMagick version $progver"
+
+# dvdauthor
+it=`which dvdauthor 2> /dev/null`
+if [ -z "$it" ] ; then # no dvdauthor
+               myecho "[dvd-menu] ERROR:  no dvdauthor found for audio processing"
+               myecho "[dvd-menu]         You need to download and install dvdauthor."
+               myecho "[dvd-menu]         http://dvdauthor.sourceforge.net"
+                cleanup ; exit 0
+fi
+progver=`dvdauthor -h 2>&1 | head -n 1 | awk '{ print $3 }'`
+logecho "[dvd-menu] Found dvdauthor version $progver"
+
+
 # ffmpeg
 it=`which ffmpeg 2> /dev/null`
 if [ -z "$it" ] ; then
 	# no ffmpeg!  use mp2 audio instead:
-	myecho "[dvd-slideshow] Warning:  no ffmpeg found for AC3 audio encoding."
-	myecho "[dvd-slideshow]           Using MP2 audio instead."
-	myecho "[dvd-slideshow]           MP2 audio is less compatible with DVD player hardware."
-	myecho "[dvd-slideshow]		  http://ffmpeg.sourceforge.net"
+	myecho "[dvd-menu] Warning:  no ffmpeg found for AC3 audio encoding."
+	myecho "[dvd-menu]           Using MP2 audio instead."
+	myecho "[dvd-menu]           MP2 audio is less compatible with DVD player hardware."
+	myecho "[dvd-menu]		  http://ffmpeg.sourceforge.net"
 	ac3=0
 	mpeg_encoder='mpeg2enc'
 else
@@ -1152,8 +1199,9 @@ else
 		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='ffmpeg' 
 	else
 		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='mpeg2enc' 
-		myecho "[dvd-slideshow] Warning:  ffmpeg is not compiled with the mpeg2video option"
-		myecho "[dvd-slideshow] 	  required for making dvds!  Using mpeg2enc instead."
+		myecho "[dvd-menu] Warning:  ffmpeg is not compiled with the mpeg2video option"
+		myecho "[dvd-menu] 	  required for making dvds!  Using mpeg2enc instead."
+		mpeg_encoder='mpeg2enc'
 	fi
 fi
 
@@ -1603,12 +1651,12 @@ echo "song=$audiofile"
 		## create silence:  
 		echo "[dvd-menu] creating silent audio track"
 		## create audio for 1 second:
-		sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:01.000 > "$tmpdir/audio.wav" 
+		sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:01.000 > "$tmpdir/audio.wav" 
 	fi
 
 	if [ "$fadein" -eq 1 ] || [ "$fadeout" -eq 1 ] ; then
 		# create slience .wav file for 1 second for fadein/fadeout
-		sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:02.000 > "$tmpdir/fade_audio.wav" 
+		sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero -t wav - trim 0 0:02.000 > "$tmpdir/fade_audio.wav" 
 	fi
 	
 

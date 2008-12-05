@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.2'
+version='0.8.3-svn'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -44,6 +44,11 @@ LANG="POSIX"
 changes ()
 {
 echo 'Changes:
+0.8.3
+    New features:
+	
+    Bug fixes:
+	Fix bugs when using old versions of sox < 14.0.0
 0.8.2
     New features:
 	Error check code BEFORE running full script.
@@ -58,7 +63,7 @@ echo 'Changes:
 	Removed old "smoothing=0" option in kenburns
 	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
 	Sox v. > 13 changes -w to -2 and -e to -n (thanks Ludovic)
-	Allow "widescreen=1" in input file.
+	Allow "widescreen=1" in input file. ( not tested much )
 	Changed "sleep 0.1s" to "sleep 1s" for better compatibility.
 	Fixed hms2seconds with leading zeros (thanks Arnd Baecker)
 	Better (larger) resizing for kenburns in high-quality mode.
@@ -2461,7 +2466,7 @@ wavlength ()
 # wavlength $file 
 # returns song length in ms
 {
-		sox "$1" -n stat 2> "$tmpdir"/trash.txt 
+		sox "$1" $sox_nop stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
 #		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
 #		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
@@ -2476,7 +2481,7 @@ wavlength ()
 
 rawlength ()
 {
-		sox -t raw -r $audio_sample_rate -2 -s -c 2 "$1" -n stat 2> "$tmpdir"/trash.txt 
+		sox -t raw -r $audio_sample_rate $sox_word -s -c 2 "$1" $sox_nop stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
 #		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
 #		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
@@ -3391,8 +3396,6 @@ fi
 
 
 ## Check for required programs
-progver=`mplex 2>&1 | grep version | awk '{ print $4 }'`
-logecho "[dvd-slideshow] Found mjpegtools version $progver"
 it=`which ppmtoy4m 2> /dev/null`
 if [ -z "$it" ] ; then # no ppmtoy4m
                myecho "[dvd-slideshow] ERROR:  no mjpegtools found for audio processing"
@@ -3400,6 +3403,8 @@ if [ -z "$it" ] ; then # no ppmtoy4m
                myecho "[dvd-slideshow]         http://mjpegtools.sourceforge.net"
 		cleanup ; exit 0
 fi
+progver=`mplex 2>&1 | grep version | awk '{ print $4 }'`
+logecho "[dvd-slideshow] Found mjpegtools version $progver"
 if ppmtoy4m -S 420mpeg2 xxxxx 2>&1 | grep -q xxxxx; then
 	logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420mpeg2"
 	subsample='420mpeg2'
@@ -3408,9 +3413,7 @@ else
 	subsample='420_mpeg2'
 fi
 	
-#checkforprog sox
-progver=`sox -h 2>&1 | head -n 1 | awk '{ print $3 }'`
-logecho "[dvd-slideshow] Found sox version $progver"
+# sox
 it=`which sox 2> /dev/null`
 if [ -z "$it" ] ; then # no sox
                myecho "[dvd-slideshow] ERROR:  no sox found for audio processing"
@@ -3418,10 +3421,19 @@ if [ -z "$it" ] ; then # no sox
                myecho "[dvd-slideshow]         http://sox.sourceforge.net"
 		cleanup ; exit 0
 fi
+progver=`sox -h 2>&1 | head -n 1 | awk '{ print $3 }'`
+logecho "[dvd-slideshow] Found sox version $progver"
+progver1="$( echo ${progver#v} | awk -F. '{print $1}' )"
+if [ $progver1 -lt 14 ] ; then  # use old sox commands:
+	sox_word='-w'
+	sox_nop='-e'
+else # use new commands ( > 14.0.0 )
+	sox_word='-2'
+	sox_nop='-n'
+fi
+logecho "[dvd-slideshow] using sox options $sox_word $sox_nop"
 
-#checkforprog convert
-progver=`convert -help | head -n 1 | awk '{ print $3 }'`
-logecho "[dvd-slideshow] Found ImageMagick version $progver"
+# ImageMagick
 it=`which convert 2> /dev/null`
 if [ -z "$it" ] ; then # no convert
                myecho "[dvd-slideshow] ERROR:  no ImageMagick found for audio processing"
@@ -3429,10 +3441,10 @@ if [ -z "$it" ] ; then # no convert
                myecho "[dvd-slideshow]         http://ImageMagick.sourceforge.net"
 		cleanup ; exit 0
 fi
+progver=`convert -help | head -n 1 | awk '{ print $3 }'`
+logecho "[dvd-slideshow] Found ImageMagick version $progver"
 
-#checkforprog dvdauthor
-progver=`dvdauthor -h 2>&1 | head -n 1 | awk '{ print $3 }'`
-logecho "[dvd-slideshow] Found dvdauthor version $progver"
+# dvdauthor
 it=`which dvdauthor 2> /dev/null`
 if [ -z "$it" ] ; then # no dvdauthor
                myecho "[dvd-slideshow] ERROR:  no dvdauthor found for audio processing"
@@ -3440,6 +3452,8 @@ if [ -z "$it" ] ; then # no dvdauthor
                myecho "[dvd-slideshow]         http://dvdauthor.sourceforge.net"
 		cleanup ; exit 0
 fi
+progver=`dvdauthor -h 2>&1 | head -n 1 | awk '{ print $3 }'`
+logecho "[dvd-slideshow] Found dvdauthor version $progver"
 
 # ffmpeg
 it=`which ffmpeg 2> /dev/null`
@@ -4469,9 +4483,9 @@ for file in "${image[@]}"; do
 			cp "${file}" "$tmpdir/audio$track"_"$audio_index_padded.wav"
 		elif [ "$file" == 'silence' ]; then
 			if [ "$audiosmp" -eq 1 ] ; then
-				sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1 &
+				sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1 &
 			else
-				sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1
+				sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1
 			fi
 		else
 			myecho "[dvd-slideshow] ERROR:  Unknown audio file format.  Must be mp3, ogg, mp4/aac, wav, or silence"
@@ -6291,9 +6305,9 @@ for file in "${image[@]}"; do
 			elif [ "$file" == 'silence' ]; then
 				myecho "[dvd-slideshow] creating silent audio track... we will splice it later."
 				if [ "$audiosmp" -eq 1 ] ; then
-					sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1 &
+					sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1 &
 				else
-					sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1
+					sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1
 				fi
 			else
 				myecho "[dvd-slideshow] ERROR:  Unknown audio file format.  Must be mp3, ogg, mp4/aac, wav, or silence"
@@ -6587,7 +6601,7 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 		myecho "[dvd-slideshow] fade_in_time=$fade_in_hms fade_out_time=$fade_out_hms"
 		total_audio_length="$(( $total_audio_length + $song_length ))"
 		myecho "[dvd-slideshow] total_audio_length=`hms $total_audio_length`"
-		sox -v 0.95 "$tmpdir/audio$track"_"$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
+		sox -v 0.95 "$tmpdir/audio$track"_"$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
 		let i=$i+1
 		myecho "[dvd-slideshow] ###############"
 	done
@@ -6597,11 +6611,11 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 		# video is longer than audio.  need to add silence to end.
 		thetime_hms=`hms $(( $end_time - $total_audio_length + 1000 ))` #plus 10 so sox actually crops.
 		myecho "[dvd-slideshow] Buffering end of audio file with silence for $thetime_hms"
-		sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" trim 0 "$thetime_hms"
+		sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" trim 0 "$thetime_hms"
 	fi
 	
 	## cat all the audio files together: 
-	cat "$tmpdir"/audio1_????.raw | sox -t raw -2 -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
+	cat "$tmpdir"/audio1_????.raw | sox -t raw $sox_word -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
 	## fade out at end of video:
 	sox "$tmpdir/audio1.wav" "$tmpdir/audio_out.wav" fade t 0 "$end_hms" "$fade_out_hms"
 	mv "$tmpdir/audio_out.wav" "$tmpdir/audio1.wav"
@@ -6691,7 +6705,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			song_end_hms=`hms $song_end_ms`
 			song_start_hms="0"  # cannot modify starting point yet...
 			myecho "[dvd-slideshow] Creating silence audio file for $song_end_hms"
-			sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -2 -s -c 2 -r $audio_sample_rate "$tmpdir"/audio1_$i_padded.raw trim "0" "$song_end_hms"
+			sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir"/audio1_$i_padded.raw trim "0" "$song_end_hms"
 		else
 			## file should only be wav format at this point since it was decoded before
 			## all audio files are of the format "$tmpdir"/audio_1.wav
@@ -6701,7 +6715,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			# reducing the volume a little should help.
 			volume="0.95"
 			waitforfile "$tmpdir/audio1_$i_padded.wav"
-			volume_sox=`sox "$tmpdir"/"audio1_$i_padded.wav" -n stat -v 2>&1 | tr -d :[blank]:`
+			volume_sox=`sox "$tmpdir"/"audio1_$i_padded.wav" $sox_nop stat -v 2>&1 | tr -d :[blank]:`
 			myecho "[dvd-slideshow] Volume adjust=$volume  should be $volume_sox"
 			song_length_ms=`wavlength "$tmpdir/audio1_$i_padded.wav"`
 			song_length_hms=`hms $song_length_ms`
@@ -6785,13 +6799,13 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 				# fade only to the end of song length now, because we may have to add silence:
 				# We should probably eventually add the silence first, and then chop the song?
 				if [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
-					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw"
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw"
 				else  # fade in or out
-					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
 				fi
 				thetime_hms=`hms $(( $song_end_ms - $song_length_ms ))` 
 				myecho "[dvd-slideshow] Adding $thetime_hms of silence to end of original audio file"
-				sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -2 -s -c 2 -r $audio_sample_rate "$tmpdir/silence.raw" trim 0 "$thetime_hms"
+				sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/silence.raw" trim 0 "$thetime_hms"
 				cat "$tmpdir/audio1_$i_padded.raw" "$tmpdir/silence.raw" > "$tmpdir/audio.raw" 
 				mv "$tmpdir/audio.raw" "$tmpdir/audio1_$i_padded.raw"
 				rm "$tmpdir"/silence.raw
@@ -6806,13 +6820,13 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 #				echo "song_length_ms=$song_length_ms song_end_ms=$song_end_ms fade_in_time=$fade_in_time fade_out_time=$fade_out_time"
 				if [ "$song_length_ms" -ne "$song_end_ms"  ] && [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
 #					echo "cropping"
-					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" trim 0 "$song_end_hms"
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" trim 0 "$song_end_hms"
 				elif [ "$fade_out_time" -ne 0 ] || [ "$fade_in_time" -ne 0 ] ; then
 #					echo "fading"
-					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
 				else
 #					echo "converting"
-					sox -v $volume "$tmpdir/audio1_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" 
+					sox -v $volume "$tmpdir/audio1_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" 
 				fi
 			fi
 			# now, audio should span to the end mark
@@ -6821,7 +6835,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			## buffer beginning with silence:
 			thetime_hms=`hms "${audio1_start[$i]}"`
 			myecho "[dvd-slideshow] Adding $thetime_hms to beginning of audio file"
-			sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -2 -s -c 2 -r $audio_sample_rate "$tmpdir/silence.raw" trim 0 "$thetime_hms"
+			sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/silence.raw" trim 0 "$thetime_hms"
 			cat "$tmpdir"/silence.raw "$tmpdir/audio1_$i_padded.raw" > "$tmpdir/audio.raw" 
 			mv "$tmpdir/audio.raw" "$tmpdir/audio1_$i_padded.raw"
 			rm "$tmpdir"/silence.raw
@@ -6840,7 +6854,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 		myecho "[dvd-slideshow] Creating ac3 audio..."
 		checkforprog ffmpeg
 		rm -f "$tmpdir/audio1.ac3"
-		cat "$tmpdir"/audio1_????.raw | sox -t raw -2 -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null >"$tmpdir/audio1.wav"
+		cat "$tmpdir"/audio1_????.raw | sox -t raw $sox_word -s -c 2 -r $audio_sample_rate - -t wav - 2> /dev/null >"$tmpdir/audio1.wav"
 		if [ $? -ne 0 ] ; then
 			## sox errored
 			myecho "[dvd-slideshow] ERROR during sox execution!"
@@ -6858,9 +6872,9 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 	else
 		myecho "[dvd-slideshow] Concatenating all track 1 audio files..."
 		## cat all the audio files together: 
-	#	ls "$tmpdir"/audio1_????.raw | xargs -0 cat | sox -t raw -2 -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
-	#	find "$tmpdir" -name audio1_\?\?\?\?.raw -print0 | xargs -0 sox -t raw -2 -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
-		cat "$tmpdir"/audio1_????.raw | sox -t raw -2 -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
+	#	ls "$tmpdir"/audio1_????.raw | xargs -0 cat | sox -t raw $sox_word -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
+	#	find "$tmpdir" -name audio1_\?\?\?\?.raw -print0 | xargs -0 sox -t raw $sox_word -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
+		cat "$tmpdir"/audio1_????.raw | sox -t raw $sox_word -s -c 2 -r $audio_sample_rate - "$tmpdir/audio1.wav"
 		if [ "$debug" -ge 1 ] ; then
 			length=`wavlength "$tmpdir/audio1.wav"`
 			myecho "[dvd-slideshow] Actual length of .raw file=`hms $length`"
@@ -6921,7 +6935,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 			song_end_hms=`hms $song_end_ms`
 			song_start_hms="0"  # cannot modify starting point yet...
 			myecho "[dvd-slideshow] Creating silence audio file for $song_end_hms"
-			sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -2 -s -c 2 -r $audio_sample_rate "$tmpdir"/audio2_$i_padded.raw trim "0" "$song_end_hms"
+			sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir"/audio2_$i_padded.raw trim "0" "$song_end_hms"
 		else # not silence
 			## file should only be wav format at this point since it was decoded before
 			## all audio files are of the format "$tmpdir"/audio_2.wav
@@ -6930,7 +6944,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 			# too low or too high and getting clipped.
 			# reducing the volume a little should help.
 			volume=0.95
-			sox "$tmpdir/audio2_$i_padded.wav" -n stat 2> "$tmpdir"/trash.txt 
+			sox "$tmpdir/audio2_$i_padded.wav" $sox_nop stat 2> "$tmpdir"/trash.txt 
 			## need to fix this so it's accurate to 0.01 sec, not just 1 sec
 			## this will get floor(time) now.
 			song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | awk -F. '{print $1}'`
@@ -7020,19 +7034,19 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 				# fade only to the end of song length now, because we may have to add silence:
 				# We should probably eventually add the silence first, and then chop the song?
 				if [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
-					sox -v $volume "$tmpdir/audio2_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw"
+					sox -v $volume "$tmpdir/audio2_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw"
 				else # one of the fades is nonzero:
-					sox -v $volume "$tmpdir/audio2_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
+					sox -v $volume "$tmpdir/audio2_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" fade t "$fade_in_hms" "$song_length_hms" "$fade_out_hms"
 				fi
 				thetime_hms=`hms $(( $song_end_ms - $song_length_ms + 1000 ))` #plus 1s so sox actually crops.
 				thetime2_hms=`hms $(( $song_end_ms - $song_length_ms ))` 
 				myecho "[dvd-slideshow] Adding $thetime2_hms of silence to end of original audio file"
-				sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -2 -s -c 2 -r $audio_sample_rate "$tmpdir/silence.raw" trim 0 "$thetime_hms"
+				sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/silence.raw" trim 0 "$thetime_hms"
 				cat "$tmpdir/audio2_$i_padded.raw" "$tmpdir/silence.raw" > "$tmpdir/audio.raw" 
 				mv "$tmpdir/audio.raw" "$tmpdir/audio2_$i_padded.raw"
 				# hopefully there won't be many times where the audio needs to be buffered 
 				# at the end, so we'll add one extra step to make the coding easier:
-				sox -t raw -s -2 -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" "$tmpdir/audio2_$i_padded.wav"
+				sox -t raw -s $sox_word -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" "$tmpdir/audio2_$i_padded.wav"
 				rm "$tmpdir"/silence.raw
 			fi
 			if [ "$debug" -ge 2 ] ; then
@@ -7044,20 +7058,20 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 			fi
 			if [ "$song_length_ms" -ne "$song_end_ms"  ] && [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
 #				echo "cropping"
-				sox -v $volume "$tmpdir/audio2_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" trim 0 "$song_end_hms"
+				sox -v $volume "$tmpdir/audio2_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" trim 0 "$song_end_hms"
 			elif [ "$fade_out_time" -ne 0 ] || [ "$fade_in_time" -ne 0 ] ; then
 #				echo "fading"
-				sox -v $volume "$tmpdir/audio2_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
+				sox -v $volume "$tmpdir/audio2_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" fade t "$fade_in_hms" "$song_end_hms" "$fade_out_hms"
 			else
 #				echo "converting"
-				sox -v $volume "$tmpdir/audio2_$i_padded.wav" -2 -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" 
+				sox -v $volume "$tmpdir/audio2_$i_padded.wav" $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio2_$i_padded.raw" 
 			fi
 		fi  # end of if silence or not
 		if [ $i -eq 0 ] && [ "${audio2_start[$i]}" -ne 0 ] ; then
 			## buffer beginning with silence:
 			thetime_hms=`hms "${audio2_start[$i]}"`
 			myecho "[dvd-slideshow] Adding $thetime_hms to beginning of audio file"
-			sox -t raw -s -2 -c 2 -r $audio_sample_rate /dev/zero -2 -s -c 2 -r $audio_sample_rate "$tmpdir/silence.raw" trim 0 "$thetime_hms"
+			sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/silence.raw" trim 0 "$thetime_hms"
 			cat "$tmpdir"/silence.raw "$tmpdir/audio2_$i_padded.raw" > "$tmpdir/audio.raw" 
 			mv "$tmpdir/audio.raw" "$tmpdir/audio2_$i_padded.raw"
 			rm "$tmpdir"/silence.raw
@@ -7073,8 +7087,8 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 		
 	myecho "[dvd-slideshow] Concatenating all track 2 audio files..."
 	## cat all the audio files together: 
-#	find "$tmpdir" -name audio2_????.raw -print0 | xargs -0 sox -t raw -2 -s -c 2 -r $audio_sample_rate - "$tmpdir/audio2.wav"
-	cat "$tmpdir"/audio2_????.raw | sox -t raw -2 -s -c 2 -r $audio_sample_rate - "$tmpdir/audio2.wav"
+#	find "$tmpdir" -name audio2_????.raw -print0 | xargs -0 sox -t raw $sox_word -s -c 2 -r $audio_sample_rate - "$tmpdir/audio2.wav"
+	cat "$tmpdir"/audio2_????.raw | sox -t raw $sox_word -s -c 2 -r $audio_sample_rate - "$tmpdir/audio2.wav"
 	if [ "$debug" -ge 1 ] ; then
 		length=`wavlength "$tmpdir/audio2.wav"`
 		myecho "[dvd-slideshow] Actual length of .raw file=`hms $length`"

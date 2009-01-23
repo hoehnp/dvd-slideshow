@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn'
+version='0.8.3-svn-91'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -46,9 +46,9 @@ changes ()
 echo 'Changes:
 0.8.3
     New features:
-	
+	Use qscale VBR option in ffmpeg for flv and mp4 output instead of fixed bitrate.	
     Bug fixes:
-	Fix bugs when using old versions of sox < 14.0.0
+
 0.8.2
     New features:
 	Error check code BEFORE running full script.
@@ -447,8 +447,8 @@ Options:
 	  subtitle_color="white"
 	  subtitle_outline_color="black"
 	  subtitle_location="bottom"
-	subtitle_location_x=0
-	subtitle_location_y=105
+	  subtitle_location_x=0
+	  subtitle_location_y=105
 
 	  ## Title:
 	  title_font_size=48
@@ -473,6 +473,10 @@ Options:
 	  # kenburns:
 	  kenburns_acceleration=1 # in seconds, or:
 	  kenburns_acceleration=25%  # as a percentage of the total kenburns effect time
+		
+	  # logo:
+	  logo=path/to/logofile.png  # will be overlaid on top of all frames
+	  logo_gravity=gravity # North | South | East | West | NorthEast | NorthWest | SouthEast | SouthWest  ( this option not implemented yet! )
 '
 	echo '  '
 }
@@ -508,35 +512,39 @@ font_dir2="/usr/X11R6/lib/X11/fonts/"
 font_dir3="/usr/local/share/fonts/"
 default_fontname1='n019004l.pfb' # helvetica bold URW fonts
 default_fontname2='helb____.ttf' # helvetica bold truetype
-	  ## Subtitle:
-	  subtitle_font_size=24
-	  subtitle_color="white"
-	  subtitle_outline_color="black"
-	  subtitle_location="bottom" # or "top"
-	subtitle_location_x=0
-	subtitle_location_y=105
 
-	  ## Title:
-	  title_font_size=48
-	  title_font_color='black'  # or use hex "#RRGGBB"
+## Subtitle:
+subtitle_font_size=24
+subtitle_color="white"
+subtitle_outline_color="black"
+subtitle_location="bottom" # or "top"
+subtitle_location_x=0
+subtitle_location_y=105
 
-	  ## top title:
-	  toptitle_font_size=48
-	  toptitle_font_color='black' # or use hex "#RRGGBB"
-	  toptitle_bar_height=125  # 0 for no 50% white behind text
-	  toptitle_text_location_x=80
-	  toptitle_text_location_y=50
+## Title:
+title_font_size=48
+title_font_color='black'  # or use hex "#RRGGBB"
 
-	  # bottom title: 
-	  bottomtitle_font_size=36
-	  bottomtitle_font_color="black"  # or use hex "#RRGGBB"
-	  bottomtitle_bar_location_y=156 # relative to bottom of image
-	  bottomtitle_bar_height=55  # 0 for no 50% white behind text
-	  bottomtitle_text_location_x=0
-	  bottomtitle_text_location_y=155
+## top title:
+toptitle_font_size=48
+toptitle_font_color='black' # or use hex "#RRGGBB"
+toptitle_bar_height=125  # 0 for no 50% white behind text
+toptitle_text_location_x=80
+toptitle_text_location_y=50
+
+# bottom title: 
+bottomtitle_font_size=36
+bottomtitle_font_color="black"  # or use hex "#RRGGBB"
+bottomtitle_bar_location_y=156 # relative to bottom of image
+bottomtitle_bar_height=55  # 0 for no 50% white behind text
+bottomtitle_text_location_x=0
+bottomtitle_text_location_y=155
 
 themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant.  see: http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
 local_themedir=~/.dvd-slideshow/themes  # local theme directory
+
+logo=""
+logo_gravity="SouthEast" # bottom right corner
 
 ##################################################################################
 ## not user configurable:
@@ -566,6 +574,8 @@ print_themes=0
 first_title=1
 first_image=1
 filtermethod=Lanczos
+commandline_gm=0
+kenburns_acceleration=2 # in seconds
 
 #image_postprocess='shadow'
 image_postprocess='none'
@@ -577,12 +587,10 @@ ignore_seq_end='-M'
 
 # set smp option based on kernel name:
 if [ -z "`uname -a | grep -i smp`" ] ; then
-	smp=0
-else
 	smp=1
+else
+	smp=0
 fi
-
-kenburns_acceleration=2 # in seconds
 
 theargs="$*"
 ## command-line settings:
@@ -625,6 +633,7 @@ do
 	-mp4) shift; output_format='mp4' ;; # force using mpeg2enc instead of ffmpeg
 	-mpg) shift; output_format='mpg' ;; # force using mpeg2enc instead of ffmpeg
 	-w) shift; widescreen=1 ;;  # use 16:9 instead of 4:3 aspect ratio
+	-gm) shift; commandline_gm=1 ;;  # use graphicsMagick instead of ImageMagick (alpha)
 	-L) shift; low_quality=1 ;;  # use low-quality mode
 	-M) shift; commandline_high_quality=0 ; low_quality=0 ;;  # use medium-quality mode (this is the default)
 	-H) shift; commandline_high_quality=1 ;;  # ALPHA.  use high-quality mode (This might take much longer to process in the future)
@@ -648,8 +657,10 @@ do
                          exit 1
                 fi ;;
 	-h) help ; exit 0 ; shift ;;
-	-?) help ; exit 0 ; shift ;;
+	-\?) help ; exit 0 ; shift ;;
 	-help) help ; exit 0 ; shift ;;
+	--help) help ; exit 0 ; shift ;;
+	-v) echo "$version" ; exit 0 ; shift ;;
 	-version) echo "$version" ; exit 0 ; shift ;;
 	esac
 done
@@ -681,7 +692,6 @@ myechon ()
 }
 
 
-## check_rm checks to see if the file exists before it is deleted:
 #check_rm ()
 #{
 #	if [ -f "$1" ] ; then
@@ -980,7 +990,6 @@ extracopies ()  # EXTRACOPIES
 		else
 			## loop over number of copies = stepsize-1
 			end=$(( $stepsize - 1 ))
-#			for it in `seq 1 $(( $stepsize - 1 ))`; do
 			for (( it=1 ; it<=end ; it++ )) ; do
 				dj2=`addzeros $(( $this_frame + $it ))`
 				cp "$tmpdir/fade_$dj.$suffix" "$tmpdir/fade_$dj2.$suffix"
@@ -1091,11 +1100,6 @@ previousslideincrement ()
 	done
 	if [ -z "$previousimage" ] ; then
 		increment=0
-#		echo "" 1>&2
-#		echo '[dvd-slideshow] ERROR: Could not find a valid previous slide' 1>&2
-#		echo '[dvd-slideshow]        This happens when a dvd-slideshow cannot locate a past image in your .txt file' 1>&2
-#		echo '[dvd-slideshow]	     Fix this in your input file and re-run dvd-slideshow.' 1>&2
-#		function_error=0
 		echo "$increment"
 	else
 		echo "$increment"
@@ -1118,11 +1122,6 @@ nextslideincrement ()
 		fi
 	done
 	if [ -z "$nextimage" ] ; then
-#		echo "" 1>&2
-#		echo '[dvd-slideshow] ERROR: Could not find a valid next slide' 1>&2
-#		echo '[dvd-slideshow]        This happens when a fade cannot locate a future image in your .txt file' 1>&2
-#		echo '[dvd-slideshow]	     Fix this in your input file and re-run dvd-slideshow.' 1>&2
-#		function_error=1
 		increment=0
 		echo "$increment"
 	else
@@ -1164,10 +1163,6 @@ read_next_variables ()  # READ_NEXT_VARIABLES
 			## next line is not an image!
 			# read variable if it exists:
 			set_variables "$image1" 1
-#			it=`set_variables "$image1" 0`
-#			if [ -n "$it" ] ; then
-#				myecho "[dvd-slideshow] Set future variable $it"
-#			fi
 			increment=$(( $increment + 1 ))	
 		fi
 	done
@@ -1822,16 +1817,6 @@ crop_parameters () # CROP_PARAMETERS image_width image_height frame_width frame_
 	## figure out the size of the window scaled to the original image size:
 	ratio=$(( 1000* $image_width / $image_height ))
 	out_ratio=$(( 1000* $frame_width / $frame_height ))  # doesn't change during script
-#	if [ "$ratio" -gt "$(( $out_ratio ))" ] ; then
-#		# image width greater than output width at same scale
-#		newwidth=$image_width
-#		newheight=$(( $dvd_height * $image_width / $dvd_width ))
-#	elif [ "$ratio" -le $(( $out_ratio )) ] ; then
-#		# image height greater than output height at same scale
-#		newwidth=$(( $dvd_width * $image_height / $dvd_height ))
-#		newheight=$image_height
-#	fi
-#	out_ratio=$(( 1000* $newwidth / $newheight ))  # this number is correct
 	#[ $debug -ge 3 ] && myecho "[dvd-slideshow:crop_parameters] input: x0=`todec000 $x0` y0=`todec000 $y0` x1=`todec000 $x1` y1=`todec000 $y1`     xi=$xi yi=$yi (dvd window)"
 	[ $debug -ge 3 ] && myecho "[dvd-slideshow:crop_parameters] input: x0=$x0 y0=$y0 x1=$x1 y1=$y1  xi=$xi yi=$yi (dvd window)"
 
@@ -1842,8 +1827,6 @@ crop_parameters () # CROP_PARAMETERS image_width image_height frame_width frame_
 	xi1=$(( 1000*$x1- 1000*$xi )); yi1=$(( 1000*$y1- 1000*$yi )) # already x1000
 	w=$(( $xi1 - $xi0 )) # already x1000
 	h=$(( $yi1 - $yi0 ))	 # already x1000
-#	out_ratio=$(( $w / $h )) ## should be same as before because coordinate system transformation preserves this.
-#	[ $debug -ge 3 ] && myecho "[dvd-slideshow:crop_parameters] xi0,yi0=$xi0,$yi0 xi1,yi1=$xi1,$yi1   w=$w h=$h  ratio=$ratio out_ratio=$out_ratio"
 	[ $debug -ge 3 ] && myecho "[dvd-slideshow:crop_parameters] xi0,yi0=`todec000 $xi0`,`todec000 $yi0` xi1,yi1=`todec000 $xi1`,`todec000 $yi1`   w=`todec000 $w` h=`todec000 $h`  ratio=`todec000 $ratio` out_ratio=`todec000 $out_ratio` (i=image ref frame)"
 
 	##############################################
@@ -1875,7 +1858,6 @@ crop_parameters () # CROP_PARAMETERS image_width image_height frame_width frame_
 	if [ $yi0 -lt 0 ] ; then  ###*  rescale=deltax
 		## top of cropped image is in the middle of the dvd window
 		yci=`div1000 $(( $rescale * -1 * $yi0 ))`
-#		yci=$(( $rescale * -1 * $yi0 / 1000 ))
 		[ "$yci" -ge 1 ] && yci=$(( $yci - 1 ))
 	else
 		## top of cropped image should be at y=0 afterward
@@ -2123,29 +2105,21 @@ kenburns ()  # KENBURNS
 		else
 			resize=''
 		fi
-		convert "$l_file" -filter $filtermethod -resize $sq_to_dvd_pixels $resize +repage -type TrueColorMatte -depth 8 "$tmpdir"/temp_slideshow_image_scaled.mpc
+		$gm_cmd convert "$l_file" -filter $filtermethod -resize $sq_to_dvd_pixels $resize $gm_repage -type TrueColorMatte -depth 8 "$tmpdir"/temp_slideshow_image_scaled.ppm
 
 		############################ end crop/resize large images
 
 #		echo 'x0,y0,x1,y1,xcenter,ycenter,xwidth,yheight,xc0,yc0,c_width,c_height' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,iwn,ihn,predicted_resized_width,predicted_resized_height,xc0_dec,yc0_dec' > kenburns_coordinates.csv
 #		echo 'xc0,yc0,c_width,c_height,xci,yci,predicted_resized_width,predicted_resized_height' > kenburns_coordinates.csv
-#		if [ $xe0 -gt $xs0 ] ; then
-			xvelocity0=$(( 1000 * ($xe0-$xs0)*($xe0-$xs0) / $l_frames ))
-			xvelocity1=$(( 1000 * ($xe1-$xs1)*($xe1-$xs1) / $l_frames ))
-			xvelocity=$(( ( $xvelocity0 + $xvelocity1 ) / 1000 ))
-#echo "xvelocity0=$xvelocity0  xvelocity1=$xvelocity1"
-#		else
-#			xvelocity=$(( 1000 * ($xs0-$xe0) / $l_frames ))
-#		fi
-#		if [ $ye0 -gt $ys0 ] ; then
-			yvelocity0=$(( 1000 * ($ye0-$ys0)*($ye0-$ys0) / $l_frames ))
-			yvelocity1=$(( 1000 * ($ye1-$ys1)*($ye1-$ys1) / $l_frames ))
-			yvelocity=$(( ( $yvelocity0 + $yvelocity1 ) / 1000 ))
-#echo "yvelocity0=$yvelocity0  yvelocity1=$yvelocity1"
-#		else
-#			yvelocity=$(( 1000 * ($ys0-$ye0) / $l_frames ))
-#		fi
+		xvelocity0=$(( 1000 * ($xe0-$xs0)*($xe0-$xs0) / $l_frames ))
+		xvelocity1=$(( 1000 * ($xe1-$xs1)*($xe1-$xs1) / $l_frames ))
+		xvelocity=$(( ( $xvelocity0 + $xvelocity1 ) / 1000 ))
+		#echo "xvelocity0=$xvelocity0  xvelocity1=$xvelocity1"
+		yvelocity0=$(( 1000 * ($ye0-$ys0)*($ye0-$ys0) / $l_frames ))
+		yvelocity1=$(( 1000 * ($ye1-$ys1)*($ye1-$ys1) / $l_frames ))
+		yvelocity=$(( ( $yvelocity0 + $yvelocity1 ) / 1000 ))
+		#echo "yvelocity0=$yvelocity0  yvelocity1=$yvelocity1"
 		if [ "$interp" -eq 1 ] && [ "$xvelocity" -eq 0 ] && [ "$yvelocity" -lt 4000 ] ; then
 			[ $debug -ge 1 ] && echo "[dvd-slideshow:kenburns] Using interpolation. Velocity=$xvelocity $yvelocity"
 		elif [ "$interp" -eq 1 ] && [ "$yvelocity" -eq 0 ] && [ "$xvelocity" -lt 4000 ] ; then
@@ -2191,6 +2165,9 @@ kenburns ()  # KENBURNS
 		V1x=$( echo "scale=9; 2 * ( $xe1 - $xs1 ) / ( $l_frames + $F2 - $F1 )" | bc ) 
 		V1y=$( echo "scale=9; 2 * ( $ye1 - $ys1 ) / ( $l_frames + $F2 - $F1 )" | bc )
 #		echo "F1=$F1 F2=$F2 V0x=$V0x V0y=$V0y"
+		if [ -n "$logo" ] ; then  # optionally add logo layer
+			add_logo "$logo" $i "$logo_gravity"
+		fi
 		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 		if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 			# pre-render the subtitle:
@@ -2306,14 +2283,7 @@ kenburns ()  # KENBURNS
 				x1=$( div1000 $it )	
 				it=$( echo "scale=3; 1000* $y1" | bc ); it=`echo "$it" | awk -F. '{print $1}'` ; [ -z "$it" ] && it=0 
 				y1=$( div1000 $it )	
-#				x0=$x0_whole ; y0=$y0_whole
-#				x1=$x1_whole ; y1=$y1_whole
 			fi
-
-#			[ "$x1" -eq 0 ] && x1="+0"
-#			[ "$y1" -eq 0 ] && y1="+0"
-#			[ "$x1" -gt 0 ] && x1="+$x1"
-#			[ "$y1" -gt 0 ] && y1="+$y1"
 
 ###########################
 
@@ -2361,21 +2331,24 @@ kenburns ()  # KENBURNS
 			if [ $delta_width -le 1 ] && [ $delta_height -le 1 ] && [ "$frame_border" -eq 0 ] ; then
 #				echo "[dvd-slideshow:kenburns: delta_width=$delta_width delta_height=$delta_height"
 				# force the output size to be exact:  no composite needed!
+				if [ -n "$logo" ] ; then  # optionally add logo layer
+					add_logo "$logo" $i "$logo_gravity"
+				fi
 				if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 					if [ "$smp" -eq 1 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh<1 smp=1"
-						(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_"$dj.$suffix"  ; extracopies $fr $l_frames $suffix ) &
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_"$dj.$suffix"  ; extracopies $fr $l_frames $suffix ) &
 					elif [ "$smp" -eq 0 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh<1 smp=0"
-						(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_"$dj.$suffix"  ; extracopies $fr $l_frames $suffix ) 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_"$dj.$suffix"  ; extracopies $fr $l_frames $suffix ) 
 					fi
 				else
 					if [ "$smp" -eq 1 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh<1 smp=1"
-						(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen -type TrueColorMatte -depth 8 "$tmpdir"/fade_"$dj.$suffix"  ; extracopies $fr $l_frames $suffix ) &
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen -type TrueColorMatte -depth 8 "$tmpdir"/fade_"$dj.$suffix"  ; extracopies $fr $l_frames $suffix ) &
 					elif [ "$smp" -eq 0 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh<1 smp=0"
-						convert "$tmpdir"/temp_slideshow_image_scaled.mpc -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames $suffix
+						$gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix"  ; extracopies $fr $l_frames $suffix
 					fi
 				fi
 			elif [ 0 == 1 ] ; then
@@ -2393,7 +2366,7 @@ kenburns ()  # KENBURNS
 	                        [ $debug -ge 2 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom delta_w=$delta_width delta_h=$delta_height"
 #				if [ "$smp" -eq 1 ] ; then
 					[ $debug -ge 1 ] && echo "deltawh>1 bg=black"
-					convert "$tmpdir"/temp_slideshow_image_scaled.mpc -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 $convolve -resize "$frame_width"x"$frame_height" "$tmpdir"/mytemp.$suffix 
+					$gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$frame_width"x"$frame_height" "$tmpdir"/mytemp.$suffix 
 					# now, get size of resized image because of roundoff errors:
 					# need to get this correct in the future so we can run this in smp mode!
 					resized_width=$( imagewidth_sq "$tmpdir"/mytemp.$suffix )
@@ -2411,33 +2384,36 @@ kenburns ()  # KENBURNS
 					[ "$bottom" -lt 0 ] && top=$(( $top + $bottom )) 
 					[ "$bottom" -lt 0 ] && bottom=0
 	                        	[ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom delta_w=$delta_width delta_h=$delta_height"
-					convert "$tmpdir"/mytemp.$suffix -background black -splice "$right"x"$bottom"+$resized_width+$resized_height -splice "$left"x"$top" +repage $sharpen -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; rm "$tmpdir"/mytemp.$suffix ; extracopies $fr $l_frames $suffix
+					$gm_cmd convert "$tmpdir"/mytemp.$suffix -background black -splice "$right"x"$bottom"+$resized_width+$resized_height -splice "$left"x"$top" $gm_repage $sharpen -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; rm "$tmpdir"/mytemp.$suffix ; extracopies $fr $l_frames $suffix
 
-					# works with imagemagick > 6.0.6  (convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$c_width"x"$c_height"+$xc0+$yc0 +repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
+					# works with imagemagick > 6.0.6  ($gm_cmd convert "$tmpdir/temp_slideshow_image_scaled.ppm" -crop "$c_width"x"$c_height"+$xc0+$yc0 $gm_repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
 #				fi
 			else   # need to composite over background image:
+				if [ -n "$logo" ] ; then  # optionally add logo layer
+					add_logo "$logo" $i "$logo_gravity"
+				fi
 				if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 					## also render subtitles:
 					if [ "$smp" -eq 1 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=1"
-						(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir/fade_$dj.$suffix" ; convert "$tmpdir"/fade_$dj.$suffix -type TrueColorMatte -depth 8 "$tmpdir"/fade_$dj.$suffix ; extracopies $fr $l_frames $suffix ) & 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir/fade_$dj.$suffix" ; $gm_cmd convert "$tmpdir"/fade_$dj.$suffix -type TrueColorMatte -depth 8 "$tmpdir"/fade_$dj.$suffix ; extracopies $fr $l_frames $suffix ) & 
 					else
 						[ $debug -ge 2 ] && echo "deltawh>1 bg=image smp=0"
-						(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg"  miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_$dj.$suffix ; convert "$tmpdir"/fade_$dj.$suffix -type TrueColorMatte -depth 8 "$tmpdir"/fade_$dj.$suffix ; extracopies $fr $l_frames $suffix ) 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg"  miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_$dj.$suffix ; $gm_cmd convert "$tmpdir"/fade_$dj.$suffix -type TrueColorMatte -depth 8 "$tmpdir"/fade_$dj.$suffix ; extracopies $fr $l_frames $suffix ) 
 						# this last pipe through convert seems to correct
 						# the "bad raw ppm magic" errors.	
 					fi
 				else  # no subtitles to render
 					if [ "$smp" -eq 1 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=1"
-						(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) & 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) & 
 					else
 						[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=0"
-						(convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" +repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) 
 					fi
 				fi
 			fi
-# this next line only works for non-smp! (since file must exist first)
+			# this next line only works for non-smp! (since file must exist first)
 			# errors here (not depth=8) will often cause ppmtoy4m errors
 			# like "Bad Raw PPM magic!"
 			if [ "$debug" -ge 2 ] && [ "$smp" -eq 0 ] ; then
@@ -2468,12 +2444,6 @@ wavlength ()
 {
 		sox "$1" $sox_nop stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
-#		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
-#		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
-#		song_length_ms=`echo $song_length | awk -F. '{printf ("%3.3f",$0)}' | awk -F. '{print $2}'`
-#		## make sure we have two decimal places?
-#		if [ -z "$song_length_ms" ] ; then song_length_ms=0 ; fi
-#		song_length=$( echo "scale=0; 1000 * $song_length_seconds + $song_length_ms" | bc )
 		song_length=$( echo "scale=0; 1000 * $song_length" | bc | awk -F. '{printf ("%3.0f", $0)}' )
 		rm "$tmpdir"/trash.txt
 		echo "$song_length"
@@ -2483,12 +2453,6 @@ rawlength ()
 {
 		sox -t raw -r $audio_sample_rate $sox_word -s -c 2 "$1" $sox_nop stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
-#		song_length_seconds=`echo $song_length | awk -F. '{print $1}'`
-#		if [ -z "$song_length_seconds" ] ; then song_length_seconds=0 ; fi
-#		song_length_ms=`echo $song_length | awk -F. '{printf ("%3.3f",$0)}' | awk -F. '{print $2}'`
-#		## make sure we have two decimal places?
-#		if [ -z "$song_length_ms" ] ; then song_length_ms=0 ; fi
-#		song_length=$( echo "scale=0; 1000 * $song_length_seconds + $song_length_ms" | bc )
 		song_length=$( echo "scale=0; 1000 * $song_length" | bc | awk -F. '{printf ("%3.0f", $0)}' )
 		rm "$tmpdir"/trash.txt
 		echo "$song_length"
@@ -2664,26 +2628,15 @@ set_end_frame_time ()
 	# calculate current time and frame before adding this extra rendered time:
 
 	this_start_time=$total_slideshow_time # before adding current rendered time
-#	echo "this_start_time=$this_start_time"
 	this_start_frame=$total_slideshow_frames
-#	echo "this_start_frame=$this_start_frame"
 
-#	echo "total_slideshow_time=$total_slideshow_time"
 	total_slideshow_time=$(( $total_slideshow_time + $current_time ))
-#	echo "total_slideshow_time=$total_slideshow_time"
 	time_to_render=$(( $total_slideshow_time - $this_start_time ))
-#	echo "time_to_render=$time_to_render"
-#	echo "frames_per_ms=$frames_per_ms"
 	total_slideshow_frames=`div1000 $(( $frames_per_ms * $total_slideshow_time / 1000 ))`
-#	echo "total_slideshow_frames=$total_slideshow_frames"
 	frames_to_render=$(( $total_slideshow_frames - $this_start_frame ))
-#	frames=$frames_to_render
-#	echo "frames_to_render=$frames_to_render"
 
 	slide_end_time=$total_slideshow_time  ## in thousandths of a second
-#	echo "slide_end_time=$slide_end_time  duration=${duration[$i]} "
 	slide_end_frame="$total_slideshow_frames"
-#	echo "slide_end_frame=$slide_end_frame"
 	slide_end_hms=`hms $slide_end_time`
 }
 
@@ -3031,6 +2984,7 @@ set_variables ()   # SET_VARIABLES
 		subtitle_location_x) subtitle_location_x="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_location_x=$subtitle_location_x" ;;
 		subtitle_location_y) subtitle_location_y="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_location_y=$subtitle_location_y" ;;
 		logo) logo="$config2" ; [ "$noecho" -eq 0 ] && echo "logo=$logo" ;;
+		logo_gravity) logo_gravity="$config2" ; [ "$noecho" -eq 0 ] && echo "logo_gravity=$logo_gravity" ;;
 	esac
 }
 
@@ -3140,6 +3094,23 @@ if [ -n "$theme" ] ; then
 	fi
 		
 fi
+}
+
+add_logo () # LOGO
+{
+	local logo="$1"
+	local i="$2"
+	local logo_gravity="$3"
+
+	if [ -z "$logo_gravity" ] ; then
+		logo_gravity="southeast"
+	fi	
+	if [ -f "$logo" ] ; then
+		composite -compose src-over -gravity $logo_gravity -type TrueColorMatte -depth 8 "$logo" "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
+	else
+		echo "[dvd-slideshow] ERROR: Logo specified but file not found:"
+		echo "[dvd-slideshow] $logo"
+	fi
 }
 
 subtitle ()  # SUBTITLE
@@ -3443,6 +3414,29 @@ if [ -z "$it" ] ; then # no convert
 fi
 progver=`convert -help | head -n 1 | awk '{ print $3 }'`
 logecho "[dvd-slideshow] Found ImageMagick version $progver"
+
+# GraphicsMagick
+it=`which gm 2> /dev/null`
+if [ -z "$it" ] ; then # no graphicsmagick
+#        myecho "[dvd-slideshow] ERROR:  no ImageMagick found for audio processing"
+#        myecho "[dvd-slideshow]         You need to download and install ImageMagick."
+#        myecho "[dvd-slideshow]         http://ImageMagick.sourceforge.net"
+#	cleanup ; exit 0
+	graphicsmagick=0
+else
+	progver=`gm version | head -n 1 | awk '{ print $2 }'`
+	logecho "[dvd-slideshow] Found GraphicsMagick version $progver"
+	if [ "$commandline_gm" -eq 1 ] ; then
+		graphicsmagick=1
+		gm_cmd="gm"
+		gm_repage=""
+	else
+		graphicsmagick=0
+		gm_cmd=""
+		gm_repage='+repage'
+	fi
+fi
+
 
 # dvdauthor
 it=`which dvdauthor 2> /dev/null`
@@ -4026,12 +4020,20 @@ myecho "[dvd-slideshow] Found $transitions transitions (fadein/fadeout/crossfade
 
 ## setup video parameters:
 if [ "$output_format" == 'flv' ] ; then
-	video_bitrate=100  # this works ok for 320x240. 
+	# need to change this to be dynamic (proportinal to size)
+	# video_bitrate=$(( 6000 * $dvd_width / 480 ))
+	#video_bitrate=1000000  # this works ok for 320x240. 
+	if [ $high_quality -eq 1 ] ; then
+		qscale='-qscale 2'
+	elif [ $low_quality -eq 1 ] ; then
+		qscale='-qscale 7'
+	else
+		qscale='-qscale 5'
+	fi
 	## video_bitrate will be scaled if user specifies -s 240x180, for example, by about 1/2
 	video_suffix='flv'
 	framerate='15'  # is this needed for .flv?
 	frames_per_ms=15000  # in ms
-#	sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
 	ppmtoy4m_frc='15:1'  # 15 fps
 	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
@@ -4040,11 +4042,17 @@ if [ "$output_format" == 'flv' ] ; then
 	audio_sample_rate=44100
 	audio_bitrate=128
 elif [ "$output_format" == 'swf' ] ; then
-	video_bitrate=100
+	#video_bitrate=100
+	if [ $high_quality -eq 1 ] ; then
+		qscale='-qscale 2'
+	elif [ $low_quality -eq 1 ] ; then
+		qscale='-qscale 7'
+	else
+		qscale='-qscale 5'
+	fi
 	video_suffix='swf'
 	framerate='15'  # is this needed for .swf?
 	frames_per_ms=15000  # in ms
-#	sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
 	ppmtoy4m_frc='15:1'  # 15 fps
 	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
@@ -4053,11 +4061,17 @@ elif [ "$output_format" == 'swf' ] ; then
 	audio_sample_rate=44100
 	audio_bitrate=128
 elif [ "$output_format" == 'mp4' ] ; then
-	video_bitrate=1000
+	#video_bitrate=1200000
+	if [ $high_quality -eq 1 ] ; then
+		qscale='-qscale 2'
+	elif [ $low_quality -eq 1 ] ; then
+		qscale='-qscale 7'
+	else
+		qscale='-qscale 5'
+	fi
 	video_suffix='mp4'
 	framerate='29.97'  
 	frames_per_ms=29970  # in ms
-#	sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
 	ppmtoy4m_frc='30000:1001'
 	ppmtoy4m_aspect='10:11'  # 4:3
 		# see http://www.uwasa.fi/~f76998/video/conversion
@@ -4144,7 +4158,6 @@ else  # assume mpeg2 video output (dvd, vcd, svcd or other)
 	fi
 	video_buffer='-b 1000'
 	if [ "$output_format" == 'mpg' ] ; then  # assume computer output:
-#		sq_pixel_multiplier=$(( 1000 ))  # keep pixels square?
 		ppmtoy4m_aspect='1:1'  # square pixels
 	        ac3=0  # force mp2 ?
 	        audio_bitrate=192
@@ -4158,23 +4171,24 @@ else  # assume mpeg2 video output (dvd, vcd, svcd or other)
 fi
 
 resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}' | sed 's/,/\./g'`
-#resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (ar=="4:3"){ar=4/3} else {ar=16/9};printf "%0.2f", (100/((h/w)*(ar)));exit;}'`
 # resize_factor is 93.75 for PAL
 # resize_factor is 112.50 for NTSC
 sq_to_dvd_pixels="${resize_factor}x100%"
-#sq_pixel_multiplier=$( printf %5.0f $( echo "scale=0; 10 * $resize_factor" | bc ) )
 [ $debug -ge 2 ] && myecho "[dvd-slideshow] sq_to_dvd_pixels=$sq_to_dvd_pixels"
 
-if [ -n "$output_size" ] ; then
-	# used user-set size, instead of defaults!
-	orig_dvd_width=$dvd_width ; orig_dvd_height=$dvd_height
-	dvd_width=$( echo "$output_size" | cut -dx -f1 | tr -d \[:blank:\] )
-	dvd_height=$( echo "$output_size" | cut -dx -f2 | tr -d \[:blank:\] )
-	if [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
-		video_bitrate=$(( $video_bitrate * ( $dvd_width * $dvd_height ) / ( $orig_dvd_width * $orig_dvd_height ) ))
-		myecho "[dvd-slideshow] Set new video bitrate to $video_bitrate kb/s"
-	fi
-fi
+# use qscale instead!
+#if [ -n "$output_size" ] ; then
+#	# used user-set size, instead of defaults!
+#	orig_dvd_width=$dvd_width ; orig_dvd_height=$dvd_height
+#	dvd_width=$( echo "$output_size" | cut -dx -f1 | tr -d \[:blank:\] )
+#	dvd_height=$( echo "$output_size" | cut -dx -f2 | tr -d \[:blank:\] )
+#	if [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] ; then
+#		video_bitrate=$(( $video_bitrate * ( $dvd_width * $dvd_height ) / ( $orig_dvd_width * $orig_dvd_height ) ))
+#		myecho "[dvd-slideshow] dvd_width=$dvd_width dvd_height=$dvd_height"
+#		myecho "[dvd-slideshow] output_size=$output_size ratio=$(( ( $dvd_width * $dvd_height ) / ( $orig_dvd_width * $orig_dvd_height ) ))"
+#		myecho "[dvd-slideshow] Set new video bitrate to $video_bitrate b/s"
+#	fi
+#fi
 
 if [ -n "$output_framerate" ] ; then
 	framerate="$output_framerate"
@@ -4608,17 +4622,19 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .flv file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
+#		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
+		# no bitrate spec:
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'swf' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .swf file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.swf" 1> /dev/null 2>> "$ffmpeg_out" &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.swf" 1> /dev/null 2>> "$ffmpeg_out" &
 	elif [ "$output_format" == 'mp4' ] ; then   
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .mp4 file"
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$ffmpeg_out" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'mp4_ipod' ] ; then   # NOT TESTED YET
 		# see http://www.ubuntuforums.org/showthread.php?t=114946
 		# do pass one first, then add audio at the end during pass 2?
@@ -4672,28 +4688,6 @@ for file in "${image[@]}"; do
 		i=$(( $i+1 )) ; continue
 	fi
 	
-#	##### Set slide duration
-#	if [ -z "${duration[$i]}" ] ; then
-#		myecho "[dvd-slideshow] WARNING:  No duration specified for ${image[$i]}"
-#		myecho "[dvd-slideshow]	     Using default duration of 5 seconds"
-#		duration[$i]=5
-#		duration[$i]=`seconds2ms ${duration[$i]}`  # duration in thousandths of a sec.
-#	elif [ "${duration[$i]}" == 'audio' ] ; then
-#		## make the duration the length of the last audio track
-#		# because audio is rendered in the baackground now, we need
-#		# to wait for it to finish so the .wav file is present:
-#		waitforfile "$tmpdir/audio$track"_"$audio_index_padded.wav" # last audio file
-#		song_length_ms=`wavlength "$tmpdir/audio$track"_"$audio_index_padded.wav"`
-#		if [ -z "$song_length_ms" ] ; then
-#			myecho '[dvd-slideshow] ERROR: You must have an audio track before a slide specifying "audio"'
-#			cleanup; exit 1
-#		fi
-#		duration[$i]="$song_length_ms"  # duration in thousandths of a sec.
-#	else  # duration should be ok
-#		duration[$i]=`seconds2ms ${duration[$i]}`  # duration in thousandths of a sec.
-#	fi
-#	## number of frames to render for this picture:
-#        # frames=`div1000 $(( $frames_per_ms * ${duration[$i]} / 1000 ))` # both duration and fps are in ms
 	frames=$( duration2frames ${duration[$i]} )
 	rendered_frames="$frames"
 	## get start frame & time:
@@ -4952,12 +4946,12 @@ for file in "${image[@]}"; do
 		## encode video
 #		myecho "[dvd-slideshow] Encoding ${image[$i]} to video.mpg"
 		# let's re-encode it just to make sure every video works:
+		# this is really inefficient, but it should work. 
 		if [ "$pal" -eq 1 ] ; then
 			ffmpeg -i "${image[$i]}" -target pal-dvd "$tmpdir"/tmp.avi >> "$ffmpeg_out" 2>&1
 		else
 			ffmpeg -i "${image[$i]}" -target ntsc-dvd "$tmpdir"/tmp.avi >> "$ffmpeg_out" 2>&1
 		fi
-#		encode_video "${image[$i]}"
 		encode_video "$tmpdir"/tmp.avi
 		# now remove the temporary file (thanks for fix by Marc Wäckerlin)
 		rm "$tmpdir"/tmp.avi
@@ -5071,20 +5065,25 @@ for file in "${image[@]}"; do
 		if [ ! -f "$tmpdir/slide_$i.ppm" ] ; then 
 			create_slide "$file" "$tmpdir/slide_$i.ppm"
 		fi
-		if [ -n "$logo" ] ; then
+		if [ -n "$logo" ] ; then  # optionally add logo layer
+			if [ -z "$logo_gravity" ] ; then
+				logo_gravity="southeast"
+			fi	
 			if [ -f "$logo" ] ; then
-				composite -compose src-over -gravity southeast -type TrueColorMatte -depth 8 "$logo" "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
+				composite -compose src-over -gravity $logo_gravity -type TrueColorMatte -depth 8 "$logo" "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
 			else
 				echo "[dvd-slideshow] ERROR: Logo specified but file not found:"
 				echo "[dvd-slideshow] $logo"
 			fi
 		fi
+		if [ -n "$logo" ] ; then  # optionally add logo layer
+			add_logo "$logo" $i "$logo_gravity"
+		fi
+		# optionally add subtitle to image:
 		subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
-#		[ -n "${subtitle1[$i]}" ] && myecho "[dvd-slideshow] Subtitle1= ${subtitle1[$i]}"
 		if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 			subtitle "${subtitle1[$i]}" $i transparent # just creates the .png file for overlay
 			composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
-		# else?
 		fi
 		if [ "$frames_to_render" -ge 1 ] ; then
 			encode "$tmpdir/slide_$i.ppm" $frames_to_render
@@ -5154,19 +5153,12 @@ for file in "${image[@]}"; do
 			window_start=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $1";"$2}'`
 			window_end=`echo "${effect1_params[$i+$increment]}" | awk -F';' '{print $3";"$4}'`
 			## number of frames in kenburns effect:
-#			next_duration=${duration[$i+$increment]}  # duration in thousandths of sec
-#			frames=$( duration2frames ${duration[$i]} )  # already calculated
-#			next_frames=$( duration2frames $next_duration )  # frames for next slide
 			next_frames="${frames_extended[$i+$increment]}"
 			kenburns "$window_start" "$window_end" "${image[$i+$increment]}" "$next_frames" 1 "$frames" "$normal_bg" "."
-#			progressbar_frames="$next_frames" ; progressbar_fr="$(( $frames + 1 ))"
-#			echo "progressbar_fr=$progressbar_fr progressbar_frames=$progressbar_frames"
 		elif [ "$nextslide_effect" == 'scroll' ] ; then  # if next picture has scroll effect
 			myecho "[dvd-slideshow] Pre-rendering scroll effect for fadein..."
 			[ -f "$tmpdir"/fade_0001.ppm ] && \rm "$tmpdir"/fade_????.ppm  # remove any old files
 			direction="${effect1_params[$i+$increment]}"
-#			next_duration=${duration[$i+$increment]}  # duration in thousandths of sec
-#			next_frames=$( duration2frames $next_duration )  # frames for next slide
 			next_frames="${frames_extended[$i+$increment]}"
 			scroll "$direction" "${image[$i+$increment]}" "$normal_bg" "$next_frames" 1 "$frames" "."
 		elif [ "$nextslide" == 'background' ] && [ "${duration[$i+$increment]}" -ne 0 ] ; then
@@ -5182,6 +5174,9 @@ for file in "${image[@]}"; do
 			# need to read next variables BEFORE making next slide!
 			read_next_variables
 			create_slide "${image[$i+$increment]}" "$tmpdir/slide_$(($i+$increment)).ppm"
+			if [ -n "$logo" ] ; then  # optionally add logo layer
+				add_logo "$logo" $(($i+increment)) "$logo_gravity"
+			fi
 			subtitle1[$i+$increment]="$( echo "${subtitle[$i+$increment]}" | awk -F';' '{print $1}' )"
 #			echo "subtitle1=${subtitle1[$i+$increment]}"
 			if [ -n "${subtitle1[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
@@ -5360,6 +5355,9 @@ for file in "${image[@]}"; do
 		else # no manual cropping next picture and it's not a title
 			read_next_variables
 			create_slide "$nextslide" "$tmpdir/slide_$(($i+$increment)).ppm"
+			if [ -n "$logo" ] ; then  # optionally add logo layer
+				add_logo "$logo" $(($i+increment)) "$logo_gravity"
+			fi
 			subtitle1[$i+$increment]="$( echo "${subtitle[$i+$increment]}" | awk -F';' '{print $1}' )"
 			if [ -n "${subtitle1[$i+$increment]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i+$increment]}" "$(( $i + $increment))" transparent # creates subtitle_$(($i+$increment)).png
@@ -5433,10 +5431,18 @@ for file in "${image[@]}"; do
 				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ; rm "$tmpdir/kb_next_$dj.ppm" ) 
 				fi
 			elif [ "$smp" -eq 1 ] ; then
+				if [ "$graphicsmagick" -eq 1 ] ; then
+				(gm composite -compose Over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ) &
+				else
 				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames ) &
+				fi
 				lastcrossfade_pid="$!"
 			else
+				if [ "$graphicsmagick" -eq 1 ] ; then
+				(gm composite -compose Over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames )
+				else
 				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; extracopies $fr $frames )
+				fi
 			fi
 		done
 		waitforfiles "$tmpdir/fade" ppm $dj
@@ -5465,8 +5471,6 @@ for file in "${image[@]}"; do
 		start_frame=1
 		# check if we're fading out from a kenburns or scroll effect:
 		if [ "$previous_increment" -ne 0 ] ; then
-#			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-#			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 			previous_frames="${frames_extended[$i-$previous_increment]}"
 		fi
 		if [ "$previousslide_effect" == 'kenburns' ] ; then
@@ -5474,8 +5478,6 @@ for file in "${image[@]}"; do
 			# render end of last kenburns effect first:
 			window_start=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $1";"$2}'`
 			window_end=`echo "${effect1_params[$i-$previous_increment]}" | awk -F';' '{print $3";"$4}'`
-#			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-#			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 			previous_frames="${frames_extended[$i-$previous_increment]}"
 			## number of frames in kenburns effect:
 			start_frame="$(( $previous_frames - $frames  + 1 ))"
@@ -5488,8 +5490,6 @@ for file in "${image[@]}"; do
 		elif [ "$previousslide_effect" == 'scroll' ] ; then
 			myecho "[dvd-slideshow] Rendering previous scroll effect for fadeout..."
 			direction="${effect1_params[$i-$previous_increment]}"
-#			previous_duration="${duration[$i-$previous_increment]}" # already in thousandths.
-#			previous_frames=`div1000 $(( $frames_per_ms * $previous_duration / 1000 ))` 
 			previous_frames="${frames_extended[$i-$previous_increment]}"
 			start_frame="$(( $previous_frames - $frames  + 1 ))"
 			scroll "$direction" "${image[$i-$previous_increment]}" "$normal_bg" "$previous_frames" "$start_frame"  "$previous_frames" "."
@@ -5594,8 +5594,6 @@ for file in "${image[@]}"; do
 			titleslide "$title" "$last_outfile" "$transparent_bg"
 			no_effects=1
                 elif [ "$previousslide" == 'titlebar' ] || [ "$previousslide" == 'Titlebar' ] ; then
-#                        title1="${subtitle[$i-$previous_increment]}"
-#                        title2="$previousslide_effect"
                         titlebarslide "$title1" "$title2" "$last_outfile" "$transparent_bg"
 			no_effects=1
                 elif [ "$previousslide" == 'musictitle' ] ; then
@@ -5967,6 +5965,9 @@ for file in "${image[@]}"; do
 #			convert "$outdir"/cropped.jpg -resize "$frame_width"x"$frame_height" -type TrueColorMatte -depth 8 "$outdir"/resize2.jpg ; identify "$outdir"/resize2.jpg
 #			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 "$outdir"/resize2.jpg "$normal_bg" "$outdir"/composited.jpg
 			convert "${file}" -filter $filtermethod -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColorMatte -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
+			if [ -n "$logo" ] ; then  # optionally add logo layer
+				add_logo "$logo" $i "$logo_gravity"
+			fi
 			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i]}" $i transparent # creates subtitle_$i.png
@@ -6019,15 +6020,12 @@ for file in "${image[@]}"; do
 			# subtract 1/2 time from rendered time:
 			rendered_time=$(( ${duration[$i]} - $previous_duration / 2 )) 
 			old_rendered_time=$(( ${duration[$i]} + $previous_duration ))
-#			frames_extended=$(( $frames + $previous_frames / 2 ))
 		elif [ "$previous_slide" == 'fadein' ] ; then
 			rendered_time=$(( ${duration[$i]} - $previous_duration )) 
 			old_rendered_time=$(( ${duration[$i]} + $previous_duration ))
-#			frames_extended=$frames
 		else  # no previous fade
 			rendered_time=${duration[$i]}
 			old_rendered_time=$rendered_time
-#			frames_extended=$frames
 		fi
 #		echo "duration=${duration[$i]}  next_transition_increment=$next_transition_increment next_slide=$next_slide next_duration=$next_duration"
 		if [ "$next_slide" == 'crossfade' ] || [ "$next_slide" == 'wipe' ] ; then
@@ -6035,7 +6033,6 @@ for file in "${image[@]}"; do
 			rendered_time=$(( $rendered_time - $next_duration / 2 )) 
 			old_rendered_time=$(( $rendered_time + $next_duration )) 
 			# also need to adjust total time/frames in this effect
-#			frames_extended=$(( $frames_extended + $next_frames / 2 ))
 		elif [ "$next_slide" == 'fadeout' ] ; then
 			rendered_time=$(( $rendered_time - $next_duration )) 
 			old_rendered_time=$(( $rendered_time + $next_duration )) 
@@ -6043,10 +6040,7 @@ for file in "${image[@]}"; do
 			rendered_time=$rendered_time	
 			old_rendered_time=$old_rendered_time
 		fi
-#		echo "frames_extended=${frames_extended[$i]}"
-#		echo "rendered_time=$rendered_time"
 		set_end_frame_time $rendered_time
-#		echo "rendered_frames=$frames_to_render"
 		rendered_frames="$frames_to_render"
 		if [ "$rendered_frames" -le 0 ] ; then
 			echo "[dvd-slideshow] WARNING: Frames rendered are less than 1!"
@@ -6199,6 +6193,9 @@ for file in "${image[@]}"; do
 			fi
 			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 #			myecho "[dvd-slideshow] Track ${audio_track[$i]} audiofile $audio_index $( truncate_filename "$file")"
+			if [ -n "$logo" ] ; then  # optionally add logo layer
+				add_logo "$logo" $i "$logo_gravity"
+			fi
 #			echo "subtitle1=${subtitle1[$i]}"
 			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i]}" $i transparent # creates subtitle_$i.png

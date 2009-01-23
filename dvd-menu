@@ -168,6 +168,9 @@ Options:
  -h or -help 
    Prints this help. 
 
+ -v or -version 
+   Prints this help. 
+
 Requires:
 	dvdauthor 0.6.11
 	sox >= 14.0.0
@@ -843,8 +846,10 @@ do
 	-a) shift; audiofile="$1"; shift;; # audio file playing during menu
         -iso) shift; iso=1 ;;  # make iso image when finished
 	-h) help ; exit 0 ; shift ;;
-	-?) help ; exit 0 ; shift ;;
 	-help) help ; exit 0 ; shift ;;
+	-\?) help ; exit 0 ; shift ;;
+	-v) echo "$version" ; exit 0 ; shift ;;
+	-version) echo "$version" ; exit 0 ; shift ;;
 	esac
 done
 

@@ -17,11 +17,13 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.2'
+version='0.8.3-svn'
 
 changes () 
 {
 echo 'Changes:
+0.8.3
+	Allow reading of dvd-slideshowrc file to set variables (thanks Johan Kunnen)
 0.8.2
 	Write out pal option to output file if selected in dir2slideshow
 	Recursive finds follow symbolic links and ignores hidden directories.
@@ -157,6 +159,7 @@ set_variables ()
 	## check for global configuration variables:
 	case "$config1" in 
 		# title
+		debug) debug="$config2" ; [ "$noecho" -eq 0 ] && echo "debug=$debug" ;;
 #		title_font) title_font="$config2" ; [ "$noecho" -eq 0 ] && echo "title_font=$title_font" ;;
 #		subtitle_font) subtitle_font="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_font=$subtitle_font" ;;
 		title_font_size) title_font_size="$config2" ; [ "$noecho" -eq 0 ] && echo "title_font_size=$title_font_size" ;;
@@ -240,6 +243,22 @@ end=1
 pal=0  # default to ntsc
 sortmethod="name"  # sort by filename as default sort method
 
+#############################################################
+## Now, read in the ~/.dvd-slideshow/dvd-slideshowrc file if it exists:
+if [ -f "${HOME}/.dvd-slideshow/dvd-slideshowrc" ] ; then
+        echo "[dir2slideshow] Reading default variables in ${HOME}/.dvd-slideshow/dvd-slideshowrc"
+        while read thisline
+        do
+          it=`set_variables "${thisline}" 0`
+          if [ -n "$it" ] ; then
+                myecho "[dir2slideshow] Set variable $it"
+                continue
+          fi
+        done < "$HOME/.dvd-slideshow/dvd-slideshowrc"
+fi
+
+#########################################################
+## read in command-line args:
 for arg
 do
 	case "$arg" in

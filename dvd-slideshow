@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-91'
+version='0.8.3-svn-92'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -48,6 +48,7 @@ echo 'Changes:
     New features:
 	Use qscale VBR option in ffmpeg for flv and mp4 output instead of fixed bitrate.	
     Bug fixes:
+	Improved kenburns jitter.
 
 0.8.2
     New features:
@@ -2044,25 +2045,27 @@ kenburns ()  # KENBURNS
 		[ $debug -ge 1 ] && myecho "[dvd-slideshow:kenburns] Image top left corner:   xi=$xi yi=$yi"
 
 		## adjust step size: ##############################
+#		multiple=2  # 720x480 x 2 = 1440x960 or 1.4M pixels
+#		multiple=3  # 720x480 x 3 = 2160x1440 or 3M pixels
 		if [ "$low_quality" -eq 1 ] ; then
 			stepsize=3
 			interp=0
 			enable_kenburns_resize=0
-			multiple=1
+			multiple=2
 		elif [ "$high_quality" -eq 1 ] ; then
 			stepsize=1
-			interp=1
-			enable_kenburns_resize=0  # see if this still gives decent quality
-			multiple=3  # 720x480 x 3 = 2160x1440 or 3M pixels
+			interp=0
+			enable_kenburns_resize=1  # see if this still gives decent quality
+			multiple=6 
 		else
 			stepsize=1
 			interp=0  # fix this for now?
 			enable_kenburns_resize=0
-			multiple=2  # 720x480 x 2 = 1440x960 or 1.4M pixels
+			multiple=4 
 		fi
 
 		# check original image width and height.  if too large,
-		# then make it smaller!
+		# then make it smaller!  if too small, make it bigger!
 		factorx=$(( 1000 * $image_width / $dvd_width ))
 		factory=$(( 1000 * $image_height / $dvd_height ))
 		maxfactor=$( max $factorx $factory )
@@ -2079,6 +2082,9 @@ kenburns ()  # KENBURNS
 				resized_x=$newsize
 				resized_y=$(( 10 * $resized_x * $image_height / $image_width ))
 				resized_y=$( div10 $(( 10 * $resized_x * $image_height / $image_width )) )
+#				echo "multiple=$multiple dvd_width=$dvd_width newsize=$newsize image_width=$image_width"
+				scale_factor=$(( 1000 * $newsize / $image_width ))
+#				echo "scale_factor=$scale_factor"
 			else
 				newsize=$(( $multiple * $dvd_height ))
 				resize='-resize x'$newsize
@@ -2086,26 +2092,68 @@ kenburns ()  # KENBURNS
 				resized_y=$newsize
 				resized_x=$(( $resized_y * $image_width / $image_height ))
 				resized_x=$( div10 $(( 10 * $resized_y * $image_width / $image_height )) )
+				scale_factor=$(( 1000 * $newsize / $image_height ))
+#				echo "scale_factor=$scale_factor"
 			fi
 			myecho "[dvd-slideshow] Rescaling $image_width"x"$image_height image to $resized_x"x"$resized_y to speed up processing"
 			## now, update the coordinates with the new values after the scale. 
 			## we might want to use the actual resized image size instead?
-#			echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 ys0=$ys0 ye0=$ye0"
-			xi=$(( 1000 * $xi / $minfactor ))
-			yi=$(( 1000 * $yi / $minfactor ))
-			xs0=$(( 1000 * $xs0 / $minfactor ))
-			xe0=$(( 1000 * $xe0 / $minfactor ))
-			ys0=$(( 1000 * $ys0 / $minfactor ))
-			ye0=$(( 1000 * $ye0 / $minfactor ))
-			xs1=$(( 1000 * $xs1 / $minfactor ))
-			xe1=$(( 1000 * $xe1 / $minfactor ))
-			ys1=$(( 1000 * $ys1 / $minfactor ))
-			ye1=$(( 1000 * $ye1 / $minfactor ))
-#			echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 ys0=$ys0 ye0=$ye0"
+#			echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 xs1=$xs1 xe1=$xe1"
+			xi=$(( $xi * $scale_factor / 1000 ))
+			yi=$(( $yi * $scale_factor / 1000 ))
+			xs0=$(( $xs0 * $scale_factor / 1000 ))
+			xe0=$(( $xe0 * $scale_factor / 1000 ))
+			ys0=$(( $ys0 * $scale_factor / 1000 ))
+			ye0=$(( $ye0 * $scale_factor / 1000 ))
+			xs1=$(( $xs1 * $scale_factor / 1000 ))
+			xe1=$(( $xe1 * $scale_factor / 1000 ))
+			ys1=$(( $ys1 * $scale_factor / 1000 ))
+			ye1=$(( $ye1 * $scale_factor / 1000 ))
+#			echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 xs1=$xs1 xe1=$xe1"
+			image_width=$resized_x
+			image_height=$resized_y
+		elif [ "$factorx" -lt "$factorlimit_x" ] && [ "$factory" -lt "$factorlimit_y" ] && [ "$enable_kenburns_resize" == 1 ] ; then
+			# resolution is too low to have nice smooth output.  Increase resolution before cropping.
+			if [ "$minfactor" == "$factorx" ] ; then	
+				newsize=$(( $multiple * $dvd_width ))
+				resize='-resize '$newsize'x'
+				resized_x=$newsize
+				resized_y=$(( 10 * $resized_x * $image_height / $image_width ))
+				resized_y=$( div10 $(( 10 * $resized_x * $image_height / $image_width )) )
+#				echo "multiple=$multiple dvd_width=$dvd_width newsize=$newsize image_width=$image_width"
+				scale_factor=$(( 1000 * $newsize / $image_width ))
+#				echo "scale_factor=$scale_factor"
+			else
+				newsize=$(( $multiple * $dvd_height ))
+				resize='-resize x'$newsize
+				# resized_x / resized_y = imagewidth_x / imagewidth_y
+				resized_y=$newsize
+				resized_x=$(( $resized_y * $image_width / $image_height ))
+				resized_x=$( div10 $(( 10 * $resized_y * $image_width / $image_height )) )
+				scale_factor=$(( 1000 * $newsize / $image_height ))
+#				echo "scale_factor=$scale_factor"
+			fi
+			myecho "[dvd-slideshow] Rescaling $image_width"x"$image_height image to $resized_x"x"$resized_y for smoother results"
+			## now, update the coordinates with the new values after the scale. 
+			## we might want to use the actual resized image size instead?
+#			echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 xs1=$xs1 xe1=$xe1"
+			xi=$(( $xi * $scale_factor / 1000 ))
+			yi=$(( $yi * $scale_factor / 1000 ))
+			xs0=$(( $xs0 * $scale_factor / 1000 ))
+			xe0=$(( $xe0 * $scale_factor / 1000 ))
+			ys0=$(( $ys0 * $scale_factor / 1000 ))
+			ye0=$(( $ye0 * $scale_factor / 1000 ))
+			xs1=$(( $xs1 * $scale_factor / 1000 ))
+			xe1=$(( $xe1 * $scale_factor / 1000 ))
+			ys1=$(( $ys1 * $scale_factor / 1000 ))
+			ye1=$(( $ye1 * $scale_factor / 1000 ))
+#			echo "xi=$xi yi=$yi xs0=$xs0 xe0=$xe0 xs1=$xs1 xe1=$xe1"
+			image_width=$resized_x
+			image_height=$resized_y
 		else
 			resize=''
 		fi
-		$gm_cmd convert "$l_file" -filter $filtermethod -resize $sq_to_dvd_pixels $resize $gm_repage -type TrueColorMatte -depth 8 "$tmpdir"/temp_slideshow_image_scaled.ppm
+		$gm_cmd convert "$l_file" -filter $filtermethod $resize -resize $sq_to_dvd_pixels $gm_repage -type TrueColorMatte -depth 8 "$tmpdir"/temp_slideshow_image_scaled.ppm
 
 		############################ end crop/resize large images
 
@@ -2582,7 +2630,6 @@ set_system_variables ()
 		subtitle_type) subtitle_type="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle_type=$subtitle_type" ;;
 		theme) theme="$config2" ; [ "$noecho" -eq 0 ] && echo "theme=$theme" ;; 
 		theme_designed_for) theme_designed_for="$config2" ; [ "$noecho" -eq 0 ] && echo "theme_designed_for=$theme_designed_for" ;; 
-		high_quality) high_quality="$config2" ; [ "$noecho" -eq 0 ] && echo "high_quality=$high_quality" ;;  #
 		widescreen) widescreen="$config2" ; [ "$noecho" -eq 0 ] && echo "widescreen=$widescreen" ;;  #
 	esac
 }

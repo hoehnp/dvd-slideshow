@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-92'
+version='0.8.3-svn-93'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -49,6 +49,7 @@ echo 'Changes:
 	Use qscale VBR option in ffmpeg for flv and mp4 output instead of fixed bitrate.	
     Bug fixes:
 	Improved kenburns jitter.
+	Added unset CDPATH to full_path function call (thanks Bob!)
 
 0.8.2
     New features:
@@ -2975,6 +2976,7 @@ scroll ()  # SCROLL
 
 full_path ()   # from Shea Martin, modified by scott dylewski
 {
+unset CDPATH
 if [ -f "$1" ]; then
         DIR="$(dirname "$1")"
         DIR=$(cd "$DIR" && pwd)

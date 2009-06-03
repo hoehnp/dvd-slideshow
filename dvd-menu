@@ -39,6 +39,7 @@ changes ()
 echo 'Changes:
 0.8.3
 	Fix sox arguments to work with both old and new versions of sox.
+	Added "unset CDPATH to full_path function.  (Thanks Bob!)
 0.8.2
 	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
 	Sox v. > 13 changes -w to -2 and -e to -n (thanks Ludovic)
@@ -623,6 +624,7 @@ fi
 
 full_path ()   # from Shea Martin, modified by scott dylewski
 {
+unset CDPATH
 if [ -f "$1" ]; then
         DIR="$(dirname "$1")"
         DIR=$(cd "$DIR" && pwd)

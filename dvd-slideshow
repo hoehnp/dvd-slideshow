@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-93'
+version='0.8.3-svn-94'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -50,6 +50,8 @@ echo 'Changes:
     Bug fixes:
 	Improved kenburns jitter.
 	Added unset CDPATH to full_path function call (thanks Bob!)
+	Fixed bug with old version of findutils < 4.2.5
+	Use du -b so it is independend of env variables (thanks kikoun)
 
 0.8.2
     New features:
@@ -936,12 +938,12 @@ waitforfile ()
 		sleep 1s
 	done
 	# now, make sure it's not increasing in size, just to be sure:
-	initial_size=$( du "$1" | awk '{print $1}' )
-	new_size=$( du "$1" | awk '{print $1}' )
+	initial_size=$( du -b "$1" | awk '{print $1}' )
+	new_size=$( du -b "$1" | awk '{print $1}' )
 	while [ $initial_size -ne $new_size ]
 	do
 		initial_size=$new_size
-		new_size=$( du "$1" | awk '{print $1}' )
+		new_size=$( du -b "$1" | awk '{print $1}' )
 	done
 }
 
@@ -3414,6 +3416,24 @@ else
 	ffmpeg_out='/dev/null'
 fi
 
+# version of "find"
+findutils_version=`find --version | head -1 |  awk '{print $4}'`
+if [ -n "$findutils_version" ] ; then
+	logecho "[dvd-slideshow] Found findutils version $findutils_version"
+	v1="$( echo $findutils_version | cut -d. -f1 )"
+	v2="$( echo $findutils_version | cut -d. -f2 )"
+	v3="$( echo $findutils_version | cut -d. -f3 )"
+	if [ "$v1" -ge 4 ] && [ "$v2" -ge 2 ] && [ "$v3" -ge 5 ] ; then
+		# -L option was added in findutils version 4.2.5
+		find_L='-L' # use modern syntax
+		find_follow=''
+	else
+		find_L=''  # use old syntax
+		find_follow='-follow'
+		logecho "[dvd-slideshow] WARNING: Found findutils version $findutils_version"
+		logecho "[dvd-slideshow]	This version may work, but isn't tested well.  Consider upgrading to a newer version of findutils."
+	fi
+fi
 
 ## Check for required programs
 it=`which ppmtoy4m 2> /dev/null`
@@ -3982,16 +4002,20 @@ fi
 ##############################################
 #  Set default font:
 if [ -d "$font_dir" ] ; then
-	default_font1=`find -L $font_dir -name $default_fontname1 | head -n 1` 
+	#default_font1=`find -L $font_dir -name $default_fontname1 | head -n 1` 
+	default_font1=`find $find_L $font_dir $find_follow -name $default_fontname1 | head -n 1` 
 fi
 if [ -d "$font_dir2" ] ; then
-	default_font2=`find -L $font_dir2 -name $default_fontname1 | head -n 1`
+	#default_font2=`find -L $font_dir2 -name $default_fontname1 | head -n 1`
+	default_font2=`find $find_L $font_dir2 $find_follow -name $default_fontname1 | head -n 1`
 fi
 if [ -d "$font_dir3" ] ; then
-	default_font3=`find -L $font_dir3 -name $default_fontname1 | head -n 1`
+	#default_font3=`find -L $font_dir3 -name $default_fontname1 | head -n 1`
+	default_font3=`find $find_L $font_dir3 $find_follow -name $default_fontname1 | head -n 1`
 fi
 if [ -d "$font_dir" ] ; then
-	default_font4=`find -L $font_dir -name $default_fontname2 | head -n 1` 
+	#default_font4=`find -L $font_dir -name $default_fontname2 | head -n 1` 
+	default_font4=`find $find_L $font_dir $find_follow -name $default_fontname2 | head -n 1` 
 fi
 
 # verify fonts exist:
@@ -4010,8 +4034,10 @@ fi
 
 if [ -n "$title_font" ] ; then   # title font passed
         if [ ! -f "$title_font" ] ; then  # look in font directory
-                myecho title_font="`find -L "$font_dir" -name "$title_font" | head -n 1`"
-                title_font="`find -L "$font_dir" -name "$title_font" | head -n 1`"
+#                myecho title_font="`find -L "$font_dir" -name "$title_font" | head -n 1`"
+                myecho title_font="`find $find_L "$font_dir" $find_follow -name "$title_font" | head -n 1`"
+#                title_font="`find -L "$font_dir" -name "$title_font" | head -n 1`"
+                title_font="`find $find_L "$font_dir" $find_follow -name "$title_font" | head -n 1`"
                 if [ ! -f "$title_font" ] ; then
                         echo "Error:  bad title_font filename"
                 fi
@@ -4019,8 +4045,10 @@ if [ -n "$title_font" ] ; then   # title font passed
 fi
 if [ -n "$subtitle_font" ] ; then   # title font passed
         if [ ! -f "$subtitle_font" ] ; then  # look in font directory
-                myecho subtitle_font="`find -L "$font_dir" -name "$subtitle_font" | head -n 1`"
-                subtitle_font="`find -L "$font_dir" -name "$subtitle_font" | head -n 1`"
+#                myecho subtitle_font="`find -L "$font_dir" -name "$subtitle_font" | head -n 1`"
+                myecho subtitle_font="`find $find_L "$font_dir" $find_follow -name "$subtitle_font" | head -n 1`"
+                #subtitle_font="`find -L "$font_dir" -name "$subtitle_font" | head -n 1`"
+                subtitle_font="`find $find_L "$font_dir" $find_follow -name "$subtitle_font" | head -n 1`"
                 if [ ! -f "$subtitle_font" ] ; then
                         echo "Error:  bad subtitle_font filename"
                 fi

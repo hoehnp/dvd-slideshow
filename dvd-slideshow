@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-94'
+version='0.8.3-svn-95'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -3423,14 +3423,18 @@ if [ -n "$findutils_version" ] ; then
 	v1="$( echo $findutils_version | cut -d. -f1 )"
 	v2="$( echo $findutils_version | cut -d. -f2 )"
 	v3="$( echo $findutils_version | cut -d. -f3 )"
-	if [ "$v1" -ge 4 ] && [ "$v2" -ge 2 ] && [ "$v3" -ge 5 ] ; then
+	if [ "$v1" -eq 4 ] && [ "$v2" -ge 3 ] ; then
+		# -L option was added in findutils version 4.2.5
+		find_L='-L' # use modern syntax
+		find_follow=''
+	elif [ "$v1" -gt 4 ] ; then
 		# -L option was added in findutils version 4.2.5
 		find_L='-L' # use modern syntax
 		find_follow=''
 	else
 		find_L=''  # use old syntax
 		find_follow='-follow'
-		logecho "[dvd-slideshow] WARNING: Found findutils version $findutils_version"
+		logecho "[dvd-slideshow] WARNING: Found findutils version $v1.$v2.$v3"
 		logecho "[dvd-slideshow]	This version may work, but isn't tested well.  Consider upgrading to a newer version of findutils."
 	fi
 fi

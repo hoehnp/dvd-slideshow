@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-95'
+version='0.8.3-svn-96'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -52,6 +52,7 @@ echo 'Changes:
 	Added unset CDPATH to full_path function call (thanks Bob!)
 	Fixed bug with old version of findutils < 4.2.5
 	Use du -b so it is independend of env variables (thanks kikoun)
+	Change sleep 1s to sleep 0.1s for faster machines
 
 0.8.2
     New features:
@@ -922,7 +923,6 @@ encode_fade ()
 {
 if [ "$yuvfirstfile" -eq 1 ]; then
 	yuvfirstfile=0
-#	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | cat >&3
 	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p >&3
 else
 	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | yuvstrip >&3
@@ -935,7 +935,7 @@ waitforfile ()
 	## wait for the file to exist...
 	while [ ! -f "$1" ] 
 	do
-		sleep 1s
+		sleep 0.1s
 	done
 	# now, make sure it's not increasing in size, just to be sure:
 	initial_size=$( du -b "$1" | awk '{print $1}' )

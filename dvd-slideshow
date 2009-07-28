@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-98'
+version='0.8.3-svn-99'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -3516,7 +3516,7 @@ if [ -z "$it" ] && [ "$commandline_gm" -eq 1 ] ; then # no graphicsmagick
 	myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install graphicsmagick"
 	myecho "[dvd-slideshow]		Reverting to ImageMagick commands"
 	graphicsmagick=0
-elif [ -n "$it" ]
+elif [ -n "$it" ] ; then
 	progver=`gm version | head -n 1 | awk '{ print $2 }'`
 	logecho "[dvd-slideshow] Found GraphicsMagick version $progver"
 	if [ "$commandline_gm" -eq 1 ] ; then

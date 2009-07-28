@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-96'
+version='0.8.3-svn-98'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -55,7 +55,7 @@ echo 'Changes:
 	Fixed bug with old version of findutils < 4.2.5
 	Use du -b so it is independend of env variables (thanks kikoun)
 	Change sleep 1s to sleep 0.1s for faster machines
-	Add better help for missing applications
+	Add better help for missing applications and graphicsmagick
 
 0.8.2
     New features:
@@ -3510,14 +3510,13 @@ logecho "[dvd-slideshow] Found ImageMagick version $progver"
 # GraphicsMagick
 it=`which gm 2> /dev/null`
 if [ -z "$it" ] && [ "$commandline_gm" -eq 1 ] ; then # no graphicsmagick
-        myecho "[dvd-slideshow] ERROR:  no GraphicsMagick found."
+        myecho "[dvd-slideshow] WARNING: no GraphicsMagick found."
         myecho "[dvd-slideshow]         You need to download and install GraphicsMagick."
         myecho "[dvd-slideshow]         http://GraphicsMagick.sourceforge.net"
 	myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install graphicsmagick"
-#	cleanup ; exit 0
 	myecho "[dvd-slideshow]		Reverting to ImageMagick commands"
 	graphicsmagick=0
-else
+elif [ -n "$it" ]
 	progver=`gm version | head -n 1 | awk '{ print $2 }'`
 	logecho "[dvd-slideshow] Found GraphicsMagick version $progver"
 	if [ "$commandline_gm" -eq 1 ] ; then
@@ -3529,6 +3528,11 @@ else
 		gm_cmd=""
 		gm_repage='+repage'
 	fi
+else
+	# don't use graphicsmagick
+	graphicsmagick=0
+	gm_cmd=''
+	gm_repage='+repage'
 fi
 
 
@@ -3547,14 +3551,14 @@ logecho "[dvd-slideshow] Found dvdauthor version $progver"
 # ffmpeg
 it=`which ffmpeg 2> /dev/null`
 if [ -z "$it" ] ; then
-              # no ffmpeg!  use mp2 audio instead:
-              myecho "[dvd-slideshow] Warning:  no ffmpeg found for AC3 audio encoding."
-              myecho "[dvd-slideshow]           Using MP2 audio instead."
-              myecho "[dvd-slideshow]           MP2 audio is less compatible with DVD player hardware."
- 		myecho "[dvd-slideshow]		http://ffmpeg.sourceforge.net"
-		myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install ffmpeg"
-              ac3=0
-		mpeg_encoder='mpeg2enc'
+        # no ffmpeg!  use mp2 audio instead:
+        myecho "[dvd-slideshow] Warning: no ffmpeg found for AC3 audio encoding."
+        myecho "[dvd-slideshow]         Using MP2 audio instead."
+        myecho "[dvd-slideshow]         MP2 audio is less compatible with DVD player hardware."
+	myecho "[dvd-slideshow]		http://ffmpeg.sourceforge.net"
+	myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install ffmpeg"
+        ac3=0
+	mpeg_encoder='mpeg2enc'
 else
 	# found ffmpeg
 	logecho "`ffmpeg -version 2>&1`"
@@ -6758,7 +6762,9 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 				fi
 			fi
 		else
-			myecho "[dvd-slideshow] using mp2enc"
+			myecho "[dvd-slideshow] using mp2enc for mpeg2 audio encoding"
+			myecho "[dvd-slideshow] TIP:  install toolame for faster mp2 audio encoding!"
+			myecho "[dvd-slideshow]	Debian/Ubuntu: sudo apt-get install toolame"
 			mp2enc -v $verbosity -b $audio_bitrate -r $audio_sample_rate -s -o "$tmpdir/audio1.mp2" < "$tmpdir/audio1.wav"
 		fi
 	fi
@@ -7006,6 +7012,8 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			fi
 		else
 			myecho "[dvd-slideshow] Creating mp2 audio using mp2enc"
+			myecho "[dvd-slideshow] TIP:  install toolame for faster mp2 audio encoding!"
+			myecho "[dvd-slideshow]	Debian/Ubuntu: sudo apt-get install toolame"
 			mp2enc -v $verbosity -b $audio_bitrate -r $audio_sample_rate -s -o "$tmpdir/audio1.mp2" < "$tmpdir/audio1.wav"
 		fi
 	fi
@@ -7233,6 +7241,8 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 			fi
 		else
 			myecho "[dvd-slideshow] Creating mp2 audio using mp2enc"
+			myecho "[dvd-slideshow] TIP:  install toolame for faster mp2 audio encoding!"
+			myecho "[dvd-slideshow]	Debian/Ubuntu: sudo apt-get install toolame"
 			mp2enc -v $verbosity -b $audio_bitrate -r $audio_sample_rate -s -o "$tmpdir/audio2.mp2" < "$tmpdir/audio2.wav"
 		fi
 	fi

@@ -54,7 +54,7 @@ echo 'Changes:
 	Added unset CDPATH to full_path function call (thanks Bob!)
 	Fixed bug with old version of findutils < 4.2.5
 	Use du -b so it is independend of env variables (thanks kikoun)
-	Change sleep 1s to sleep 0.1s for faster machines
+	Change sleep 1s to sleep 0.01s for faster machines
 	Add better help for missing applications and graphicsmagick
 
 0.8.2
@@ -950,7 +950,7 @@ waitforfile ()
 	## wait for the file to exist...
 	while [ ! -f "$1" ] 
 	do
-		sleep 0.1s
+		sleep 0.01s
 	done
 	# now, make sure it's not increasing in size, just to be sure:
 	initial_size=$( du -b "$1" | awk '{print $1}' )
@@ -985,7 +985,7 @@ waitforfiles ()  # WAITFORFILES
 		[ $debug -ge 2 ] && logecho "waiting for file $newfile_tmp"
 		while [ ! -e "$newfile_tmp" ] 
 		do
-			sleep 1s
+			sleep 0.01s
 		done
 	done
 }
@@ -3517,17 +3517,20 @@ if [ -z "$it" ] && [ "$commandline_gm" -eq 1 ] ; then # no graphicsmagick
 	graphicsmagick=0
 	gm_cmd=''
 	gm_repage='+repage'
+	gm_compose='src-over'
 elif [ -n "$it" ] && [ "$commandline_gm" -eq 1 ] ; then
 	progver=`gm version | head -n 1 | awk '{ print $2 }'`
 	logecho "[dvd-slideshow] Found GraphicsMagick version $progver"
 	graphicsmagick=1
 	gm_cmd="gm"
 	gm_repage=""
+	gm_compose='over'
 else
 	# don't use graphicsmagick
 	graphicsmagick=0
 	gm_cmd=''
 	gm_repage='+repage'
+	gm_compose='src-over'
 fi
 
 
@@ -5311,10 +5314,6 @@ for file in "${image[@]}"; do
 		else
 			stepsize=1
 		fi
-		## convert ppm to mpc for better speed:
-#		if [ "$nextslide_effect" != 'kenburns' ] && [ "$nextslide_effect" != 'scroll' ] ; then
-#			convert "$tmpdir/slide_$(($i+$increment)).ppm" -type TrueColorMatte -depth 8 "$tmpdir/slide_$(($i+$increment)).mpc"
-#		fi
 		set_end_frame_time ${duration[$i]}
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		lastbar=0 # required for progressbar reset
@@ -5326,14 +5325,14 @@ for file in "${image[@]}"; do
 #			echo "fr=$fr frames=$frames percent=$percent"
 			if [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				(mv "$tmpdir"/fade_$dj.ppm "$tmpdir"/kb_$dj.ppm ; composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_$dj.ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
+				(mv "$tmpdir"/fade_$dj.ppm "$tmpdir"/kb_$dj.ppm ; $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_$dj.ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
 				else
-				(mv "$tmpdir"/fade_$dj.ppm "$tmpdir"/kb_$dj.ppm ; composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_$dj.ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames )
+				(mv "$tmpdir"/fade_$dj.ppm "$tmpdir"/kb_$dj.ppm ; $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_$dj.ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames )
 				fi
 			elif [ "$smp" -eq 1 ] ; then
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
 			else
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames )
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames )
 			fi
 		done
 		waitforfiles "$tmpdir/fade" ppm $dj
@@ -5491,15 +5490,7 @@ for file in "${image[@]}"; do
 		else
 			stepsize=2
 		fi
-		## convert ppm to mpc for better speed?:
-#		convert "$tmpdir/slide_$(($i+1)).ppm" -type TrueColorMatte -depth 8 "$tmpdir/slide_$(($i+1)).mpc"
 		lastslide="`previousslideppm`"
-#		lastslide_mpc="$tmpdir/temp_slideshow_image.mpc"
-#		convert "$lastslide" +repage "$lastslide_mpc"  # gives "bad raw ppm magic" errors...
-		## convert ppm to mpc for better speed:
-#		if [ "$nextslide_effect" != 'kenburns' ] && [ "$nextslide_effect" != 'scroll' ] ; then
-#			convert "$tmpdir/slide_$(($i+$increment)).ppm" -type TrueColorMatte -depth 8 "$tmpdir/slide_$(($i+$increment)).mpc"
-#		fi
 		both=0
 		if [ "$previousslide_effect" == 'scroll' ] && [ "$nextslide_effect" == 'scroll' ] ; then
 			both=1
@@ -5513,7 +5504,7 @@ for file in "${image[@]}"; do
 		if [ -n "$lastcrossfade_pid" ] ; then
 			# wait for last crossfade process to finish before starting a new one!
 			# this might stop the random hangs in long slideshows...
-# http://sourceforge.net/tracker/index.php?func=detail&aid=1672263&group_id=100188&atid=626615
+			# http://sourceforge.net/tracker/index.php?func=detail&aid=1672263&group_id=100188&atid=626615
 #			echo "[dvd-slideshow] Waiting for last crossfade to finish rendering..."
 			if [ -n "$( jobs -p | grep $lastcrossfade_pid )" ] ; then
 				wait "$lastcrossfade_pid"
@@ -5529,38 +5520,31 @@ for file in "${image[@]}"; do
 			percent=$(( 100 * $fr / $frames ))
 			if [ "$both" -eq 1 ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ; rm "$tmpdir/kb_next_$dj.ppm" ) &
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ; rm "$tmpdir/kb_next_$dj.ppm" ) &
 				lastcrossfade_pid="$!"
 				else
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ; rm "$tmpdir/kb_next_$dj.ppm" ) 
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ; rm "$tmpdir/kb_next_$dj.ppm" ) 
 				fi
 			elif [ "$previousslide_effect" == 'kenburns' ] || [ "$previousslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ) &
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ) &
 				lastcrossfade_pid="$!"
 				else
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ) 
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$tmpdir/kb_prev_$dj.ppm" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_prev_$dj.ppm" ) 
 				fi
 			elif [ "$nextslide_effect" == 'kenburns' ] || [ "$nextslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_next_$dj.ppm" ) &
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_next_$dj.ppm" ) &
 				lastcrossfade_pid="$!"
 				else
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_next_$dj.ppm" ) 
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_next_$dj.ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ; rm "$tmpdir/kb_next_$dj.ppm" ) 
 				fi
-			elif [ "$smp" -eq 1 ] ; then
-				if [ "$graphicsmagick" -eq 1 ] ; then
-				(gm composite -compose Over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
-				else
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
-				fi
+			else 	# no special effects, just images before and after crossfade
+				if [ "$smp" -eq 1 ] ; then
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
 				lastcrossfade_pid="$!"
-			else
-				echo "smp=0 crossfade"
-				if [ "$graphicsmagick" -eq 1 ] ; then
-				(gm composite -compose Over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames )
 				else
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames )
+				$gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames
 				fi
 			fi
 		done
@@ -5626,7 +5610,7 @@ for file in "${image[@]}"; do
 				myecho "[dvd-slideshow]        specified a real image first."
 				cleanup; exit 1
 			fi
-			convert "$lastslide" "$tmpdir/temp_slideshow_image.mpc"
+#			convert "$lastslide" "$tmpdir/temp_slideshow_image.mpc"
 		fi
 
 		if [ "$low_quality" -eq 1 ] ; then
@@ -5651,14 +5635,14 @@ for file in "${image[@]}"; do
 #			echo "fr=$fr kb_fr=$kb_dj frames=$frames percent=$percent"
 			if [ "$previousslide_effect" == 'kenburns' ] || [ "$previousslide_effect" == 'scroll' ] ; then
 				if [ "$smp" -eq 1 ] ; then
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_prev_$dj.ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_prev_$dj.ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
 				else
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_prev_$dj.ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) 
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/kb_prev_$dj.ppm" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) 
 				fi
 			elif [ "$smp" -eq 1 ] ; then
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/temp_slideshow_image.mpc" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$lastslide" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
 			else
-				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/temp_slideshow_image.mpc" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames )
+				( $gm_cmd composite -compose $gm_compose -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$lastslide" "$normal_bg" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames )
 			fi
 		done
 		waitforfiles "$tmpdir/fade" ppm $dj

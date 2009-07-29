@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-99'
+version='0.8.3-svn-101'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -2407,18 +2407,18 @@ kenburns ()  # KENBURNS
 				if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 					if [ "$smp" -eq 1 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh<1 smp=1"
-						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_"$dj.$suffix" ; extracopies $fr $l_frames $suffix ) &
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_"$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) &
 					elif [ "$smp" -eq 0 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh<1 smp=0"
-						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_"$dj.$suffix" ; extracopies $fr $l_frames $suffix ) 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_"$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) 
 					fi
-				else
+				else  # no subtitles
 					if [ "$smp" -eq 1 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh<1 smp=1"
-						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen -type TrueColorMatte -depth 8 "$tmpdir"/fade_"$dj.$suffix" ; extracopies $fr $l_frames $suffix ) &
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen -type TrueColorMatte -depth 8 "$tmpdir"/fade_"$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) &
 					elif [ "$smp" -eq 0 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh<1 smp=0"
-						$gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix
+						$gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -filter $filtermethod -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 $convolve -resize "$dvd_width"x"$dvd_height"! $sharpen -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix
 					fi
 				fi
 			elif [ 0 == 1 ] ; then
@@ -2454,9 +2454,9 @@ kenburns ()  # KENBURNS
 					[ "$bottom" -lt 0 ] && top=$(( $top + $bottom )) 
 					[ "$bottom" -lt 0 ] && bottom=0
 	                        	[ $debug -ge 3 ] && myecho "[dvd-slideshow:kenburns] left=$left right=$right top=$top bottom=$bottom delta_w=$delta_width delta_h=$delta_height"
-					$gm_cmd convert "$tmpdir"/mytemp.$suffix -background black -splice "$right"x"$bottom"+$resized_width+$resized_height -splice "$left"x"$top" $gm_repage $sharpen -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; rm "$tmpdir"/mytemp.$suffix ; extracopies $fr $l_frames $suffix
+					$gm_cmd convert "$tmpdir"/mytemp.$suffix -background black -splice "$right"x"$bottom"+$resized_width+$resized_height -splice "$left"x"$top" $gm_repage $sharpen -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; rm "$tmpdir"/mytemp.$suffix ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix
 
-					# works with imagemagick > 6.0.6  ($gm_cmd convert "$tmpdir/temp_slideshow_image_scaled.ppm" -crop "$c_width"x"$c_height"+$xc0+$yc0 $gm_repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.ppm" ; extracopies $fr $l_frames )
+					# works with imagemagick > 6.0.6  ($gm_cmd convert "$tmpdir/temp_slideshow_image_scaled.ppm" -crop "$c_width"x"$c_height"+$xc0+$yc0 $gm_repage -resize "$dvd_width"x"$dvd_height" -bordercolor black -compose src-over -border 0 -background black -splice "$right"x"$bottom"+$i_width+$i_height -splice "$left"x"$top" -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames )
 #				fi
 			else   # need to composite over background image:
 #				if [ -n "$logo" ] ; then  # optionally add logo layer
@@ -2466,20 +2466,20 @@ kenburns ()  # KENBURNS
 					## also render subtitles:
 					if [ "$smp" -eq 1 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=1"
-						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir/fade_$dj.$suffix" ; $gm_cmd convert "$tmpdir"/fade_$dj.$suffix -type TrueColorMatte -depth 8 "$tmpdir"/fade_$dj.$suffix ; extracopies $fr $l_frames $suffix ) & 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir/fade_$dj.$suffix" ; $gm_cmd convert "$tmpdir"/fade_$dj.$suffix -type TrueColorMatte -depth 8 "$tmpdir"/fade_$dj.$suffix ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) & 
 					else
 						[ $debug -ge 2 ] && echo "deltawh>1 bg=image smp=0"
-						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg"  miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_$dj.$suffix ; $gm_cmd convert "$tmpdir"/fade_$dj.$suffix -type TrueColorMatte -depth 8 "$tmpdir"/fade_$dj.$suffix ; extracopies $fr $l_frames $suffix ) 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg"  miff:- | composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png - "$tmpdir"/fade_$dj.$suffix ; $gm_cmd convert "$tmpdir"/fade_$dj.$suffix -type TrueColorMatte -depth 8 "$tmpdir"/fade_$dj.$suffix ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) 
 						# this last pipe through convert seems to correct
 						# the "bad raw ppm magic" errors.	
 					fi
 				else  # no subtitles to render
 					if [ "$smp" -eq 1 ] ; then
 						[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=1"
-						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) & 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) & 
 					else
 						[ $debug -ge 3 ] && echo "deltawh>1 bg=image smp=0"
-						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; extracopies $fr $l_frames $suffix ) 
+						($gm_cmd convert "$tmpdir"/temp_slideshow_image_scaled.ppm -crop "$c_width"x"$c_height"+"$xc0"+"$yc0" $gm_repage -type TrueColorMatte -depth 8 -filter $filtermethod $convolve -resize "$frame_width"x"$frame_height" $sharpen miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) 
 					fi
 				fi
 			fi
@@ -2943,23 +2943,18 @@ scroll ()  # SCROLL
 		fi
 		it="${effect1_params[$i]}"
 		if [ "$interp" -eq 1 ] ; then
-			if [ "$interp" -eq 1 ] ; then
-				# calculate subpixel-averaging weights:
-		                Afactor=$( echo "scale=3; 100*(1-$x0_dec)*(1-$y0_dec)" | bc )
-               		       	Bfactor=$( echo "scale=3; 100*($x0_dec)*(1-$y0_dec)" | bc )
-                       	 	Cfactor=$( echo "scale=3; 100*(1-$x0_dec)*($y0_dec)" | bc )
-		                Dfactor=$( echo "scale=3; 100*($x0_dec)*($y0_dec)" | bc )
-			        Afactor=`printf %3.0f $Afactor | tr -d \[:blank:\]`
-			        Bfactor=`printf %3.0f $Bfactor | tr -d \[:blank:\]`
-			        Cfactor=`printf %3.0f $Cfactor | tr -d \[:blank:\]`
-			        Dfactor=`printf %3.0f $Dfactor | tr -d \[:blank:\]`
-			fi
+			# calculate subpixel-averaging weights:
+	                Afactor=$( echo "scale=3; 100*(1-$x0_dec)*(1-$y0_dec)" | bc )
+       		       	Bfactor=$( echo "scale=3; 100*($x0_dec)*(1-$y0_dec)" | bc )
+               	 	Cfactor=$( echo "scale=3; 100*(1-$x0_dec)*($y0_dec)" | bc )
+	                Dfactor=$( echo "scale=3; 100*($x0_dec)*($y0_dec)" | bc )
+		        Afactor=`printf %3.0f $Afactor | tr -d \[:blank:\]`
+		        Bfactor=`printf %3.0f $Bfactor | tr -d \[:blank:\]`
+		        Cfactor=`printf %3.0f $Cfactor | tr -d \[:blank:\]`
+		        Dfactor=`printf %3.0f $Dfactor | tr -d \[:blank:\]`
 #			echo "$dj,$frame_width,$frame_height,$frame_border,$x0,$y0,$x0_whole,$y0_whole,$x0_dec,$y0_dec,$Afactor,$Bfactor,$Cfactor,$Dfactor" >> "$outdir/scroll.csv"
 			[ $debug -ge 3 ] && myecho "[dvd-slideshow:scroll] x0=$x0 y0=$y0 Af=$Afactor Bf=$Bfactor Cf=$Cfactor Df=$Dfactor"
 			convolve="-convolve 0,0,0,0,$Afactor,$Bfactor,0,$Cfactor,$Dfactor"
-#			convert "$tmpdir"/temp_slideshow_image_scaled.mpc "$outdir"/scroll_shrunk.jpg 
-#			convert "$outdir"/scroll_shrunk.jpg -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" "$outdir"/scroll_cropped.jpg 
-#			composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColorMatte -depth 8 "$outdir"/scroll_cropped.jpg "$normal_bg" "$outdir"/scroll_composited.jpg 
 			if [ "$smp" -eq 1 ] ; then
 				if [ "$frame_border" -eq 0 ] ; then
 			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" &
@@ -2973,20 +2968,20 @@ scroll ()  # SCROLL
 			    	convert "$tmpdir"/temp_slideshow_image_scaled.mpc -crop "$frame_width"x"$frame_height"+"$x0_whole"+"$y0_whole" $convolve +repage -type TrueColorMatte -depth 8 miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" 
 				fi
 			fi
-		else
+		else # no interp
 			convolve=""
 			[ $debug -ge 3 ] && echo "[dvd-slideshow:scroll] $dj crop:$frame_width"x"$frame_height"+"$x0"+"$y0 composite: +$frame_border"+"$frame_border"
 			if [ "$smp" -eq 1 ] ; then
 				if [ "$frame_border" -eq 0 ] ; then
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $l_frames $suffix ) &
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) &
 				else
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColorMatte -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $l_frames $suffix ) &
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColorMatte -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix ) &
 				fi
 			else
 				if [ "$frame_border" -eq 0 ] ; then
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $l_frames $suffix )
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 -type TrueColorMatte -depth 8 "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix )
 				else
-				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColorMatte -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $l_frames $suffix )
+				(convert "$tmpdir/temp_slideshow_image_scaled.mpc" -crop "$frame_width"x"$frame_height"+$x0+$y0 +repage -type TrueColorMatte -depth 8  miff:- | composite -compose src-over -geometry "+$frame_border+$frame_border" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/fade_$dj.$suffix" ; add_logo "$logo" fade_$dj.$suffix "$logo_gravity" ; extracopies $fr $l_frames $suffix )
 				fi
 			fi
 		fi
@@ -3520,18 +3515,14 @@ if [ -z "$it" ] && [ "$commandline_gm" -eq 1 ] ; then # no graphicsmagick
 	myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install graphicsmagick"
 	myecho "[dvd-slideshow]		Reverting to ImageMagick commands"
 	graphicsmagick=0
-elif [ -n "$it" ] ; then
+	gm_cmd=''
+	gm_repage='+repage'
+elif [ -n "$it" ] && [ "$commandline_gm" -eq 1 ] ; then
 	progver=`gm version | head -n 1 | awk '{ print $2 }'`
 	logecho "[dvd-slideshow] Found GraphicsMagick version $progver"
-	if [ "$commandline_gm" -eq 1 ] ; then
-		graphicsmagick=1
-		gm_cmd="gm"
-		gm_repage=""
-	else
-		graphicsmagick=0
-		gm_cmd=""
-		gm_repage='+repage'
-	fi
+	graphicsmagick=1
+	gm_cmd="gm"
+	gm_repage=""
 else
 	# don't use graphicsmagick
 	graphicsmagick=0
@@ -4334,6 +4325,9 @@ myecho "[dvd-slideshow] Audio: $mp2_or_ac3 $audio_sample_rate $audio_bitrate"k
 myecho "[dvd-slideshow] Debug=$debug  Autocrop=$autocrop Subtitles=$subtitle_type Border=$frame_border"
 if [ "$manual_chapter_markers" == 1 ] ; then
 	myecho "[dvd-slideshow] Chapter markers= Manual"
+fi	
+if [ "$graphicsmagick" == 1 ] ; then
+	myecho "[dvd-slideshow] Using GraphicsMagick commands when possible"
 fi	
 if [ "$smp" == 1 ] ; then
 	myecho "[dvd-slideshow] Using SMP optimizations for multi-processor machines"
@@ -5556,7 +5550,6 @@ for file in "${image[@]}"; do
 				fi
 			elif [ "$smp" -eq 1 ] ; then
 				if [ "$graphicsmagick" -eq 1 ] ; then
-				echo "smp=1 crossfade"
 				(gm composite -compose Over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
 				else
 				(composite -compose src-over -gravity center -type TrueColorMatte -depth 8 -dissolve $percent "$tmpdir/slide_$(($i+$increment)).ppm" "$lastslide" "$tmpdir/fade_$dj.ppm" ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &

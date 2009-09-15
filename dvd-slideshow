@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-101'
+version='0.8.3-svn-103'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -50,6 +50,7 @@ echo 'Changes:
 	Logo (-logo) works as general overlay (beta).
 	Added -threads $cores to ffmepg calls for speed improvement?
     Bug fixes:
+	Redirect wait errors to log file to reduce errors in long slideshows
 	Improved kenburns jitter.
 	Added unset CDPATH to full_path function call (thanks Bob!)
 	Fixed bug with old version of findutils < 4.2.5
@@ -5504,10 +5505,9 @@ for file in "${image[@]}"; do
 		if [ -n "$lastcrossfade_pid" ] ; then
 			# wait for last crossfade process to finish before starting a new one!
 			# this might stop the random hangs in long slideshows...
-			# http://sourceforge.net/tracker/index.php?func=detail&aid=1672263&group_id=100188&atid=626615
 #			echo "[dvd-slideshow] Waiting for last crossfade to finish rendering..."
 			if [ -n "$( jobs -p | grep $lastcrossfade_pid )" ] ; then
-				wait "$lastcrossfade_pid"
+				wait "$lastcrossfade_pid" >> "$outdir/$logfile" 2>&1
 			fi
 		fi
 		set_end_frame_time ${duration[$i]}
@@ -6068,14 +6068,14 @@ for file in "${image[@]}"; do
 #			convert "$outdir"/cropped.jpg -resize "$frame_width"x"$frame_height" -type TrueColorMatte -depth 8 "$outdir"/resize2.jpg ; identify "$outdir"/resize2.jpg
 #			composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 "$outdir"/resize2.jpg "$normal_bg" "$outdir"/composited.jpg
 			convert "${file}" -filter $filtermethod -resize "$sq_to_dvd_pixels" -crop "$c_width"x"$c_height+$xc0+$yc0" +repage -resize "$frame_width"x"$frame_height" -type TrueColorMatte -depth 8 miff:- | composite -compose src-over -geometry "+$(( $xci + $frame_border ))+$(( $yci + $frame_border ))" -type TrueColorMatte -depth 8 - "$normal_bg" "$tmpdir/slide_$i.ppm"
-			if [ -n "$logo" ] ; then  # optionally add logo layer
-				add_logo "$logo" slide_$i.ppm "$logo_gravity"
-			fi
 			subtitle1[$i]="$( echo "${subtitle[$i]}" | awk -F';' '{print $1}' )"
 			if [ -n "${subtitle1[$i]}" -a "$subtitle_type" == 'render' ] ; then
 				subtitle "${subtitle1[$i]}" $i transparent # creates subtitle_$i.png
 				composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
 			fi
+		fi
+		if [ -n "$logo" ] ; then  # optionally add logo layer
+			add_logo "$logo" slide_$i.ppm "$logo_gravity"
 		fi
 		encode "$tmpdir/slide_$i.ppm" $rendered_frames
 		image_number=$(( $image_number + 1 ))
@@ -6659,7 +6659,7 @@ logecho "`ps $yuvpid`"
 exec 3>&-  
 myecho '[dvd-slideshow] waiting for encoder to finish...'
 if [ -n "$( jobs -p | grep $yuvpid )" ] ; then
-	wait $yuvpid
+	wait $yuvpid >> "$outdir/$logfile" 2>&1
 fi
 yuvpid=0
 

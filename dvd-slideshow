@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-103'
+version='0.8.3-svn-104'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -50,6 +50,8 @@ echo 'Changes:
 	Logo (-logo) works as general overlay (beta).
 	Added -threads $cores to ffmepg calls for speed improvement?
     Bug fixes:
+	Fix audio duration for .avi files (untested) (thanks Guy Albertelli)
+	Fix hms2seconds to allow 0:08:05:345 (seconds and minutes like "08") (thanks Guy Albertelli)
 	Redirect wait errors to log file to reduce errors in long slideshows
 	Improved kenburns jitter.
 	Added unset CDPATH to full_path function call (thanks Bob!)
@@ -839,9 +841,10 @@ hms2seconds ()
 	if [ -z "$1" ] ; then
 		echo ''
 	else
-		hours=$( printf %d `echo $1 | cut -d: -f1` )
-		minutes=$( printf %d `echo $1 | cut -d: -f2` )
-		seconds=$( printf %d `echo $1 | cut -d: -f3 | cut -d. -f1` )
+		# need to get rid of leading zeros to avoid "printf %d '08'"
+		hours=$( printf %d `echo $1 | cut -d: -f1 | sed -e 's/^0*//'` )
+		minutes=$( printf %d `echo $1 | cut -d: -f2 | sed -e 's/^0*//'` )
+		seconds=$( printf %d `echo $1 | cut -d: -f3 | cut -d. -f1 | sed -e 's/^0*//'` )
 		fraction=`echo $1 | cut -d: -f3 | cut -d. -f2`
 		characters=${#fraction}
 		if [ "$characters" -eq 1 ] ; then ## no decimal was specified
@@ -4405,12 +4408,12 @@ for file in "${image[@]}"; do
 		previous_transition_increment="`previousTransitionIncrement`"
 		next_transition_increment="`nextTransitionIncrement`"
 		if [ "${image[$i-$previous_transition_increment]}" == 'fadein' ] || [ "${image[$i-$previous_transition_increment]}" == 'crossfade' ] || [ "${image[$i-$previous_transition_increment]}" == 'wipe' ] ; then 
-			myecho "[dvd-slideshow] ERROR line ${line[$i]}. Cannot fadein or crossfade to a .avi file (yet)"
-			exit 1
+			myecho "[dvd-slideshow] WARNING line ${line[$i]}. Cannot fadein or crossfade to a .avi file (yet)"
+#			exit 1
 		fi
 		if [ "${image[$i+$next_transition_increment]}" == 'fadeout' ] || [ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'wipe' ]; then
-			myecho "[dvd-slideshow] ERROR line ${line[$i]}. Cannot fadeout or crossfade from a .avi file (yet)"
-			exit 1
+			myecho "[dvd-slideshow] WARNING line ${line[$i]}. Cannot fadeout or crossfade from a .avi file (yet)"
+#			exit 1
 		fi
 	elif [ "${image_file[$i]}" == 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG
 		nothing="nothing"
@@ -5056,12 +5059,12 @@ for file in "${image[@]}"; do
 		next_transition_increment="`nextTransitionIncrement`"
 		next_duration="${duration[$i+$next_transition_increment]}" # already in thousandths.
 		if [ "${image[$i-$previous_transition_increment]}" == 'fadein' ] || [ "${image[$i-$previous_transition_increment]}" == 'crossfade' ] || [ "${image[$i-$previous_transition_increment]}" == 'wipe' ] ; then 
-			myecho "[dvd-slideshow] ERROR: Cannot fadein or crossfade to a .avi file (yet)"
-			exit 1
+			myecho "[dvd-slideshow] WARNING: Cannot fadein or crossfade to a .avi file (yet)"
+#			exit 1
 		fi
 		if [ "${image[$i+$next_transition_increment]}" == 'fadeout' ] || [ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'wipe' ]; then
-			myecho "[dvd-slideshow] ERROR: Cannot fadeout or crossfade from a .avi file (yet)"
-			exit 1
+			myecho "[dvd-slideshow] WARNING: Cannot fadeout or crossfade from a .avi file (yet)"
+#			exit 1
 		fi
 		## encode video
 #		myecho "[dvd-slideshow] Encoding ${image[$i]} to video.mpg"
@@ -5100,22 +5103,23 @@ for file in "${image[@]}"; do
 				myecho "[dvd-slideshow] see $outdir/$logfile for details"
 				cleanup; exit 1
 			fi
+		        set_end_frame_time ${duration[$i]} # compute end of video which is end of audio
 			audio1_start[$audio_index]="$slide_start_time"   # in ms
 			## set ending point of the previous audio track:
 			if [ "$audio_index" -gt 0 ] ; then # not first audio track
-				audio1_end[$(($audio_index-1))]="$slide_end_time"   # in ms from last slide
+				audio1_end[$(($audio_index-1))]="$slide_start_time"   # in ms from last slide
 				myecho "[dvd-slideshow] Set end time for audio file $audio_index to `hms $slide_end_time`"
 			else # set audio end to zero for now...
 				audio1_end[$audio_index]=0   # in ms from last slide
 			fi
-			myecho "[dvd-slideshow] track=${audio_track[$i]} audio_start=$slide_start_time audio_end=$slide_end_time"
-	#		myecho "[dvd-slideshow] track=${audio_track[$i]} audio_start=${audio1_start[$audio_index]} audio_end=${audio1_end[$audio_index]}"
+			myecho "[dvd-slideshow] slide track=${audio_track[$i]} audio_start=$slide_start_time audio_end=$slide_end_time"
 			song_length_ms=`wavlength "$tmpdir/audio1_$audio_index_padded".wav`
 			song_length_hms=`hms "$song_length_ms"`
 			echo "[dvd-slideshow] Audio length ms=$song_length_ms  $song_length_hms"
+		else
+			set_end_frame_time ${duration[$i]} #
 		fi
 		subtitle[$i]=''  # set subtitle to nothing so we don't get a subtitle
-		set_end_frame_time ${duration[$i]}
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		myecho "[dvd-slideshow]############################################################"
 	elif [ "${image_file[$i]}" -eq 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG IMAGE

@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-104'
+version='0.8.3-svn-105'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -59,6 +59,7 @@ echo 'Changes:
 	Use du -b so it is independend of env variables (thanks kikoun)
 	Change sleep 1s to sleep 0.01s for faster machines
 	Add better help for missing applications and graphicsmagick
+	Allow escaped # in musictitle slides (use \# to print #)
 
 0.8.2
     New features:
@@ -1374,9 +1375,9 @@ titleslide ()
 musictitleslide ()
 {
 # musictitleslide $Title $Artist $Album $output_file $background_file
-		local Title="$1"
-		local Artist="$2"
-		local Album="$3"
+		local Title="$( echo $1 | sed -e 's/\\#/#/g' )"
+		local Artist="$( echo $2 | sed -e 's/\\#/#/g' )"
+		local Album="$( echo $3 | sed -e 's/\\#/#/g' )"
 		# draw text:
 		if [ -n "$4" ] ; then
 			local output_file="$4"
@@ -5510,7 +5511,7 @@ for file in "${image[@]}"; do
 			# wait for last crossfade process to finish before starting a new one!
 			# this might stop the random hangs in long slideshows...
 #			echo "[dvd-slideshow] Waiting for last crossfade to finish rendering..."
-			if [ -n "$( jobs -p | grep $lastcrossfade_pid )" ] ; then
+			if [ jobs -p | grep -F -q $lastcrossfade_pid ] ; then
 				wait "$lastcrossfade_pid" >> "$outdir/$logfile" 2>&1
 			fi
 		fi
@@ -6662,7 +6663,7 @@ logecho "`ps $yuvpid`"
 # close pipe to mpeg2enc
 exec 3>&-  
 myecho '[dvd-slideshow] waiting for encoder to finish...'
-if [ -n "$( jobs -p | grep $yuvpid )" ] ; then
+if [ jobs -p | grep -F -q $yuvpid ] ; then
 	wait $yuvpid >> "$outdir/$logfile" 2>&1
 fi
 yuvpid=0

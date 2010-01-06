@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-105'
+version='0.8.3-svn-106'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -60,6 +60,7 @@ echo 'Changes:
 	Change sleep 1s to sleep 0.01s for faster machines
 	Add better help for missing applications and graphicsmagick
 	Allow escaped # in musictitle slides (use \# to print #)
+	Added fixes for .avi files (thanks Guy Albertelli)
 
 0.8.2
     New features:
@@ -1045,8 +1046,9 @@ previousTransitionIncrement ()
 		[ -n "${image[$i-$increment]}" ] && image1="${image[$(($i-$increment))]}" 
 		[ -n "${duration[$i-$increment]}" ] && dur1="${duration[$(($i-$increment))]}" 
 		[ -n "${image_file[$i-$increment]}" ] && image_file1=${image_file[$i-$increment]}
+		[ -n "${avi_file[$i-$increment]}" ] && avi_file1=${avi_file[$i-$increment]}
 #echo "i=$i increment=$increment image_file=${image_file[$i-$increment]}" 1>&2
-		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
+		if [ "$image_file1" == "1" ] || [ "$avi_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
 			previousimage="0"  #  i.e., not a fade
 			break
 		elif [ "$image1" == 'fadein' ] || [ "$image1" == 'crossfade' ] || [ "$image1" == 'wipe' ] ; then
@@ -1070,8 +1072,9 @@ nextTransitionIncrement ()
 		[ -n "${image[$i+$increment]}" ] && image1="${image[$(($i+$increment))]}" 
 		[ -n "${duration[$i+$increment]}" ] && dur1="${duration[$(($i+$increment))]}" 
 		[ -n "${image_file[$i+$increment]}" ] && image_file1=${image_file[$i+$increment]}
-#		echo "i=$i increment=$increment image1=$image1 nextimage=$nextimage" 1>&2
-		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" != 0 ] ) ; then
+		[ -n "${avi_file[$i+$increment]}" ] && avi_file1=${avi_file[$i+$increment]}
+#		echo "i=$i increment=$increment image1=$image1 image_file1=$image_file1 nextimage=$nextimage" 1>&2
+		if [ "$image_file1" == "1" ] || [ "$avi_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" != 0 ] ) ; then
 			nextimage="0"  # i.e., not a transition
 			break
 		elif [ "$image1" == 'fadeout' ] || [ "$image1" == 'crossfade' ] || [ "$image1" == 'wipe' ] ; then
@@ -1091,8 +1094,8 @@ nextslidename ()  # NEXTSLIDENAME
 	nextimage=''
 	increment=1
 	while [ $(( $i + $increment )) -le ${#image[@]} ] ; do
-		image1="${image[$(($i+$increment))]}" ; dur1="${duration[$(($i+$increment))]}" ; image_file1=${image_file[$i+$increment]}
-		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
+		image1="${image[$(($i+$increment))]}" ; dur1="${duration[$(($i+$increment))]}" ; image_file1=${image_file[$i+$increment]} ; avi_file1=${avi_file[$i+$increment]}
+		if [ "$image_file1" == "1" ] || [ "$avi_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
 			nextimage="$image1"
 			break
 		else 
@@ -1116,9 +1119,9 @@ previousslideincrement ()
 	previousimage=''
 	increment=1
 	while [ $(( $i - $increment )) -ge 0 ] ; do
-		image1="${image[$(($i-$increment))]}" ; dur1="${duration[$(($i-$increment))]}" ; image_file1=${image_file[$i-$increment]}
+		image1="${image[$(($i-$increment))]}" ; dur1="${duration[$(($i-$increment))]}" ; image_file1=${image_file[$i-$increment]} ; avi_file1=${avi_file[$i-$increment]}
 #		image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
-		if [ $image_file1 -eq 1 ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
+		if [ $image_file1 -eq 1 ] || [ "$avi_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
 			previousimage="$image1"
 			break
 		else 
@@ -1139,9 +1142,9 @@ nextslideincrement ()
 	nextimage=''
 	increment=1
 	while [ $(( $i + $increment )) -le ${#image[@]} ] ; do
-		image1="${image[$(($i+$increment))]}" ; dur1="${duration[$(($i+$increment))]}" ; image_file1=${image_file[$i+$increment]}
+		image1="${image[$(($i+$increment))]}" ; dur1="${duration[$(($i+$increment))]}" ; image_file1=${image_file[$i+$increment]} ; avi_file1=${avi_file[$i+$increment]}
 #		image_file[$i]=0 ; audio_file[$i]=0 ; avi_file[$i]=0
-		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
+		if [ "$image_file1" == "1" ] || [ "$avi_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
 			nextimage="$image1"
 			break
 		else 
@@ -1183,8 +1186,8 @@ read_next_variables ()  # READ_NEXT_VARIABLES
 	local nextimage=''
 	local increment=1
 	while [ $(( $i + $increment )) -le ${#image[@]} ] ; do
-		local image1="${image[$(($i+$increment))]}" ; local dur1="${duration[$(($i+$increment))]}" ; local image_file1=${image_file[$i+$increment]}
-		if [ "$image_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
+		local image1="${image[$(($i+$increment))]}" ; local dur1="${duration[$(($i+$increment))]}" ; local image_file1=${image_file[$i+$increment]} ; local avi_file=${avi_file[$i+$increment]}
+		if [ "$image_file1" == "1" ] || [ "$avi_file1" == "1" ] || [ "$image1" == 'title' ] || [ "$image1" == 'titlebar' ] || [ "$image1" == 'musictitle' ] || ( [ "$image1" == 'background' ] && [ "$dur1" -ne 0 ] ) ; then
 			nextimage="$image1"
 			break
 		else 
@@ -5239,6 +5242,12 @@ for file in "${image[@]}"; do
 			cleanup ; exit 1
 		fi
 		nextslide_effect="${effect1[$i+$increment]}"
+		if [ "${avi_file[$i+$increment]}" == "1" ]; then
+			myecho "[dvd-slideshow] WARNING: Skipping Fadein to .avi file"
+                	myecho "[dvd-slideshow]############################################################"
+			let i=$i+1
+			continue
+		fi
 		rm -f "$tmpdir/slide_$(($i+$increment)).ppm" # make sure it doesn't already exist!
 		## we need to prepare the NEXT image now:
                 if [ "$nextslide" == 'title' ] || [ "$nextslide" == 'Title' ] ; then
@@ -5375,6 +5384,12 @@ for file in "${image[@]}"; do
 			cleanup; exit 1
 		fi
 		myecho "[dvd-slideshow] Applying Crossfade between images `hms ${duration[$i]}`"
+		if [ "${avi_file[$i-$previous_increment]}" == "1" ] || [ "${avi_file[$i+$increment]}" == "1" ]; then
+			myecho "[dvd-slideshow] WARNING: Skipping Crossfade from/to .avi file"
+                	myecho "[dvd-slideshow]############################################################"
+			let i=$i+1
+			continue
+		fi
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Crossfade Subtitle= ${subtitle[$i]}"
 #		rm -f "$tmpdir/slide_$(($i+$increment)).ppm"  # make sure it doesn't already exist!
 #		rm -f "$tmpdir/slide_$(($i+1)).cache"  # make sure it doesn't already exist!
@@ -5572,6 +5587,12 @@ for file in "${image[@]}"; do
 		previousslide_effect="${effect1[$i-$previous_increment]}"
 		previous_frames=0; 
 		next_transition_increment=`nextTransitionIncrement`
+		if [ "${avi_file[$i-$previous_increment]}" == "1" ]; then
+			myecho "[dvd-slideshow] WARNING: Skipping Fadeout from .avi file"
+                	myecho "[dvd-slideshow]############################################################"
+			let i=$i+1
+			continue
+		fi
 		if [ "$next_transition_increment" != 0 ] && ([ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'fadeout' ]) ; then
 			myecho "[dvd-slideshow] ERROR: Cannot fadeout to a crossfade or another fadeout!"
 			cleanup; exit 1
@@ -5684,6 +5705,12 @@ for file in "${image[@]}"; do
 			cleanup; exit 1
 		fi
 		myecho "[dvd-slideshow] Applying wipe between images `hms ${duration[$i]}`"
+		if [ "${avi_file[$i-$previous_increment]}" == "1" ] || [ "${avi_file[$i+$increment]}" == "1" ]; then
+			myecho "[dvd-slideshow] WARNING: Skipping Wipe from/to .avi file"
+                	myecho "[dvd-slideshow]############################################################"
+			let i=$i+1
+			continue
+		fi
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Wipe Subtitle= ${subtitle[$i]}"
 #		myecho "[dvd-slideshow] next slide=$nextslide. increment=$increment."
 
@@ -6663,7 +6690,7 @@ logecho "`ps $yuvpid`"
 # close pipe to mpeg2enc
 exec 3>&-  
 myecho '[dvd-slideshow] waiting for encoder to finish...'
-if [ jobs -p | grep -F -q $yuvpid ] ; then
+if [ "$( jobs -p | grep -F -q $yuvpid )" ] ; then
 	wait $yuvpid >> "$outdir/$logfile" 2>&1
 fi
 yuvpid=0

@@ -24,6 +24,7 @@ changes ()
 echo 'Changes:
 0.8.3
 	Allow reading of dvd-slideshowrc file to set variables (thanks Johan Kunnen)
+	Reads .avi files for dvd-slideshow (thanks Guy Albertelli)
 0.8.2
 	Write out pal option to output file if selected in dir2slideshow
 	Recursive finds follow symbolic links and ignores hidden directories.
@@ -396,10 +397,12 @@ checkforprog ()
 cleanup ()
 {
 	## clean up temporary files
-	check_rm "$output_dir"/imagelist.txt
+	check_rm "$output_dir/imagelist.txt"
 	check_rm "$output_dir/filelist_sorted.txt"
 	check_rm "$output_dir/txtlist.txt"
 	check_rm "$output_dir/audiolist.txt"
+	check_rm "$output_dir/videolist.txt"
+	check_rm "$output_dir/directory_list.txt"
 	echo "[dir2slideshow] Done!"
 }
 
@@ -581,22 +584,26 @@ if [ "$recursive_single" == 1 ] ; then
 	# do not display images under .thumbs or .thumbnails directories
 
 	# first, get list of directories:
-	find "$input_dir" -type d | grep --invert-match -e '\.' | sort > "$output_dir"/directory_list.txt
+	find "$input_dir" -type d | grep --invert-match -e '\.' | grep --invert-match -e '\/tn$' | sort > "$output_dir"/directory_list.txt
 	check_rm "$output_dir"/imagelist.txt
 	check_rm "$output_dir"/audiolist.txt
+	check_rm "$output_dir"/videolist.txt
 #	check_rm "$output_dir"/txtlist.txt
 	while read directory
 	do
 		find "$directory" -maxdepth 1 -type f -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort >> "$output_dir"/imagelist.txt
 		find "$directory" -maxdepth 1 -type f -prune \( -name \*.mp3 -o -name \*.ogg \) | sort >> "$output_dir"/audiolist.txt
+		find "$directory" -maxdepth 1 -type f -prune \( -name \*.avi \) | sort >> "$output_dir"/videolist.txt
 #		find "$directory" -maxdepth 1 -type f \( -name \*.txt \) -exec ls -1 {} \; | sort >> "$output_dir"/txtlist.txt
 	done < "$output_dir"/directory_list.txt	
 
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
+	videofiles=`wc -l "$output_dir"/videolist.txt | awk '{print $1}'`
 #	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
 	echo "[dir2slideshow] Total audio files found = $audiofiles"
+	echo "[dir2slideshow] Total video files found = $videofiles"
 #	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
 
@@ -605,14 +612,22 @@ elif [ "$recursive_multiple" == 1 ] ; then
 	# do find, then check each file if it is a directory:
 else  # default case
 	# ok, we need to follow links, but don't do recursive directory searching
+	check_rm "$output_dir"/imagelist.txt
+	check_rm "$output_dir"/audiolist.txt
+	check_rm "$output_dir"/videolist.txt
+#	check_rm "$output_dir"/txtlist.txt
 	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort > "$output_dir"/imagelist.txt
 	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.mp3 -o -name \*.ogg \) | sort > "$output_dir"/audiolist.txt
+	find "$input_dir" -maxdepth 1 -type f -prune \( -name \*.avi \) | sort > "$output_dir"/videolist.txt
+#	find "$input_dir" -maxdepth 1 -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
+	videofiles=`wc -l "$output_dir"/videolist.txt | awk '{print $1}'`
 #	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
 	echo "[dir2slideshow] Total pictures found = $pictures"
 	echo "[dir2slideshow] Total audio files found = $audiofiles"
+	echo "[dir2slideshow] Total video files found = $videofiles"
 #	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
 	if [ "$audiobook" == 1 ] ; then
@@ -647,6 +662,11 @@ if [ "$sortmethod" == 'taken_date' ] ; then
 			echo "$file: $modified" >> "$output_dir"/filelist_date.txt
 		fi
 	done	
+	for (( i=1 ; i<=videofiles ; i++ )) ; do
+		file=`sed -n "$i"p "$output_dir"/videolist.txt`
+		modified=`basename $file|awk -F_ '{printf "%s %s", $1, $2}'|sed s/-/:/g`
+		echo "$file: $modified" >> "$output_dir"/filelist_date.txt
+	done
 	## sort:
 	sort -k 2,3 -d "$output_dir"/filelist_date.txt > "$output_dir"/filelist_sorted.txt
 
@@ -661,11 +681,17 @@ elif [ "$sortmethod" == 'modified_date' ] ; then
 #		echo "modified_time=$modified_time"
 		echo "$file: $modified_day $modified_time" >> "$output_dir"/filelist_date.txt
 	done	
+	for (( i=1 ; i<=videofiles ; i++ )) ; do
+		file=`sed -n "$i"p "$output_dir"/videolist.txt`
+		modified=`basename $file|awk -F_ '{printf "%s %s", $1, $2}'|sed s/-/:/g`
+		echo "$file: $modified" >> "$output_dir"/filelist_date.txt
+	done
 	## sort:
 	sort -k 2,3 -d "$output_dir"/filelist_date.txt > "$output_dir"/filelist_sorted.txt
 else
 	## sort by name (should be done by ls -l)
-	mv "$output_dir"/imagelist.txt "$output_dir"/filelist_sorted.txt	
+	cat "$output_dir"/imagelist.txt "$output_dir"/videolist.txt > "$output_dir"/filelist_date.txt	
+	sort -k 1 -d "$output_dir"/filelist_date.txt > "$output_dir"/filelist_sorted.txt
 fi
 check_rm "$output_dir"/filelist_date.txt
 
@@ -794,6 +820,41 @@ for (( i=1 ; i<=total_lines ; i++ )) ; do
 			chapter=$(( $chapter + 1 ))
 #		else
 #			fileecho "$file:1"
+		fi
+	elif [ "$filetype" == 'avi' ] ; then
+		if [ -n "$subtitle" ] ; then
+			if [ "$subtitle" == 'filename' ] ; then
+				# use name as the subtitle
+				subtitle_text="$( basename "$file" )"
+			elif [ "$subtitle" == 'path' ] ; then
+				# use full filename and path as subtitle (truncate?)
+				subtitle_text="$file"
+			else
+				subtitle_text="$subtitle"
+			fi
+		else
+			subtitle_text=''
+		fi	
+	
+		if [ -n "$subtitle2" ] ; then
+			if [ "$subtitle2" == 'filename' ] ; then
+				# use name as the subtitle2
+				subtitle2_text="$( basename "$file" )"
+			elif [ "$subtitle2" == 'path' ] ; then
+				# use full filename and path as subtitle2 (truncate?)
+				subtitle2_text="$file"
+			else
+				subtitle2_text="$subtitle2"
+			fi
+		else
+			subtitle2_text=''
+		fi	
+		if [ -n "$subtitle_text" ] && [ -n "$subtitle2_text" ] ; then
+			fileecho "$file:$slide_duration:$subtitle_text"';'"$subtitle2_text"
+		elif [ -n "$subtitle_text" ] && [ -z "$subtitle2_text" ] ; then
+			fileecho "$file:$slide_duration:$subtitle_text"
+		else
+			fileecho "$file:$slide_duration"
 		fi
 	elif [ "$filetype" == 'txt' ] ; then
 		echo "found text file"

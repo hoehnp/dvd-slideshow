@@ -116,6 +116,8 @@ Options:
 	  Use background.jpg as background image. Default is black.
  		
  [-notitle]	 Do not create a title slide.
+
+ [-nofades]	 Do not create fades at start and end of slideshow.
  		
  [-r]	 Recursively search directories for images, 
 	  creating one output file.
@@ -228,6 +230,7 @@ input_dir=""
 name=''
 sortmethod=''
 title=1
+fades=1
 background=''
 title_background=''
 audiobook=0
@@ -270,6 +273,7 @@ do
 	-b) shift; commandline_background="$1" ; shift ;;
 	-tb) shift; commandline_title_background="$1" ; shift ;;
 	-notitle) commandline_title=0 ; shift ;;
+	-nofades) commandline_fades=0 ; shift ;;
 	-B) commandline_audiobook=1 ; shift ;;
 	-k) commandline_kenburns=1 ; shift ;;
 	-r) commandline_recursive_single=1 ; shift ;;
@@ -356,6 +360,7 @@ fi
 [ -n "$commandline_background" ] && background="$commandline_background"
 [ -n "$commandline_title_background" ] && title_background="$commandline_title_background"
 [ -n "$commandline_title" ] && title="$commandline_title"
+[ -n "$commandline_fades" ] && fades="$commandline_fades"
 [ -n "$commandline_kenburns" ] && kenburns="$commandline_kenburns"
 [ -n "$commandline_pal" ] && pal="$commandline_pal"
 [ -n "$commandline_duration" ] && slide_duration="$commandline_duration"
@@ -752,15 +757,19 @@ name_converted="$( echo $name | sed -e 's/_/ /g' )"
 if [ "$title" -eq 1 ] ; then
 	[ -n "$title_font_color" ] && fileecho "title_font_color=$title_font_color"
 	[ -n "$title_font_size" ] && fileecho "title_font_size=$title_font_size"
-	fileecho "background:1"
-	fileecho "fadein:1"
+	if [ "$fades" -eq 1 ] ; then
+		fileecho "background:1"
+		fileecho "fadein:1"
+	fi
 	if [ "$title_type" == 'titlebar' ] ; then
 		fileecho "bottomtitle_bar_height=0" # no bottom title for now
 		fileecho "titlebar:$slide_duration:$name_converted"
 	else
 		fileecho "title:$slide_duration:$name_converted"
 	fi
-	fileecho "background:0::$background" 
+	fileecho "background:0::$background"   # set the background back to the non-title background
+fi
+if [ "$fades" -eq 1 ] && [ "$title" -eq 1 ] ; then
 	fileecho "fadeout:1"
 	fileecho "background:2"
 fi
@@ -802,7 +811,9 @@ elif [ -f "$output_dir/audiolist.txt" ] ; then
 	done < "$output_dir/audiolist.txt"
 
 fi
-fileecho "fadein:1"
+if [ "$fades" -eq 1 ] ; then
+	fileecho "fadein:1"
+fi
 
 total_lines=`wc -l "$output_dir"/filelist_sorted.txt | awk '{print $1}'`
 j=0
@@ -970,9 +981,11 @@ for (( i=1 ; i<=total_lines ; i++ )) ; do
 	fi  # end of if statement for different file types
 done
 	
-## fade out at end
-fileecho "fadeout:1"
-fileecho "background:2"
+if [ "$fades" -eq 1 ] ; then
+	## fade out at end
+	fileecho "fadeout:1"
+	fileecho "background:2"
+fi
 #if [ "$title" -eq 1 ] && [ -n "$title_background" ] ; then
 #	# if we use a title, then fade back in to title_background?
 #	fileecho "fadein:1"

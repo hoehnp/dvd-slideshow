@@ -18,11 +18,11 @@
 #
 
 name='dvd-slideshow'
-version='0.8.3-svn-107'
+version='0.8.4-1'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
-echo "[dvd-slideshow]            Copyright 2003-2007 by Scott Dylewski"
+echo "[dvd-slideshow]            Copyright 2003-2011 by Scott Dylewski"
 echo "[dvd-slideshow]            "
 
 ## todo: (sorted by priority?)
@@ -42,6 +42,8 @@ LANG="POSIX"
 changes ()
 {
 echo 'Changes:
+0.8.4
+	New release!
 0.8.3
     New features:
 	Use qscale VBR option in ffmpeg for flv and mp4 output instead of fixed bitrate.	
@@ -5580,8 +5582,9 @@ for file in "${image[@]}"; do
 			# wait for last crossfade process to finish before starting a new one!
 			# this might stop the random hangs in long slideshows...
 #			echo "[dvd-slideshow] Waiting for last crossfade to finish rendering..."
-			if [ jobs -p | grep -F -q $lastcrossfade_pid ] ; then
-				wait "$lastcrossfade_pid" >> "$outdir/$logfile" 2>&1
+			if [ -n "$( jobs -p | grep -F "$lastcrossfade_pid" )" ] ; then
+				echo "waiting for fade process $lastcrossfade_pid to finish" >> "$outdir"/"$logfile"
+				wait "$lastcrossfade_pid" >> "$outdir"/"$logfile" 2>&1
 			fi
 		fi
 		set_end_frame_time ${duration[$i]}

@@ -18,11 +18,11 @@
 #
 
 name='dvd-menu'
-version='0.8.3-svn'
+version='0.8.4-1'
 
 echo "[dvd-menu]            dvd-menu $version"
 echo "[dvd-menu]            Licensed under the GNU GPL"
-echo "[dvd-menu]            Copyright 2003-2008 by Scott Dylewski"
+echo "[dvd-menu]            Copyright 2003-2011 by Scott Dylewski"
 echo "[dvd-menu]            "
 
 ## TODO:
@@ -37,6 +37,8 @@ LANG="POSIX"
 changes () 
 {
 echo 'Changes:
+0.8.4	New release!
+
 0.8.3
 	Fix sox arguments to work with both old and new versions of sox.
 	Added "unset CDPATH to full_path function.  (Thanks Bob!)

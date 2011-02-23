@@ -596,9 +596,9 @@ if [ "$recursive_single" == 1 ] ; then
 #	check_rm "$output_dir"/txtlist.txt
 	while read directory
 	do
-		find "$directory" -maxdepth 1 -type f -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort >> "$output_dir"/imagelist.txt
-		find "$directory" -maxdepth 1 -type f -prune \( -name \*.mp3 -o -name \*.ogg \) | sort >> "$output_dir"/audiolist.txt
-		find "$directory" -maxdepth 1 -type f -prune \( -name \*.avi \) | sort >> "$output_dir"/videolist.txt
+		find "$directory" -maxdepth 1 -type f -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg -o -name \*.JPEG \) | sort >> "$output_dir"/imagelist.txt
+		find "$directory" -maxdepth 1 -type f -prune \( -name \*.mp3 -o -name \*.MP3 -o -name \*.ogg -o -name \*.OGG \) | sort >> "$output_dir"/audiolist.txt
+		find "$directory" -maxdepth 1 -type f -prune \( -name \*.avi -o -name \*.AVI \) | sort >> "$output_dir"/videolist.txt
 #		find "$directory" -maxdepth 1 -type f \( -name \*.txt \) -exec ls -1 {} \; | sort >> "$output_dir"/txtlist.txt
 	done < "$output_dir"/directory_list.txt	
 
@@ -621,9 +621,9 @@ else  # default case
 	check_rm "$output_dir"/audiolist.txt
 	check_rm "$output_dir"/videolist.txt
 #	check_rm "$output_dir"/txtlist.txt
-	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg \) | sort > "$output_dir"/imagelist.txt
-	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.mp3 -o -name \*.ogg \) | sort > "$output_dir"/audiolist.txt
-	find "$input_dir" -maxdepth 1 -type f -prune \( -name \*.avi \) | sort > "$output_dir"/videolist.txt
+	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg -o -name \*.JPEG \) | sort > "$output_dir"/imagelist.txt
+	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.mp3 -o -name \*.MP3 -o -name \*.ogg -o -name \*.OGG \) | sort > "$output_dir"/audiolist.txt
+	find "$input_dir" -maxdepth 1 -type f -prune \( -name \*.avi -o -name \*.AVI \) | sort > "$output_dir"/videolist.txt
 #	find "$input_dir" -maxdepth 1 -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
 
 	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`

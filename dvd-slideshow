@@ -658,7 +658,7 @@ do
 	-mp4) shift; output_format='mp4' ;; # mp4 output
 	-ipod) shift; output_format='mp4_ipod' ;; # ipod compatible h.264/mp4 output
 	-ogv) shift; output_format='ogv' ;; # OGG theora video and vorbis audio output
-	-mpg) shift; output_format='mpg' ;; # mpeg output (don't assume dvd output)
+	-mpg) shift; output_format='mpg' ;; # mpeg output (do not assume dvd output)
 	-w) shift; widescreen=1 ;;  # use 16:9 instead of 4:3 aspect ratio
 	-gm) shift; commandline_gm=1 ;;  # use graphicsMagick instead of ImageMagick (alpha)
 	-L) shift; low_quality=1 ;;  # use low-quality mode
@@ -3486,6 +3486,8 @@ logecho "[dvd-slideshow] Found mjpegtools version $progver"
 if ppmtoy4m -S 420mpeg2 xxxxx 2>&1 | grep -q xxxxx; then
 	logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420mpeg2"
 	subsample='420mpeg2'
+	logecho "[dvd-slideshow] Using mjpegtools subsampling -S 444 (none)"
+	subsample='444'
 else
 	logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420_mpeg2"
 	subsample='420_mpeg2'
@@ -4796,25 +4798,27 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 	if [ "$output_format" == 'flv' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
+		# it seems that specifying the aspect ratio makes ffmpeg fail, so keep it out.
 		myecho "[dvd-slideshow] Exporting .flv file"
-		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
+#		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
 		# no bitrate spec: ( uses qscale )
 #		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'swf' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .swf file"
-		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.swf" 1> /dev/null 2>> "$ffmpeg_out" &
+		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.swf" 1> /dev/null 2>> "$ffmpeg_out" &
 	elif [ "$output_format" == 'mp4' ] ; then   
 		myecho "[dvd-slideshow] Exporting .mp4 file"
-		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$ffmpeg_out" 2>&1 &
+		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'mp4_ipod' ] ; then   
 		myecho "[dvd-slideshow] Exporting ipod .mp4 file"
 		ffmpeg -y -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -an -threads 0 -vcodec libx264 -refs 5 -subq 5 -crf 30 -maxrate 768000 -bufsize 244 -r $framerate -level 13 -s "$dvd_width"x"$dvd_height" -f mp4 "$tmpdir/video.mp4" >> "$ffmpeg_out" 2>&1 &
 
 	elif [ "$output_format" == 'ogv' ] ; then   
 		myecho "[dvd-slideshow] Exporting .ogv file"
-		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f ogg -vcodec libtheora "$tmpdir/video.ogv" >> "$ffmpeg_out" 2>&1 &
+		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -s "$dvd_width"x"$dvd_height" -y -f ogg -vcodec libtheora "$tmpdir/video.ogv" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'mpg' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.

@@ -42,6 +42,7 @@ echo 'Changes:
 0.8.3
 	Fix sox arguments to work with both old and new versions of sox.
 	Added "unset CDPATH to full_path function.  (Thanks Bob!)
+	Add explicit PAL or NTSC in .xml files for dvdauthor 0.7.0
 0.8.2
 	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
 	Sox v. > 13 changes -w to -2 and -e to -n (thanks Ludovic)
@@ -1828,6 +1829,7 @@ else	# dvd menus:
 	echo '<dvdauthor dest="'$dvd_dir'" jumppad="0">' > "$outdir/vmgm.xml"
 	echo '        <vmgm>' >> "$outdir/vmgm.xml"
 	echo '           <menus>' >> "$outdir/vmgm.xml"
+	echo '               <video format="'$ntsc_or_pal'" />' >> "$outdir/vmgm.xml"
 fi
 
 # write menu
@@ -1903,6 +1905,7 @@ if [ "$vcd" -eq 0 ] && [ "$svcd" -eq 0 ] ; then ## DVD
 	## for DVD players that default to first vtsm menu when you
 	## press the DVD menu button.  (thanks for fix from will guaraldi)
 	echo '           <menus>' >> "$outdir/vmgm.xml"
+	echo '              <video format="'$ntsc_or_pal'" />' >> "$outdir/vmgm.xml"
 	echo '              <pgc>' >> "$outdir/vmgm.xml"
 	echo '              <post> jump vmgm menu; </post>' >> "$outdir/vmgm.xml"
 	echo '              </pgc>' >> "$outdir/vmgm.xml"

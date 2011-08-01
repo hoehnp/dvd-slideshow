@@ -31,6 +31,7 @@ echo "[dvd-slideshow]            "
 # add hints for smoothest kenburns effects. (no zoom and pan)
 
 ## known bugs:
+####################
 # continuous subtitles don't work across non-image/transition lines
 # convert image.jpg -bordercolor black -border 0 "$tmpdir/fade_$dj.ppm" works for transparent .png images
 # in ImageMagick > 6.0.6, but not in 6.0.6 for some reason.  (black output).  
@@ -44,7 +45,7 @@ changes ()
 echo 'Changes:
 0.8.4
 	New release!
-0.8.3
+0.8.3  (svn only release)
     New features:
 	Use qscale VBR option in ffmpeg for flv and mp4 output instead of fixed bitrate.	
 	Logo (-logo) works as general overlay (beta).
@@ -52,6 +53,7 @@ echo 'Changes:
 	Added .ogg mode ( use -ogv ) (not working yet)
 	Added ipod output ( use -ipod ) (not working yet)
     Bug fixes:
+	No audio added to .flv files when none is passed by default.
 	Changed default dvd audio bitrate from 192kbps to 256kbps
 	Enable subtitle_location_x (was not being passed before)
 	Fix audio duration for .avi files (untested) (thanks Guy Albertelli)
@@ -512,6 +514,7 @@ fi
 
 ## setup program default variables (user configurable)
 debug=0 # 0-2
+quiet=0
 pal=0  
 copy=0
 low_quality=0
@@ -686,6 +689,7 @@ do
 	-h) help ; exit 0 ; shift ;;
 	-\?) help ; exit 0 ; shift ;;
 	-help) help ; exit 0 ; shift ;;
+	-q) quiet=1 ; shift ;;
 	--help) help ; exit 0 ; shift ;;
 	-v) echo "$version" ; exit 0 ; shift ;;
 	-version) echo "$version" ; exit 0 ; shift ;;
@@ -701,7 +705,9 @@ done
 myecho ()
 {
 	## use this version of echo to write to screen and to the logfile:
-	echo "$*"
+	if [ "$quiet" == 0 ] ; then
+		echo "$*"
+	fi
 	echo "$*" >> "$outdir/$logfile"
 }
 
@@ -734,8 +740,8 @@ if [ "$nocleanup" -eq 0 ] ; then
 	rm -f temp_slideshow_image.ppm ; rm -f temp.ppm
 	rm -f temp_slideshow_image_scaled.ppm
 	rm -f "$outdir/$tmptxtfile"
-	# close pipe to mpeg2enc
-        exec 3>&-  
+	# close pipe to mpeg2enc  ( close file descriptor 9 )
+        exec 9>&-  
         rm -f "$tmpdir/$yuvfifo"
         if [ "$yuvpid" -ne 0 ]; then
         	kill -TERM $yuvpid
@@ -924,9 +930,9 @@ encode_video ()
 {
 if [ "$yuvfirstfile" -eq 1 ]; then
 	yuvfirstfile=0
-	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - >&3
+	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - >&9
 else
-	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - | yuvstrip >&3
+	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - | yuvstrip >&9
 fi
 }
 
@@ -939,9 +945,9 @@ local myimage="$1"
 local myframes="$2"
 if [ "$yuvfirstfile" -eq 1 ]; then
         yuvfirstfile=0
-	ppmtoy4m -v $verbosity -n "$myframes" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$myimage" >&3
+	ppmtoy4m -v $verbosity -n "$myframes" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$myimage" >&9
 else
-	ppmtoy4m -v $verbosity -n "$myframes" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$myimage" | yuvstrip >&3
+	ppmtoy4m -v $verbosity -n "$myframes" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$myimage" | yuvstrip >&9
 fi
 }
 
@@ -950,9 +956,9 @@ encode_fade ()
 {
 if [ "$yuvfirstfile" -eq 1 ]; then
 	yuvfirstfile=0
-	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p >&3
+	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p >&9
 else
-	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | yuvstrip >&3
+	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | yuvstrip >&9
 fi
 }
 
@@ -1703,9 +1709,8 @@ parse_window ()  # PARSE_WINDOW
 		fi
 
 		## we also need to convert the x coordinates to the dvd aspect (non-square) pixel coordinates:
-		## fix provided by <add name>
-		x0="$(printf %5.0f $(scale=5; echo "$x0 * $resize_factor / 100" | bc) )"
-		x1="$(printf %5.0f $(scale=5; echo "$x1 * $resize_factor / 100" | bc) )"
+		x0="$(printf %5.0f $(echo "scale=5; $x0 * $resize_factor / 100" | bc) )"
+		x1="$(printf %5.0f $(echo "scale=5; $x1 * $resize_factor / 100" | bc) )"
 		[ $debug -ge 3 ] && echo "[dvd-slideshow:parse_window] x0=$x0 y0=$y0  x1=$x1 y1=$y1  xi=$xi yi=$yi"
 
 		# xi,yi already calculated
@@ -1809,7 +1814,7 @@ div10 ()
 imagewidth ()  # IMAGEWIDTH
 {
 	it="`identify -format %w "$1"`"
-	it="$(printf %5.0f $(scale=5; echo "$it * $resize_factor / 100" | bc) )"
+	it="$(printf %5.0f $(echo "scale=5; $it * $resize_factor / 100" | bc) )"
 	echo "$it"
 }
 
@@ -3399,13 +3404,13 @@ logecho "`locale`"
 #############################################################
 ## Now, read in the ~/.dvd-slideshow/dvd-slideshowrc file if it exists:
 if [ -f "${HOME}/.dvd-slideshow/dvd-slideshowrc" ] ; then
-	echo "[dvd-slideshow] Reading default variables in ${HOME}/.dvd-slideshow/dvd-slideshowrc"
+	myecho "[dvd-slideshow] Reading default variables in ${HOME}/.dvd-slideshow/dvd-slideshowrc"
 	while read thisline
 	do
 	  set_system_variables "${thisline}" 1
 	  it=`set_system_variables "${thisline}" 0`
 	  if [ -n "$it" ] ; then
-		myecho "[dvd-slideshow] Set system variable $it"
+		mymyecho "[dvd-slideshow] Set system variable $it"
 		continue
 	  fi
 
@@ -3473,26 +3478,28 @@ if [ -n "$findutils_version" ] ; then
 fi
 
 ## Check for required programs
+program_needed=0
 it=`which ppmtoy4m 2> /dev/null`
 if [ -z "$it" ] ; then # no ppmtoy4m
                myecho "[dvd-slideshow] ERROR:  no mjpegtools found for audio processing"
                myecho "[dvd-slideshow]         You need to download and install mjpegtools."
                myecho "[dvd-slideshow]         http://mjpegtools.sourceforge.net"
                myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install mjpegtools"
-		cleanup ; exit 0
-fi
-progver=`mplex 2>&1 | grep version | awk '{ print $4 }'`
-logecho "[dvd-slideshow] Found mjpegtools version $progver"
-if ppmtoy4m -S 420mpeg2 xxxxx 2>&1 | grep -q xxxxx; then
-	logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420mpeg2"
-	subsample='420mpeg2'
-	logecho "[dvd-slideshow] Using mjpegtools subsampling -S 444 (none)"
-	subsample='444'
+		program_needed=1
+#		cleanup ; exit 0
 else
-	logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420_mpeg2"
-	subsample='420_mpeg2'
-fi
-	
+	progver=`mplex 2>&1 | grep version | awk '{ print $4 }'`
+	logecho "[dvd-slideshow] Found mjpegtools version $progver"
+	if ppmtoy4m -S 420mpeg2 xxxxx 2>&1 | grep -q xxxxx; then
+		logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420mpeg2"
+		subsample='420mpeg2'
+		logecho "[dvd-slideshow] Using mjpegtools subsampling -S 444 (none)"
+		subsample='444'
+	else
+		logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420_mpeg2"
+		subsample='420_mpeg2'
+	fi
+fi	
 # sox
 it=`which sox 2> /dev/null`
 if [ -z "$it" ] ; then # no sox
@@ -3500,19 +3507,21 @@ if [ -z "$it" ] ; then # no sox
                myecho "[dvd-slideshow]         You need to download and install sox."
                myecho "[dvd-slideshow]         http://sox.sourceforge.net"
                myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install sox"
-		cleanup ; exit 0
+		program_needed=1
+#		cleanup ; exit 0
+else
+	progver=`sox -h 2>&1 | head -n 1 | awk '{ print $3 }'`
+	logecho "[dvd-slideshow] Found sox version $progver"
+	progver1="$( echo ${progver#v} | awk -F. '{print $1}' )"
+	if [ $progver1 -lt 14 ] ; then  # use old sox commands:
+		sox_word='-w'
+		sox_nop='-e'
+	else # use new commands ( > 14.0.0 )
+		sox_word='-2'
+		sox_nop='-n'
+	fi
+	logecho "[dvd-slideshow] using sox options $sox_word $sox_nop"
 fi
-progver=`sox -h 2>&1 | head -n 1 | awk '{ print $3 }'`
-logecho "[dvd-slideshow] Found sox version $progver"
-progver1="$( echo ${progver#v} | awk -F. '{print $1}' )"
-if [ $progver1 -lt 14 ] ; then  # use old sox commands:
-	sox_word='-w'
-	sox_nop='-e'
-else # use new commands ( > 14.0.0 )
-	sox_word='-2'
-	sox_nop='-n'
-fi
-logecho "[dvd-slideshow] using sox options $sox_word $sox_nop"
 
 # ImageMagick
 it=`which convert 2> /dev/null`
@@ -3521,11 +3530,13 @@ if [ -z "$it" ] ; then # no convert
                myecho "[dvd-slideshow]         You need to download and install ImageMagick."
                myecho "[dvd-slideshow]         http://ImageMagick.sourceforge.net"
                myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install imagemagick"
-		cleanup ; exit 0
+		program_needed=1
+#		cleanup ; exit 0
+else
+	progver=`convert -help | head -n 1 | awk '{ print $3 }'`
+	logecho "[dvd-slideshow] Found ImageMagick version $progver"
 fi
-progver=`convert -help | head -n 1 | awk '{ print $3 }'`
-logecho "[dvd-slideshow] Found ImageMagick version $progver"
-
+	
 # GraphicsMagick
 it=`which gm 2> /dev/null`
 if [ -z "$it" ] && [ "$commandline_gm" -eq 1 ] ; then # no graphicsmagick
@@ -3561,10 +3572,12 @@ if [ -z "$it" ] ; then # no dvdauthor
                myecho "[dvd-slideshow]         You need to download and install dvdauthor."
                myecho "[dvd-slideshow]         http://dvdauthor.sourceforge.net"
 		myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install dvdauthor"
-		cleanup ; exit 0
+		program_needed=1
+#		cleanup ; exit 0
+else
+	progver=`dvdauthor -h 2>&1 | head -n 1 | awk '{ print $3 }'`
+	logecho "[dvd-slideshow] Found dvdauthor version $progver"
 fi
-progver=`dvdauthor -h 2>&1 | head -n 1 | awk '{ print $3 }'`
-logecho "[dvd-slideshow] Found dvdauthor version $progver"
 
 # ffmpeg
 it=`which ffmpeg 2> /dev/null`
@@ -3580,7 +3593,7 @@ if [ -z "$it" ] ; then
 	mpeg_encoder='mpeg2enc'
 else
 	# found ffmpeg
-	logecho "`ffmpeg -version 2>&1`"
+	logecho "[dvd-slideshow]	`ffmpeg -version 2>&1 | head -n 1 `"
 	## check to see if we have mpeg2video output option:
 	it=`ffmpeg -f mpeg2video 2>&1 | grep 'Unknown input or output format: mpeg2video'`
 	if [ -z "$it" ] ; then
@@ -3592,6 +3605,9 @@ else
 		myecho "[dvd-slideshow] 	  required for making dvds!  Using mpeg2enc instead."
 		mpeg_encoder='mpeg2enc'
 	fi
+fi
+if [ "$program_needed" -eq 1 ] ; then
+		cleanup ; exit 0
 fi
 ################################################## done finding programs
 
@@ -4146,18 +4162,20 @@ myecho "[dvd-slideshow] Found $transitions transitions (fadein/fadeout/crossfade
 
 
 ## setup video parameters:
-if [ "$output_format" == 'flv' ] ; then
+if [ "$output_format" == 'flv' ] ; then  # FLV
 	# need to change this to be dynamic (proportinal to size)
 	# video_bitrate=$(( 6000 * $dvd_width / 480 ))
-	video_bitrate=10000000  # this works ok for 320x240. 
 	if [ $high_quality -eq 1 ] ; then
+		video_bitrate=2000000  # this works ok for 320x240. 
 		qscale='-qscale 1'
 		framerate=30;
 		frames_per_ms=30000;
 		ppmtoy4m_frc='30:1'  # 30 fps
 	elif [ $low_quality -eq 1 ] ; then
+		video_bitrate=500000  # this works ok for 320x240. 
 		qscale='-qscale 7'
 	else
+		video_bitrate=1000000  # this works ok for 320x240. 
 		qscale='-qscale 5'
 		framerate='15'  # is this needed for .flv?
 		frames_per_ms=15000  # in ms
@@ -4170,7 +4188,8 @@ if [ "$output_format" == 'flv' ] ; then
 	dvd_width='320' ; dvd_height='240'
 	aspect_ratio="4:3"  #   what is used when output size is not this aspect ratio?
 	audio_sample_rate=44100
-	audio_bitrate=128
+	audio_bitrate=64
+	ffmpeg_options=''
 elif [ "$output_format" == 'swf' ] ; then
 	#video_bitrate=100
 	if [ $high_quality -eq 1 ] ; then
@@ -4190,6 +4209,7 @@ elif [ "$output_format" == 'swf' ] ; then
 	aspect_ratio="4:3"
 	audio_sample_rate=44100
 	audio_bitrate=128
+	ffmpeg_options=''
 elif [ "$output_format" == 'mp4' ] ; then
 	video_bitrate=1200000
 	if [ $high_quality -eq 1 ] ; then
@@ -4210,6 +4230,7 @@ elif [ "$output_format" == 'mp4' ] ; then
 	aspect_ratio="4:3"
 	audio_sample_rate=44100
 	audio_bitrate=128
+	ffmpeg_options=''
 elif [ "$output_format" == 'mp4_ipod' ] ; then
 	# copied this from mp4 options, but probably don't need all these
 	#video_bitrate=1200000
@@ -4221,16 +4242,19 @@ elif [ "$output_format" == 'mp4_ipod' ] ; then
 		qscale='-qscale 5'
 	fi
 	video_suffix='mp4'
-	framerate='29.97'  
-	frames_per_ms=29970  # in ms
-	ppmtoy4m_frc='30000:1001'
+	framerate='20'  
+	frames_per_ms=20000  # in ms
+	ppmtoy4m_frc='20:1'  # 15 fps
 	ppmtoy4m_aspect='1:1'  # square pixels
 		# see http://www.uwasa.fi/~f76998/video/conversion
 	dvd_width='320' ; dvd_height='240'  # default
 	aspect_ratio="4:3"
 	audio_sample_rate=44100
-	audio_bitrate=128
+	audio_bitrate=96k
 	ac3=1  # force ac3
+	#ffmpeg_options='-level 41 crf 25 -bufsize 20000k -maxrate 25000k -g 250 -coder 1 -flags +loop -cmp +chroma -partitions +parti4x4+partp8x8+partb8x8 -flags2 +brdo+dct8x8+bpyramid -me umh -subq 7 -me_range 16 -keyint_min 25 -sc_threshold 40 -i_qfactor 0.71 -rc_eq '\''blurCplx^(1-qComp)'\'' -bf 16 -b_strategy 1 -bidir_refine 1 -refs 6 -deblockalpha 0 -deblockbeta 0'
+	# ffmpeg options for h.264 from http://flowplayer.org/tutorials/ffmpeg.html but not working yet
+	ffmpeg_options='-vcodec xvid -b 300 -qmin 3 -qmax 5 -bufsize 4096 -g 300 -acodec libfaac'
 elif [ "$output_format" == 'ogv' ] ; then
 	video_bitrate=1200000
 	if [ $high_quality -eq 1 ] ; then
@@ -4252,8 +4276,10 @@ elif [ "$output_format" == 'ogv' ] ; then
 	audio_sample_rate=44100
 	audio_bitrate=128
 	ac3=1  # force ac3
+	ffmpeg_options=''
 else  # assume mpeg2 video output (dvd, vcd, svcd or other)
 	video_suffix='mpg'
+	ffmpeg_options=''
 	if [ "$pal" -eq 1 ] ; then
 		framerate='25'
 		frames_per_ms=25000  # in ms
@@ -4800,22 +4826,18 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		# don't do mplex, do second pass instead.
 		# it seems that specifying the aspect ratio makes ffmpeg fail, so keep it out.
 		myecho "[dvd-slideshow] Exporting .flv file"
-#		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
-		# no bitrate spec: ( uses qscale )
-#		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
-		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
+		ffmpeg -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate -b $video_bitrate -an -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.flv" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'swf' ] ; then
 		# do pass one first, then add audio at the end during pass 2?
 		# don't do mplex, do second pass instead.
 		myecho "[dvd-slideshow] Exporting .swf file"
 		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -s "$dvd_width"x"$dvd_height" -y -f flv "$tmpdir/video.swf" 1> /dev/null 2>> "$ffmpeg_out" &
 	elif [ "$output_format" == 'mp4' ] ; then   
-		myecho "[dvd-slideshow] Exporting .mp4 file"
+		myecho '[dvd-slideshow] Exporting .mp4 file'
 		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -s "$dvd_width"x"$dvd_height" -y -f mp4 -vcodec mpeg4 "$tmpdir/video.mp4" >> "$ffmpeg_out" 2>&1 &
 	elif [ "$output_format" == 'mp4_ipod' ] ; then   
 		myecho "[dvd-slideshow] Exporting ipod .mp4 file"
 		ffmpeg -y -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -an -threads 0 -vcodec libx264 -refs 5 -subq 5 -crf 30 -maxrate 768000 -bufsize 244 -r $framerate -level 13 -s "$dvd_width"x"$dvd_height" -f mp4 "$tmpdir/video.mp4" >> "$ffmpeg_out" 2>&1 &
-
 	elif [ "$output_format" == 'ogv' ] ; then   
 		myecho "[dvd-slideshow] Exporting .ogv file"
 		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -r $framerate $qscale -an -s "$dvd_width"x"$dvd_height" -y -f ogg -vcodec libtheora "$tmpdir/video.ogv" >> "$ffmpeg_out" 2>&1 &
@@ -4832,8 +4854,8 @@ else
 fi
 yuvpid=${!}
 
-# open the fifo for writing as fd 3 (unlikely to be used!)
-exec 3>"$tmpdir/$yuvfifo"
+# open the fifo for writing as file descriptor #9 (unlikely to be used!)
+exec 9>"$tmpdir/$yuvfifo"
 
 ## make both a slideshow_background file and a title_background file
 if [ -f "${bgfile}" ] ; then
@@ -4847,7 +4869,9 @@ transparent_bg="$tmpdir"/transparent_background.png
 normal_bg="$tmpdir/slideshow_background.ppm"
 convert -size "$dvd_width"'x'"$dvd_height" xc:transparent -type TrueColorMatte -depth 8 "$transparent_bg"
 
-myecho "[dvd-slideshow]############################################################"
+#if [ "$debug" -gt 0 ] || [ "$quiet" == 0 ] ; then
+	myecho "[dvd-slideshow]############################################################"
+#fi
 
 total_slideshow_time=0
 total_slideshow_frames=0
@@ -5189,7 +5213,9 @@ for file in "${image[@]}"; do
 	elif [ "${image_file[$i]}" -eq 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG IMAGE
 		## use real jpeg. 
 		## now the slide may already exist if we had a fadein or crossfade before
-		myecho "[dvd-slideshow] $image_number/$imagefiles $(truncate_filename "$file") `hms ${duration[$i]}`"
+		if [ "$quiet" == 0 ] ; then
+			myecho "[dvd-slideshow] $image_number/$imagefiles $(truncate_filename "$file") `hms ${duration[$i]}`"
+		fi
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Subtitle= ${subtitle[$i]}"
 		if [ "$first_image" == 1 ] && [ "${image[$i]}" != 'background' ] ; then
 			first_image=0
@@ -5282,7 +5308,11 @@ for file in "${image[@]}"; do
 #		if [ "${image[$i+$next_transition_increment]}" == 'fadeout' ] ; then
 #                	echo -n ""
 #		else
-                	myecho "[dvd-slideshow]############################################################"
+			if [ "$quiet" == 0 ] ; then
+                		myecho "[dvd-slideshow]############################################################"
+			else
+				echo -n "#"
+			fi
 #		fi
 	elif [ "$file" == 'fadein' ] ; then  # FADEIN
 		## ok, let's copy the background and just fade the foreground:
@@ -6548,7 +6578,9 @@ for file in "${image[@]}"; do
 		fi
 		subtitle[$i]=''  # set subtitle to nothing so we don't get a subtitle
 		set_end_frame_time 0
+		if [ "$debug" -gt 0 ] || [ "$quiet" == 0 ] ; then
 		myecho "[dvd-slideshow]############################################################"
+		fi
 	else  
 		myecho "[dvd-slideshow] Unrecognized or malformed line in your input file:"
 		myecho "[dvd-slideshow] $file. effect=${effect1[$i]} effect_params=${effect1_params[$i]}"
@@ -6748,7 +6780,7 @@ logecho "[dvd-slideshow] mpeg2enc/ffmpeg process=$yuvpid"
 logecho "[dvd-slideshow] output from ps:"
 logecho "`ps $yuvpid`"
 # close pipe to mpeg2enc
-exec 3>&-  
+exec 9>&-  
 myecho '[dvd-slideshow] waiting for encoder to finish...'
 if [ "$( jobs -p | grep -F -q $yuvpid )" ] ; then
 	wait $yuvpid >> "$outdir/$logfile" 2>&1
@@ -7345,9 +7377,15 @@ logecho '[dvd-slideshow] Some sequence marker warnings here are normal'
 ## total mplex bitrate = 128kBit audio + 1500 kBit video + a little overhead
 verbosity=0
 if [ "$output_format" == 'flv' ] ; then  # only one audio track for .flv, .swf, and .mp4, etc...
-	myecho "[dvd-slideshow] Adding audio to .flv file"
-	ffmpeg -threads "$cores" -y -i "$tmpdir/audio1.wav" -i "$tmpdir/video.flv" -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir/video1.flv" >> "$ffmpeg_out" 2>&1 
-	mv "$tmpdir/video1.flv" "$outdir"/"$slideshow_name".flv
+	if [ "$audio_1" == 'silence' ] ; then
+		# no audio tracks for this flv file... do not add audio
+		myecho "[dvd-slideshow] No audio for .flv file"
+		mv "$tmpdir/video.flv" "$outdir"/"$slideshow_name".flv
+	else
+		myecho "[dvd-slideshow] Adding audio to .flv file"
+		ffmpeg -threads "$cores" -y -i "$tmpdir/audio1.wav" -i "$tmpdir/video.flv" -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir/video1.flv" >> "$ffmpeg_out" 2>&1 
+		mv "$tmpdir/video1.flv" "$outdir"/"$slideshow_name".flv
+	fi
 	myecho "[dvd-slideshow] Generating video thumbnail..."
 	ffmpeg -threads "$cores" -y -i "$outdir"/"$slideshow_name".flv -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$ffmpeg_out" 2>&1
 	if [ -f "/usr/bin/flvtool2" ] ; then
@@ -7362,7 +7400,8 @@ elif [ "$output_format" == 'swf' ] ; then
 	ffmpeg -threads "$cores" -y -i "$outdir"/"$slideshow_name".swf -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$ffmpeg_out" 2>&1
 elif [ "$output_format" == 'mp4' ] ; then   
 	myecho "[dvd-slideshow] Adding audio to .mp4 file"
-	ffmpeg -threads "$cores" -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.mp4 -vcodec copy -f mp4 -ar 22050 -ab 128k -ac 1 "$tmpdir"/video1.mp4 >> "$ffmpeg_out" 2>&1 
+#	myecho ffmpeg -threads "$cores" -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.mp4 -vcodec copy -f mp4 -ar 22050 -ab 128k -ac 1 "$tmpdir"/video1.mp4 '>>' "$ffmpeg_out" '2>&1'
+	ffmpeg -threads "$cores" -y -i "$tmpdir"/audio1.wav -i "$tmpdir"/video.mp4 -vcodec copy -f mp4 -ar 22050 -ab 128k -ac 1 "$tmpdir"/video1.mp4 >> "$ffmpeg_out" 2>&1 
 	mv "$tmpdir"/video1.mp4 "$outdir"/"$slideshow_name".mp4
 elif [ "$output_format" == 'mp4_ipod' ] ; then   
 	myecho "[dvd-slideshow] Exporting ipod .mp4 file"
@@ -7503,15 +7542,27 @@ sed -e '/ [[:cntrl:]]size= /d' "$outdir"/"tmp.txt" > "$outdir"/"$logfile"
 
 myecho "[dvd-slideshow] More extensive logfile output is at:"
 myecho "[dvd-slideshow] $outdir/$logfile"
-myecho "[dvd-slideshow] Done!"
+echo "[dvd-slideshow] Done!"
 myecho ""
 myecho "[dvd-slideshow] use one of the following comands to view your output:"
 if [ "$output_format" == 'mpg' ] ; then
 	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.mpg\""
 	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.mpg\""
+elif [ "$output_format" == 'flv' ] ; then
+	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.flv\""
+	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.flv\""
+elif [ "$output_format" == 'swf' ] ; then
+	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.swf\""
+	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.swf\""
+elif [ "$output_format" == 'mp4' ] ; then
+	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.mp4\""
+	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.mp4\""
+elif [ "$output_format" == 'ogv' ] ; then
+	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.ogv\""
+	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.ogv\""
 else
 	myecho "[dvd-slideshow] xine -g -u 0 \"$outdir/$slideshow_name.vob\""
 	myecho "[dvd-slideshow] mplayer -sid 0 \"$outdir/$slideshow_name.vob\""
 fi
-myecho
+echo
 exit 0

@@ -25,6 +25,7 @@ echo 'Changes:
 0.8.3
 	Allow reading of dvd-slideshowrc file to set variables (thanks Johan Kunnen)
 	Reads .avi files for dvd-slideshow (thanks Guy Albertelli)
+	Add -q (quiet mode) for less output on screen when calling from another script
 0.8.2
 	Write out pal option to output file if selected in dir2slideshow
 	Recursive finds follow symbolic links and ignores hidden directories.
@@ -142,6 +143,7 @@ Options:
 	along with images, and also add titles.  You wil probably have to
 	modify the output to your liking, but this should give you a start.
 	(alpha!) do not use yet.
+ [-q]	Quiet mode.  Less on-scren output.
 
  -h or -help 
    Prints this help. 
@@ -152,6 +154,12 @@ if [ $# -lt 1 ]; then
 	help
 	exit 1
 fi
+
+myecho () ## create new echo to bounce things to files, etc.
+{
+	if [ "$quiet" == 0 ]; then echo "$1" ; fi
+}
+
 
 set_variables ()
 {
@@ -217,11 +225,12 @@ else
 fi
 }
 
-echo "[dir2slideshow] dir2slideshow version $version"
+
 
 ## setup initial variables:
 LANG=POSIX
 debug=0  # 1 or 0
+quiet=0
 crossfade=0
 wipe=0
 slide_duration=5
@@ -247,26 +256,13 @@ end=1
 pal=0  # default to ntsc
 sortmethod="name"  # sort by filename as default sort method
 
-#############################################################
-## Now, read in the ~/.dvd-slideshow/dvd-slideshowrc file if it exists:
-if [ -f "${HOME}/.dvd-slideshow/dvd-slideshowrc" ] ; then
-        echo "[dir2slideshow] Reading default variables in ${HOME}/.dvd-slideshow/dvd-slideshowrc"
-        while read thisline
-        do
-          it=`set_variables "${thisline}" 0`
-          if [ -n "$it" ] ; then
-                myecho "[dir2slideshow] Set variable $it"
-                continue
-          fi
-        done < "$HOME/.dvd-slideshow/dvd-slideshowrc"
-fi
-
+			
 #########################################################
 ## read in command-line args:
 for arg
 do
 	case "$arg" in
-	-i) shift; input_dir="$1" ; shift ;;
+	-i) shift; commandline_input_dir="$1" ; shift ;;
 	-n) shift; commandline_name="$1" ; shift ;;
 	-s) shift; commandline_subtitle="$1" ; shift ;;
 	-s2) shift; commandline_subtitle2="$1" ; shift ;;
@@ -278,15 +274,16 @@ do
 	-k) commandline_kenburns=1 ; shift ;;
 	-r) commandline_recursive_single=1 ; shift ;;
 	-R) commandline_recursive_multiple=1 ; shift ;;
-	-vcd) vcd=1 ; shift ;;
-	-svcd) svcd=1 ; shift ;;
+	-vcd) commandline_vcd=1 ; shift ;;
+	-svcd) commandline_svcd=1 ; shift ;;
 	-p) commandline_pal=1 ; shift ;;  # required if -k specified.
 	-n) commandline_pal=0 ; shift ;;  # required if -k specified.
+	-q) quiet=1; shift ;;  # enable quiet mode
 	-o) shift; output_dir="$1"; shift ;;
         -t) shift; commandline_duration="$1"; shift ;; 
-        -T) sortmethod="taken_date"; shift ;; 
-        -M) sortmethod="modified_date"; shift ;; 
-        -S) sortmethod="normal"; shift ;; 
+        -T) commandline_sortmethod="taken_date"; shift ;; 
+        -M) commandline_sortmethod="modified_date"; shift ;; 
+        -S) commandline_sortmethod="normal"; shift ;; 
         -c) shift; commandline_crossfade="$1"; shift ;; 
         -w) shift; commandline_wipe="$1"; shift ;; 
         -theme) shift; theme="$1"; shift ;; 
@@ -297,6 +294,22 @@ do
 	esac
 done
 
+myecho "[dir2slideshow] dir2slideshow version $version"
+
+#############################################################
+## Now, read in the ~/.dvd-slideshow/dvd-slideshowrc file if it exists:
+if [ -f "${HOME}/.dvd-slideshow/dvd-slideshowrc" ] ; then
+        myecho "[dir2slideshow] Reading default variables in ${HOME}/.dvd-slideshow/dvd-slideshowrc"
+        while read thisline
+        do
+          it=`set_variables "${thisline}" 0`
+          if [ -n "$it" ] ; then
+                myecho "[dir2slideshow] Set variable $it"
+                continue
+          fi
+        done < "$HOME/.dvd-slideshow/dvd-slideshowrc"
+fi
+###########################################################
 ## read in theme file:
 if [ -n "$theme" ] && [ "$theme" != 'default' ] ; then
 	# check if directory
@@ -304,56 +317,57 @@ if [ -n "$theme" ] && [ "$theme" != 'default' ] ; then
 		themedir="$theme"
 		themefile="`ls -1 "$theme"/*.theme 2> /dev/null | tail -n 1`"
 		if [ -z "$themefile" ] ; then
-			echo "[dir2slideshow] Found theme directory: $themedir"
+			myecho "[dir2slideshow] Found theme directory: $themedir"
 			echo "[dir2slideshow] ERROR: theme directory does not contain a .theme file!"
 			exit 1
 		else
-			echo "[dir2slideshow] setting theme file to $theme"
+			myecho "[dir2slideshow] setting theme file to $theme"
 		fi
 	elif [ -f "$theme" ] ; then
 		themefile="`full_path "$theme"`"
 		themedir="`dirname "$theme"`"
-		echo "[dir2slideshow] using theme file $theme"
+		myecho "[dir2slideshow] using theme file $theme"
 	else
 		# check in default theme directory:
 		if [ -d "$themedir"/"$theme" ] ; then
 			themedir="$themedir"/"$theme"
 			themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
 			if [ -z "$themefile" ] ; then
-				echo "[dir2slideshow] Found theme directory: $themedir"
+				myecho "[dir2slideshow] Found theme directory: $themedir"
 				echo "[dir2slideshow] ERROR: theme directory does not contain a .theme file!"
 				exit 1
 			else
-				echo "[dir2slideshow] setting theme file to $themefile"
+				myecho "[dir2slideshow] setting theme file to $themefile"
 			fi
 		# check in local theme directory
 		elif [ -d "$local_themedir"/"$theme" ] ; then
 			themedir="$local_themedir"/"$theme"
 			themefile="`ls -1 "$themedir"/*.theme 2> /dev/null | tail -n 1`"
 			if [ -z "$themefile" ] ; then
-				echo "[dir2slideshow] Found theme directory: $themedir"
+				myecho "[dir2slideshow] Found theme directory: $themedir"
 				echo "[dir2slideshow] ERROR: theme directory does not contain a .theme file!"
 				exit 1
 			else
-				echo "[dir2slideshow] setting theme file to $themefile"
+				myecho "[dir2slideshow] setting theme file to $themefile"
 			fi
 		else
 			echo "[dir2slideshow] ERROR!  Bad theme name (not found)"
 			exit 1
 		fi
 	fi
-	echo "[dir2slideshow] Reading theme file..."
+	myecho "[dir2slideshow] Reading theme file..."
 	while read thisline
 	do
 	  set_variables "${thisline}" 1
 	  it=`set_variables "${thisline}" 0`
 	  if [ -n "$it" ] ; then
-		echo "[dir2slideshow] Set variable $it"
+		myecho "[dir2slideshow] Set variable $it"
 	  fi
 	done < "$themefile"	
 fi
-			
+
 ## over-ride theme file with command-line options:
+[ -n "$commandline_input_dir" ] && input_dir="$commandline_input_dir"
 [ -n "$commandline_name" ] && name="$commandline_name"
 [ -n "$commandline_subtitle" ] && subtitle="$commandline_subtitle"
 [ -n "$commandline_subtitle2" ] && subtitle2="$commandline_subtitle2"
@@ -369,7 +383,11 @@ fi
 [ -n "$commandline_audio_list" ] && audio_list="$commandline_audio_list"
 [ -n "$commandline_recursive_single" ] && recursive_single="$commandline_recursive_single"
 [ -n "$commandline_recursive_multiple" ] && recursive_multiple="$commandline_recursive_multiple"
+[ -n "$commandline_vcd" ] && vcd="$commandline_vcd"
+[ -n "$commandline_svcd" ] && svcd="$commandline_svcd"
 [ -n "$commandline_audiobook" ] && audiobook="$commandline_audiobook"
+[ -n "$commandline_sortmethod" ] && sortmethod="$commandline_sortmethod"
+
 
 if [ -z "$input_dir" ] ; then
 	input_dir="$1"
@@ -408,7 +426,7 @@ cleanup ()
 	check_rm "$output_dir/audiolist.txt"
 	check_rm "$output_dir/videolist.txt"
 	check_rm "$output_dir/directory_list.txt"
-	echo "[dir2slideshow] Done!"
+	myecho "[dir2slideshow] Done!"
 }
 
 forcequit () ## function gets run when we have some sort of forcequit...
@@ -417,7 +435,6 @@ forcequit () ## function gets run when we have some sort of forcequit...
 	cleanup
 	exit 1
 }
-
 
 imagewidth ()
 {
@@ -443,7 +460,9 @@ imageheight ()
 fileecho ()
 {
 	echo "$*" >> "$outfile"
-        echo "$*"
+	if [ "$quiet" == 0 ] ; then
+        	echo "$*"
+	fi
 }
 
 
@@ -530,10 +549,10 @@ if [ ! -d "$input_dir" ]; then
         exit 1;
 fi
 if [ -z "$name" ]; then
-        echo "[dir2slideshow] WARNING: No slideshow name specified using -n <name>"
+        myecho "[dir2slideshow] WARNING: No slideshow name specified using -n <name>"
 	name="$( dirname "$input_dir"/. )"
 	name="$( echo $name | awk -F/ '{print $NF}')"
-	echo "[dir2slideshow] Using slideshow name= $name"
+	myecho "[dir2slideshow] Using slideshow name= $name"
 fi
 
 # make sure $input_dir has no trailing slash
@@ -559,12 +578,12 @@ output_dir=`echo "$output_dir" | sed -e 's/\/$//'`;
 #outfile="$output_dir"/"`echo "$name" | sed -e 's/ /_/g'`.txt"  
 outfile="$output_dir"/"$name".txt
 
-echo "[dir2slideshow] Input directory = $input_dir"
-echo "[dir2slideshow] Slideshow name = $name"
-echo "[dir2slideshow] Output file = $outfile"
+myecho "[dir2slideshow] Input directory = $input_dir"
+myecho "[dir2slideshow] Slideshow name = $name"
+myecho "[dir2slideshow] Output file = $outfile"
 
 ## now, summarize settings:
-if [ 1 ] ; then
+if [ "$quiet" == 0 ] ; then
 	echo [dir2slideshow] subtitle="$subtitle"
 	echo [dir2slideshow] subtitle2="$subtitle2"
 	echo [dir2slideshow] background="$background"
@@ -606,9 +625,9 @@ if [ "$recursive_single" == 1 ] ; then
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
 	videofiles=`wc -l "$output_dir"/videolist.txt | awk '{print $1}'`
 #	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
-	echo "[dir2slideshow] Total pictures found = $pictures"
-	echo "[dir2slideshow] Total audio files found = $audiofiles"
-	echo "[dir2slideshow] Total video files found = $videofiles"
+	myecho "[dir2slideshow] Total pictures found = $pictures"
+	myecho "[dir2slideshow] Total audio files found = $audiofiles"
+	myecho "[dir2slideshow] Total video files found = $videofiles"
 #	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
 
@@ -630,9 +649,9 @@ else  # default case
 	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
 	videofiles=`wc -l "$output_dir"/videolist.txt | awk '{print $1}'`
 #	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
-	echo "[dir2slideshow] Total pictures found = $pictures"
-	echo "[dir2slideshow] Total audio files found = $audiofiles"
-	echo "[dir2slideshow] Total video files found = $videofiles"
+	myecho "[dir2slideshow] Total pictures found = $pictures"
+	myecho "[dir2slideshow] Total audio files found = $audiofiles"
+	myecho "[dir2slideshow] Total video files found = $videofiles"
 #	echo "[dir2slideshow] Total text files found = $txtfiles"
 	## now, join the audio files and images:
 	if [ "$audiobook" == 1 ] ; then
@@ -650,7 +669,7 @@ fi
 
 ## sort the pictures:
 
-echo "[dir2slideshow] Sorting pictures..."
+myecho "[dir2slideshow] Sorting pictures..."
 if [ "$sortmethod" == 'taken_date' ] ; then
 	## sort by taken date:
 	checkforprog jhead
@@ -662,7 +681,7 @@ if [ "$sortmethod" == 'taken_date' ] ; then
 		if [ -n "$taken" ] ; then
 			echo "$file: $taken" >> "$output_dir"/filelist_date.txt
 		else
-			echo "[dir2slideshow] No picture taken date in $file."
+			myecho "[dir2slideshow] No picture taken date in $file."
 #			echo "[dir2slideshow] Using modification date!"
 			echo "$file: $modified" >> "$output_dir"/filelist_date.txt
 		fi
@@ -710,7 +729,7 @@ check_rm "$output_dir"/filelist_date.txt
 
 min_kb_size_percent=80
 
-echo "#########################################"
+myecho "#########################################"
 if [ -n "$background" ] && [ -f "$background" ] ; then
 	background="`full_path "$background"`"
 elif [ -n "$background" ] ; then # either color local file
@@ -991,9 +1010,9 @@ fi
 #	fileecho "fadein:1"
 #	fileecho "$title_background":3
 #fi
-echo "#########################################"
+myecho "#########################################"
 
 cleanup
 
-echo "[dir2slideshow] Output file is $outfile"
-echo
+myecho "[dir2slideshow] Output file is $outfile"
+myecho

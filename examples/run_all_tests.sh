@@ -20,11 +20,11 @@ cd "complete"
 sh runtest.sh $*
 cd ..
 
-cd 0.7.5
+cd '0.7.5'
 sh runtest.sh $*
 cd ..
 
-cd 0.8.0
+cd '0.8.0'
 sh runtest.sh $*
 cd ..
 

@@ -47,12 +47,14 @@ echo 'Changes:
 	New release!
 0.8.3  (svn only release)
     New features:
-	Use qscale VBR option in ffmpeg for flv and mp4 output instead of fixed bitrate.	
+	Improved encoding speed significantly. (thanks Gary Hunt!)
+	Use qscale VBR option in ffmpeg for flv and mp4 output instead of fixed bitrate.
 	Logo (-logo) works as general overlay (beta).
 	Added -threads $cores to ffmepg calls for speed improvement?
 	Added .ogg mode ( use -ogv ) (not working yet)
 	Added ipod output ( use -ipod ) (not working yet)
     Bug fixes:
+	New dvdauthor/spumux > 0.7.0 require explicit NTSC/PAL declaration
 	No audio added to .flv files when none is passed by default.
 	Changed default dvd audio bitrate from 192kbps to 256kbps
 	Enable subtitle_location_x (was not being passed before)
@@ -506,6 +508,7 @@ if [ $# -lt 1 ]; then
 	exit 1
 fi
 
+cpu_start_time=`date +%s`
 
 ###################################################################
 # Default variables
@@ -930,9 +933,9 @@ encode_video ()
 {
 if [ "$yuvfirstfile" -eq 1 ]; then
 	yuvfirstfile=0
-	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - >&9
+	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_out" >&9
 else
-	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - | yuvstrip >&9
+	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_out" | yuvstrip >&9
 fi
 }
 
@@ -943,22 +946,43 @@ encode ()
 {
 local myimage="$1"
 local myframes="$2"
-if [ "$yuvfirstfile" -eq 1 ]; then
-        yuvfirstfile=0
-	ppmtoy4m -v $verbosity -n "$myframes" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$myimage" >&9
-else
-	ppmtoy4m -v $verbosity -n "$myframes" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$myimage" | yuvstrip >&9
+local use_ffmpeg=1
+if [ "$use_ffmpeg" == '1' ] ; then
+	# use ffmpeg's -loop option to see if it's faster with a single image piped to the yuv4mpegpipe
+	if [ "$yuvfirstfile" -eq 1 ]; then
+		yuvfirstfile=0
+		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "ffmpeg_out" >&9
+	else
+		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "ffmpeg_out" | yuvstrip >&9
+	fi
+else # use old method using ppmtoy4m pipe
+	if [ "$yuvfirstfile" -eq 1 ]; then
+	        yuvfirstfile=0
+		ppmtoy4m -v $verbosity -n "$myframes" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$myimage" >&9
+	else
+		ppmtoy4m -v $verbosity -n "$myframes" -r -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p "$myimage" | yuvstrip >&9
+	fi
 fi
 }
 
 
 encode_fade ()
 {
-if [ "$yuvfirstfile" -eq 1 ]; then
-	yuvfirstfile=0
-	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p >&9
-else
-	find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | yuvstrip >&9
+local use_ffmpeg=1
+if [ "$use_ffmpeg" == '1' ] ; then
+	if [ "$yuvfirstfile" -eq 1 ]; then
+		yuvfirstfile=0
+		ffmpeg -f image2 -i "$tmpdir/fade%04d.ppm" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "ffmpeg_out" >&9
+	else
+		ffmpeg -f image2 -i "$tmpdir/fade%04d.ppm" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "ffmpeg_out" | yuvstrip >&9
+	fi
+else # use old method by sorting through files and piping through ppmtoy4m
+	if [ "$yuvfirstfile" -eq 1 ]; then
+		yuvfirstfile=0
+		find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p >&9
+	else
+		find "$tmpdir" -name "fade*.ppm" -type f -print0 | sort -z -d | xargs -0 cat | ppmtoy4m -v $verbosity -n 0 -S "$subsample" -F $ppmtoy4m_frc -A $ppmtoy4m_aspect -I p | yuvstrip >&9
+	fi
 fi
 }
 
@@ -6427,8 +6451,8 @@ for file in "${image[@]}"; do
 				composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
 			fi
 			encode "$tmpdir/slide_$i.ppm" "$frames"
+			set_end_frame_time ${duration[$i]}  # only update time if nonzero
 		fi
-		set_end_frame_time ${duration[$i]}
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		myecho "[dvd-slideshow]############################################################"
 #identify "$tmpdir/slide_$i.ppm"
@@ -6609,10 +6633,10 @@ for file in "${image[@]}"; do
 	## now, create the xml file to pass to spumux
 	if [ "$spumux_header" -eq 0 ]; then  # only do once on first pass:
 		spumux_header=1
-		echo '<subpictures>' > "$tmpdir/$slideshow_name".spumux
+		echo '<subpictures format="'$ntsc_or_pal'">' > "$tmpdir/$slideshow_name".spumux
 		echo '	<stream>' >> "$tmpdir/$slideshow_name".spumux
 		continuous_subtitle_flag=0
-		echo '<subpictures>' > "$tmpdir/$slideshow_name".spumux2
+		echo '<subpictures format="'$ntsc_or_pal'">' > "$tmpdir/$slideshow_name".spumux2
 		echo '	<stream>' >> "$tmpdir/$slideshow_name".spumux2
 	fi	
 
@@ -7452,7 +7476,9 @@ if [ "$vcd" -eq 1 ] || [ "$svcd" -eq 1 ] ; then
 elif [ "$output_format" == "flv" ] || [ "$output_format" == "mp4" ] || [ "$output_format" == 'mp4_ipod' ] || [ "$output_format" == 'swf' ] || [ "$output_format" == 'ogv' ] ; then
 	myecho "[dvd-slideshow] Non-DVD mode: not running spumux"
 elif [ "$subtitle_type" != 'render' ] ; then   # dvd
+myecho "[dvd-slideshow] Running spumux in render mode"
 	if [ "$has_subtitles" -eq 1 ] ; then
+		export VIDEO_FORMAT="$ntsc_or_pal"
 		spumux -m dvd -v $verbosity -s 0 -P "$tmpdir"/"$slideshow_name".spumux < "$outdir"/"$slideshow_name".vob > "$outdir/tmp.vob"  2>> "$outdir/$logfile"
 		if [ $? -ne 0 ] ; then
 			## spumux errored
@@ -7463,6 +7489,7 @@ elif [ "$subtitle_type" != 'render' ] ; then   # dvd
 		mv "$outdir/tmp.vob" "$outdir"/"$slideshow_name".vob
 	fi
 	if [ "$has_subtitles2" -eq 1 ] ; then
+		export VIDEO_FORMAT="$ntsc_or_pal"
 		spumux -m dvd -v $verbosity -s 1 -P "$tmpdir"/"$slideshow_name".spumux2 < "$outdir"/"$slideshow_name".vob > "$outdir/tmp.vob"  2>> "$outdir/$logfile"
 		if [ $? -ne 0 ] ; then
 			## spumux errored
@@ -7473,6 +7500,7 @@ elif [ "$subtitle_type" != 'render' ] ; then   # dvd
 		mv "$outdir/tmp.vob" "$outdir"/"$slideshow_name".vob
 	fi
 fi
+
 
 ## build the chapters string for passing to dvdauthor:
 myecho "[dvd-slideshow] total chapters=${#chaps[@]}"
@@ -7540,9 +7568,12 @@ sed -e '/ [[:cntrl:]]size= /d' "$outdir"/"tmp.txt" > "$outdir"/"$logfile"
 \rm "$outdir"/tmp.txt
 #mv "$outdir"/tmp.txt "$outdir"/"$logfile"
 
+cpu_end_time=`date +%s`
+cpu_time="$(( $cpu_end_time - $cpu_start_time ))"
+myecho "[dvd-slideshow] Total runtime was $cpu_time seconds"
 myecho "[dvd-slideshow] More extensive logfile output is at:"
 myecho "[dvd-slideshow] $outdir/$logfile"
-echo "[dvd-slideshow] Done!"
+myecho "[dvd-slideshow] Done!"
 myecho ""
 myecho "[dvd-slideshow] use one of the following comands to view your output:"
 if [ "$output_format" == 'mpg' ] ; then

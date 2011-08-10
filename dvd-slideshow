@@ -58,6 +58,7 @@ echo 'Changes:
 	Added .ogg mode ( use -ogv ) (not working yet)
 	Added ipod output ( use -ipod ) (not working yet)
     Bug fixes:
+	Use soxi to determine length of .wav audio instead of sox (better compatibility?)
 	Fixed chroma subsampling bug when using -mpeg2enc option (cat terminated by signal 13)
 	New dvdauthor/spumux > 0.7.0 require explicit NTSC/PAL declaration
 	No audio added to .flv files when none is passed by default.
@@ -949,9 +950,11 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 	# use ffmpeg's -loop option to see if it's faster with a single image piped to the yuv4mpegpipe
 	if [ "$yuvfirstfile" -eq 1 ]; then
 		yuvfirstfile=0
-		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" >&9
+#		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" >&9
+		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" >&9
 	else
-		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" | yuvstrip >&9
+#		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" | yuvstrip >&9
+		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" | yuvstrip >&9
 	fi
 else # use old method using ppmtoy4m pipe
 	if [ "$yuvfirstfile" -eq 1 ]; then
@@ -4413,12 +4416,21 @@ resize_factor=`awk -vw=$dvd_width -vh=$dvd_height -var=$aspect_ratio 'BEGIN{if (
 sq_to_dvd_pixels="${resize_factor}x100%"
 [ $debug -ge 2 ] && myecho "[dvd-slideshow] sq_to_dvd_pixels=$sq_to_dvd_pixels"
 
-# use qscale instead!
+# use qscale insteadi of video_bitrate!
 if [ -n "$output_size" ] ; then
 	# used user-set size, instead of defaults!
 	orig_dvd_width=$dvd_width ; orig_dvd_height=$dvd_height
 	dvd_width=$( echo "$output_size" | cut -dx -f1 | tr -d \[:blank:\] )
 	dvd_height=$( echo "$output_size" | cut -dx -f2 | tr -d \[:blank:\] )
+	# make sure the sizes are at least factors of 2:
+	if [ `is_even $dvd_width` -ne 1 ] ; then
+		myecho "[dvd-slideshow] ERROR: User-specified width=$dvd_width must be a factor of 2"
+		cleanup; exit 1;
+	fi
+	if [ `is_even $dvd_height` -ne 1 ] ; then
+		myecho "[dvd-slideshow] ERROR: User-specified height=$dvd_height must be a factor of 2"
+		cleanup; exit 1;
+	fi
 	if [ "$output_format" == 'flv' ] || [ "$output_format" == 'swf' ] || [ "$output_format" == 'mp4' ] || [ "$output_format" == 'mp4_ipod' ] || [ "$output_format" == 'ogv' ]  ; then
 #		video_bitrate=$(( $video_bitrate * ( $dvd_width * $dvd_height ) / ( $orig_dvd_width * $orig_dvd_height ) ))
 #		video_bitrate=500000
@@ -6476,8 +6488,8 @@ for file in "${image[@]}"; do
 				composite -compose src-over -type TrueColorMatte -depth 8 "$tmpdir"/subtitle_"$i".png "$tmpdir"/slide_"$i".ppm "$tmpdir"/slide_"$i".ppm
 			fi
 			encode "$tmpdir/slide_$i.ppm" "$frames"
-			set_end_frame_time ${duration[$i]}  # only update time if nonzero
 		fi
+		set_end_frame_time ${duration[$i]}  
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
 		myecho "[dvd-slideshow]############################################################"
 #identify "$tmpdir/slide_$i.ppm"

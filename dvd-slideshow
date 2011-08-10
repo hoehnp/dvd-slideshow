@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #    dvd-slideshow
 #    Copyright 2003-2008 Scott Dylewski  <scott at dylewski.com>
 #
@@ -940,9 +940,9 @@ fi
 
 
 encode ()
+{
 # for encoding one image for N frames
 # encode $image $frames
-{
 local myimage="$1"
 local myframes="$2"
 if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
@@ -2549,14 +2549,19 @@ kenburns ()  # KENBURNS
 }
 
 wavlength ()
-# wavlength $file 
-# returns song length in ms
 {
+	# wavlength $file 
+	# returns song length in ms
+	if [ "$soxi" == '1' ] ; then
+		soxi "$1" -D 1> "$tmpdir"/trash.txt
+		song_length=`cat "$tmpdir"/trash.txt` 
+	else
 		sox "$1" $sox_nop stat 2> "$tmpdir"/trash.txt 
 		song_length=`cat "$tmpdir"/trash.txt | grep 'Length (seconds):' | awk -F: '{print $2}' | tr -d \[:blank:\]`
-		song_length=$( echo "scale=0; 1000 * $song_length" | bc | awk -F. '{printf ("%3.0f", $0)}' )
-		rm "$tmpdir"/trash.txt
-		echo "$song_length"
+	fi
+	song_length=$( echo "scale=0; 1000 * $song_length" | bc | awk -F. '{printf ("%3.0f", $0)}' )
+	rm "$tmpdir"/trash.txt
+	echo "$song_length"
 }
 
 rawlength ()
@@ -3545,9 +3550,11 @@ else
 	if [ $progver1 -lt 14 ] ; then  # use old sox commands:
 		sox_word='-w'
 		sox_nop='-e'
+		soxi=0
 	else # use new commands ( > 14.0.0 )
 		sox_word='-2'
 		sox_nop='-n'
+		soxi=1
 	fi
 	logecho "[dvd-slideshow] using sox options $sox_word $sox_nop"
 fi
@@ -4186,8 +4193,8 @@ else
 fi
 myecho "[dvd-slideshow] Found $background_slides background slides."
 myecho "[dvd-slideshow] Found $titles title slides."
-myecho "[dvd-slideshow] Found $transitions transitions (fadein/fadeout/crossfade/wipe)."
-# myecho ", and $moviefiles videos"
+myecho "[dvd-slideshow] Found $transitions" 'transitions (fadein/fadeout/crossfade/wipe).'
+##  myecho ", and $moviefiles videos"
 
 # setup audio parameters
 
@@ -4773,7 +4780,6 @@ if [ -n "${passed_audio[0]}" ] && [ $audio_inside_txtfile -eq 0 ] ; then  ## onl
 		suffix=`echo "$file" | awk -F. '{print tolower($NF)}'`
 		audio_index_padded=`addzeros "$i_audio"`
 		if [ "$suffix" == "mp3" ] ; then
-#			checkfor_lame
 			myecho "[dvd-slideshow] Decoding mp3 audio: $file"
 			# use ffmpeg instead of lame!
 			ffmpeg -threads "$cores" -i "$file" -y -vn -ab "$audio_bitrate"k -f wav -ar $audio_sample_rate -ac 2 "$tmpdir/audio$track"_"$audio_index_padded.wav" >> "$ffmpeg_out" 2>&1
@@ -4792,6 +4798,7 @@ if [ -n "${passed_audio[0]}" ] && [ $audio_inside_txtfile -eq 0 ] ; then  ## onl
 		else
 			myecho "[dvd-slideshow] ERROR:  Unknown audio file format.  Must be mp3, ogg, aac/mp4 or wav"
 		fi	
+		waitforfile "$tmpdir/audio$track"_"$audio_index_padded.wav"
 		length=`wavlength "$tmpdir/audio$track"_"$audio_index_padded.wav"`
 		length_array[$i]=`hms $length`
 		total_audio_length="$(( $total_audio_length + $length ))"
@@ -5242,6 +5249,7 @@ for file in "${image[@]}"; do
 				audio1_end[$audio_index]=0   # in ms from last slide
 			fi
 			myecho "[dvd-slideshow] slide track=${audio_track[$i]} audio_start=$slide_start_time audio_end=$slide_end_time"
+			waitforfile "$tmpdir/audio1_$audio_index_padded".wav
 			song_length_ms=`wavlength "$tmpdir/audio1_$audio_index_padded".wav`
 			song_length_hms=`hms "$song_length_ms"`
 			echo "[dvd-slideshow] Audio length ms=$song_length_ms  $song_length_hms"
@@ -6986,6 +6994,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			waitforfile "$tmpdir/audio1_$i_padded.wav"
 			volume_sox=`sox "$tmpdir"/"audio1_$i_padded.wav" $sox_nop stat -v 2>&1 | tr -d :[blank]:`
 			myecho "[dvd-slideshow] Volume adjust=$volume  should be $volume_sox"
+			waitforfile "$tmpdir/audio1_$i_padded".wav
 			song_length_ms=`wavlength "$tmpdir/audio1_$i_padded.wav"`
 			song_length_hms=`hms $song_length_ms`
 			myecho "[dvd-slideshow] Original audio track length=$song_length_hms"
@@ -7427,8 +7436,8 @@ if [ "$output_format" == 'flv' ] ; then  # only one audio track for .flv, .swf, 
 		ffmpeg -threads "$cores" -y -i "$tmpdir/audio1.wav" -i "$tmpdir/video.flv" -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir/video1.flv" >> "$ffmpeg_out" 2>&1 
 		mv "$tmpdir/video1.flv" "$outdir"/"$slideshow_name".flv
 	fi
-	myecho "[dvd-slideshow] Generating video thumbnail..."
-	ffmpeg -threads "$cores" -y -i "$outdir"/"$slideshow_name".flv -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$ffmpeg_out" 2>&1
+#	myecho "[dvd-slideshow] Generating video thumbnail..."
+#	ffmpeg -threads "$cores" -y -i "$outdir"/"$slideshow_name".flv -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$ffmpeg_out" 2>&1
 	if [ -f "/usr/bin/flvtool2" ] ; then
 		myecho "[dvd-slideshow] Running flvtool2 -U $slideshow_name".flv
 		/usr/bin/flvtool2 -U "$outdir"/"$slideshow_name".flv
@@ -7437,8 +7446,8 @@ elif [ "$output_format" == 'swf' ] ; then
 	myecho "[dvd-slideshow] Adding audio to .swf file"
 	ffmpeg -threads "$cores" -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.swf -vcodec copy -f flv -ar 22050 -ab 48 -ac 1 "$tmpdir"/video1.swf >> "$ffmpeg_out" 2>&1 
 	mv "$tmpdir"/video1.swf "$outdir"/"$slideshow_name".swf
-	myecho "[dvd-slideshow] Generating video thumbnail..."
-	ffmpeg -threads "$cores" -y -i "$outdir"/"$slideshow_name".swf -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$ffmpeg_out" 2>&1
+#	myecho "[dvd-slideshow] Generating video thumbnail..."
+#	ffmpeg -threads "$cores" -y -i "$outdir"/"$slideshow_name".swf -f mjpeg -t 0.001 "$outdir"/"$slideshow_name".jpg >> "$ffmpeg_out" 2>&1
 elif [ "$output_format" == 'mp4' ] ; then   
 	myecho "[dvd-slideshow] Adding audio to .mp4 file"
 #	myecho ffmpeg -threads "$cores" -y -i "$tmpdir/audio1.wav" -i "$tmpdir"/video.mp4 -vcodec copy -f mp4 -ar 22050 -ab 128k -ac 1 "$tmpdir"/video1.mp4 '>>' "$ffmpeg_out" '2>&1'

@@ -51,7 +51,7 @@ autocrop=0 # make images that are very near the dvd aspect ratio fill the screen
 
 #background:0::background.jpg
 # note that tenths or hundredths or thousandths of seconds can be specified:
-fadein:1.582
+fadein:0.882
 # Just display the top title.  Lower titlebar will not show:
 titlebar:2:Top Title   # add another comment if you want.
 # Just show the lower title.  Top title will not show.

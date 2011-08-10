@@ -1058,6 +1058,8 @@ fi
 # Summarize settings:
 myecho "[dvd-menu] Final dvd filesystem is in $dvd_dir"
 [ "$pal" -eq 1 ] && ntsc_or_pal="PAL" || ntsc_or_pal="NTSC"
+[ -n "$VIDEO_FORMAT" ] && original_video_format="$VIDEO_FORMAT" || original_video_format=''
+export VIDEO_FORMAT="$ntsc_or_pal"
 [ "$ac3" -eq 1 ] && mp2_or_ac3="AC3" || mp2_or_ac3="MP2"
 [ "$vcd" -eq 1 ] && myecho "[dvd-menu] Using VCD mode."
 [ "$svcd" -eq 1 ] && myecho "[dvd-menu] Using SVCD mode."
@@ -2029,7 +2031,7 @@ if [ "$no_dvdauthor" -eq 0 ] ; then
 	else
 		myecho "[dvd-menu] Running dvdauthor..."
 #		dvdauthor -o "$dvd_dir" -x "$outdir/vmgm.xml" >> "$logfile" 2>&1
-		dvdauthor -o "$dvd_dir" -x "$outdir/vmgm.xml" 
+		dvdauthor -o "$dvd_dir" -x "$outdir/vmgm.xml" 2>> "$logfile"
 		if [ $? -ne 0 ] ; then
 			## dvdauthor errored
 			myecho "[dvd-menu] ERROR during dvdauthor execution!"
@@ -2075,6 +2077,8 @@ fi
 # cleanup the logfile a little bit:
 sed -e '/ bytes of data written[[:cntrl:]]INFO/d' "$logfile" > "$outdir"/tmp.txt
 mv "$outdir"/tmp.txt "$logfile"
+
+export VIDEO_FORMAT="$original_video_format"
 
 echo "[dvd-menu] Output directory is $outdir"
 echo "[dvd-menu] Logfile output is at $logfile"

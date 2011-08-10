@@ -22,7 +22,7 @@ check_rm menu.vob
 check_rm menu.xml
 
 echo "[runtest.sh] Executing command:"
-echo "[runtest.sh] dvd-slideshow -H -f 'my_slideshow.txt' $*"
+echo "[runtest.sh] dvd-slideshow -f 'my_slideshow.txt' $*"
 echo " "
 dvd-slideshow -f my_slideshow.txt $*
 echo " "

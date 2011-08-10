@@ -50,7 +50,7 @@ rm -f -r dvd-slideshow_temp*
 rm -f -r dvd-menu_temp*
 cd ..
 ######################################
-cd 0.7.5
+cd '0.7.5'
 rm -f *.xml *.wav *.flv
 rm -f *.mpg ; rm -f *.vob
 rm -f *.log *.idx
@@ -60,7 +60,7 @@ rm -f -r dvd-slideshow_temp*
 rm -f -r dvd-menu_temp*
 cd ..
 ######################################
-cd 0.8.0
+cd '0.8.0'
 rm -f *.xml *.wav *.flv
 rm -f *.mpg ; rm -f *.vob
 rm -f *.log *.idx

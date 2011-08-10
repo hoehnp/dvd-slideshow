@@ -36,6 +36,10 @@ echo "[dvd-slideshow]            "
 # convert image.jpg -bordercolor black -border 0 "$tmpdir/fade_$dj.ppm" works for transparent .png images
 # in ImageMagick > 6.0.6, but not in 6.0.6 for some reason.  (black output).  
 
+# sometimes we'll get errors:  xargs: cat: terminated by signal 13
+# Signal 13 means, "Write on a pipe with no one to read it" so this means
+# that cat is trying to write to ppmtoy4m and it's not ready or something
+
 ## set up bash variables  http://wiki.sourcemage.org/HOWTO-Locale_problems
 LC_ALL=C
 LANG="POSIX"
@@ -54,6 +58,7 @@ echo 'Changes:
 	Added .ogg mode ( use -ogv ) (not working yet)
 	Added ipod output ( use -ipod ) (not working yet)
     Bug fixes:
+	Fixed chroma subsampling bug when using -mpeg2enc option (cat terminated by signal 13)
 	New dvdauthor/spumux > 0.7.0 require explicit NTSC/PAL declaration
 	No audio added to .flv files when none is passed by default.
 	Changed default dvd audio bitrate from 192kbps to 256kbps
@@ -603,17 +608,10 @@ kenburns_acceleration=2 # in seconds
 #image_postprocess='shadow'
 image_postprocess='none'
 mpeg_encoder='ffmpeg' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
-#mpeg_encoder='mpeg2enc' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
 output_format='mpeg2' # or flv, mpg, mp4, mp4_ipod.  mpeg2 is default
 #output_format='flv' # or flv, mpg, mp4, mp4_ipod
 ignore_seq_end='-M'
 
-# set smp option based on kernel name:
-#if [ -z "`uname -a | grep -i smp`" ] ; then
-#	smp=1
-#else
-#	smp=0
-#fi
 # set smp option if more than 1 processor core:
 cores="$( grep -i 'cpu cores' /proc/cpuinfo | head -n 1 | cut -d: -f 2 | tr -d \[:blank:\] )"
 if [ -n "$cores" ] && [ "$cores" -ge 2 ] ; then
@@ -658,7 +656,7 @@ do
 #	-B) shift; browsable=1 ; submenu=1 ;;  # create a browsable slideshow (not working)
 	-vcd) shift; vcd=1 ;;  # use vcd resolution and mp1 audio
 	-svcd) shift; svcd=1 ;;  # use svcd resolution and mp1 audio
-	-mpeg2enc) shift; mpeg_encoder='mpeg2enc' ;; # force using mpeg2enc instead of ffmpeg
+	-mpeg2enc) shift; commandline_mpeg_encoder='mpeg2enc' ;; # force using mpeg2enc instead of ffmpeg
 	-flv) shift; output_format='flv' ;; # flv output
 	-swf) shift; output_format='swf' ;; # swf output
 	-mp4) shift; output_format='mp4' ;; # mp4 output
@@ -698,6 +696,7 @@ do
 	-version) echo "$version" ; exit 0 ; shift ;;
 	esac
 done
+
 
 ##################################################################
 ### no more user input after this line?
@@ -743,7 +742,7 @@ if [ "$nocleanup" -eq 0 ] ; then
 	rm -f temp_slideshow_image.ppm ; rm -f temp.ppm
 	rm -f temp_slideshow_image_scaled.ppm
 	rm -f "$outdir/$tmptxtfile"
-	# close pipe to mpeg2enc  ( close file descriptor 9 )
+	# close pipe to ffmpeg/mpeg2enc  ( close file descriptor 9 )
         exec 9>&-  
         rm -f "$tmpdir/$yuvfifo"
         if [ "$yuvpid" -ne 0 ]; then
@@ -933,9 +932,9 @@ encode_video ()
 {
 if [ "$yuvfirstfile" -eq 1 ]; then
 	yuvfirstfile=0
-	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_out" >&9
+	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" >&9
 else
-	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_out" | yuvstrip >&9
+	ffmpeg -i "$1" -threads "$cores" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" | yuvstrip >&9
 fi
 }
 
@@ -946,14 +945,13 @@ encode ()
 {
 local myimage="$1"
 local myframes="$2"
-local use_ffmpeg=1
-if [ "$use_ffmpeg" == '1' ] ; then
+if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 	# use ffmpeg's -loop option to see if it's faster with a single image piped to the yuv4mpegpipe
 	if [ "$yuvfirstfile" -eq 1 ]; then
 		yuvfirstfile=0
-		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "ffmpeg_out" >&9
+		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" >&9
 	else
-		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "ffmpeg_out" | yuvstrip >&9
+		ffmpeg -f image2 -loop_input -i "$1" -vframes "$myframes" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" | yuvstrip >&9
 	fi
 else # use old method using ppmtoy4m pipe
 	if [ "$yuvfirstfile" -eq 1 ]; then
@@ -968,13 +966,12 @@ fi
 
 encode_fade ()
 {
-local use_ffmpeg=1
-if [ "$use_ffmpeg" == '1' ] ; then
+if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 	if [ "$yuvfirstfile" -eq 1 ]; then
 		yuvfirstfile=0
-		ffmpeg -f image2 -i "$tmpdir/fade%04d.ppm" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "ffmpeg_out" >&9
+		ffmpeg -f image2 -i "$tmpdir/fade_%04d.ppm" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" >&9
 	else
-		ffmpeg -f image2 -i "$tmpdir/fade%04d.ppm" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "ffmpeg_out" | yuvstrip >&9
+		ffmpeg -f image2 -i "$tmpdir/fade_%04d.ppm" -y -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -r $framerate -an -pix_fmt yuv420p -f yuv4mpegpipe - 2>> "$ffmpeg_err" | yuvstrip >&9
 	fi
 else # use old method by sorting through files and piping through ppmtoy4m
 	if [ "$yuvfirstfile" -eq 1 ]; then
@@ -3452,6 +3449,7 @@ fi
 [ -n "$commandline_autocrop" ] && autocrop=$commandline_autocrop
 [ -n "$commandline_copy" ] && copy=$commandline_copy
 [ -n "$commandline_ac3" ] && ac3=$commandline_ac3
+[ -n "$commandline_mpeg_encoder" ] && mpeg_encoder=$commandline_mpeg_encoder
 [ -n "$commandline_debug" ] && debug=$commandline_debug
 [ -n "$commandline_theme" ] && theme=$commandline_theme
 [ -n "$commandline_high_quality" ] && high_quality=$commandline_high_quality
@@ -3472,10 +3470,15 @@ fi
 logecho "[dvd-slideshow] Using `which bash` version `bash --version | head -n 1`"
 bashversion=`bash --version | head -n 1 | awk '{print $4}' | awk -F. '{print $1"."$2}'`
 
-if [ $debug -ge 1 ] ; then
+if [ $debug -ge 2 ] ; then
 	ffmpeg_out="$outdir"/"$logfile"
+	ffmpeg_err="$outdir"/"$logfile"
+elif [ $debug -ge 1 ] ; then
+	ffmpeg_out="$outdir"/"$logfile"
+	ffmpeg_err='/dev/null'
 else
 	ffmpeg_out='/dev/null'
+	ffmpeg_err='/dev/null'
 fi
 
 # version of "find"
@@ -3517,11 +3520,13 @@ else
 	if ppmtoy4m -S 420mpeg2 xxxxx 2>&1 | grep -q xxxxx; then
 		logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420mpeg2"
 		subsample='420mpeg2'
+#		logecho "[dvd-slideshow] Using mjpegtools subsampling -S 444 (none)"
+#		subsample='444'
+	else
+#		logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420mpeg2"
+#		subsample='420mpeg2'
 		logecho "[dvd-slideshow] Using mjpegtools subsampling -S 444 (none)"
 		subsample='444'
-	else
-		logecho "[dvd-slideshow] Using mjpegtools subsampling -S 420_mpeg2"
-		subsample='420_mpeg2'
 	fi
 fi	
 # sox
@@ -3574,8 +3579,9 @@ if [ -z "$it" ] && [ "$commandline_gm" -eq 1 ] ; then # no graphicsmagick
 	gm_repage='+repage'
 	gm_compose='src-over'
 elif [ -n "$it" ] && [ "$commandline_gm" -eq 1 ] ; then
+#elif [ -n "$it" ] ; then
 	progver=`gm version | head -n 1 | awk '{ print $2 }'`
-	logecho "[dvd-slideshow] Found GraphicsMagick version $progver"
+	logecho "[dvd-slideshow] Using GraphicsMagick version $progver"
 	graphicsmagick=1
 	gm_cmd="gm"
 	gm_repage=""
@@ -3602,6 +3608,7 @@ else
 	progver=`dvdauthor -h 2>&1 | head -n 1 | awk '{ print $3 }'`
 	logecho "[dvd-slideshow] Found dvdauthor version $progver"
 fi
+
 
 # ffmpeg
 it=`which ffmpeg 2> /dev/null`
@@ -4435,6 +4442,8 @@ fi
 
 ## summarize configuration:
 [ "$pal" -eq 1 ] && ntsc_or_pal="PAL" || ntsc_or_pal="NTSC"
+[ -n "$VIDEO_FORMAT" ] && original_video_format="$VIDEO_FORMAT" || original_video_format=''
+export VIDEO_FORMAT="$ntsc_or_pal"  # required for dvdauthor and spumux
 [ "$ac3" -eq 1 ] && mp2_or_ac3="AC3" || mp2_or_ac3="MP2"
 
 #myecho "[dvd-slideshow] Configuration summary:"
@@ -4445,6 +4454,9 @@ myecho "[dvd-slideshow] Audio: $mp2_or_ac3 $audio_sample_rate $audio_bitrate"k
 myecho "[dvd-slideshow] Debug=$debug  Autocrop=$autocrop Subtitles=$subtitle_type Border=$frame_border"
 if [ "$manual_chapter_markers" == 1 ] ; then
 	myecho "[dvd-slideshow] Chapter markers= Manual"
+fi	
+if [ "$mpeg_encoder" == 'mpeg2enc' ] ; then
+	myecho "[dvd-slideshow] Using mpeg2enc instead of FFmpeg"
 fi	
 if [ "$graphicsmagick" == 1 ] ; then
 	myecho "[dvd-slideshow] Using GraphicsMagick commands when possible"
@@ -4874,12 +4886,17 @@ if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
 		ffmpeg -threads "$cores" -f yuv4mpegpipe -i "$tmpdir"/$yuvfifo -target $ffmpeg_target -r $framerate -an -aspect $aspect_ratio -s "$dvd_width"x"$dvd_height" -y -bf 2 -f mpeg2video "$tmpdir/video.mpg" >> "$ffmpeg_out" 2>&1 &
 	fi
 else
-	mpeg2enc $mpeg2enc_params -o "$tmpdir/video.mpg" < "$tmpdir"/$yuvfifo >> "$outdir/$logfile" 2>&1 & 
+	if [ "$output_format" == 'mpg' -o "$output_format" == 'mpeg2' ] ; then
+		mpeg2enc $mpeg2enc_params -o "$tmpdir/video.mpg" < "$tmpdir"/$yuvfifo >> "$outdir/$logfile" 2>&1 & 
+	else
+		myecho "[dvd-slideshow] ERROR: mpeg2enc only encodes .mpg video"
+		cleanup; exit 1;
+	fi	
 fi
 yuvpid=${!}
 
 # open the fifo for writing as file descriptor #9 (unlikely to be used!)
-exec 9>"$tmpdir/$yuvfifo"
+exec 9> "$tmpdir/$yuvfifo"
 
 ## make both a slideshow_background file and a title_background file
 if [ -f "${bgfile}" ] ; then
@@ -5641,7 +5658,7 @@ for file in "${image[@]}"; do
 			# this might stop the random hangs in long slideshows...
 #			echo "[dvd-slideshow] Waiting for last crossfade to finish rendering..."
 			if [ -n "$( jobs -p | grep -F "$lastcrossfade_pid" )" ] ; then
-				echo "waiting for fade process $lastcrossfade_pid to finish" >> "$outdir"/"$logfile"
+				echo "[dvd-slideshow] Waiting for fade process $lastcrossfade_pid to finish" >> "$outdir"/"$logfile"
 				wait "$lastcrossfade_pid" >> "$outdir"/"$logfile" 2>&1
 			fi
 		fi
@@ -5683,7 +5700,7 @@ for file in "${image[@]}"; do
 				fi
 			fi
 		done
-		waitforfiles "$tmpdir/fade" ppm $dj
+		waitforfiles "$tmpdir/fade" ppm "$dj"
 		encode_fade
 		finish_progressbar $fr $frames
 		find "$tmpdir" -name "fade*.ppm" -type f -print0 | xargs -0 rm -f  # remove old files
@@ -7561,6 +7578,7 @@ else
 fi
 
 cleanup
+export VIDEO_FORMAT="$original_video_format"
 
 ## now, just cleanup the logfile a little bit:
 sed -e '/ bytes of data written[[:cntrl:]]INFO/d' "$outdir"/"$logfile" > "$outdir"/tmp.txt

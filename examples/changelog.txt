@@ -1,8 +1,5 @@
 # dvd-slideshow-examples changelog:
 
-todo:
-add mplayer as option to play resulting videos
-
 0.7.5:
 	Updated code to not specify slideshow names.  Default is used instead.
 	Updated 0.7.5 example with new features.

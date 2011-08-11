@@ -43,6 +43,7 @@ echo 'Changes:
 	Fix sox arguments to work with both old and new versions of sox.
 	Added "unset CDPATH to full_path function.  (Thanks Bob!)
 	Add explicit PAL or NTSC in .xml files for dvdauthor 0.7.0
+	Add totem and VLC playback examples
 0.8.2
 	Change imagemagick calls with -type TrueColor to -type TrueColorMatte for latest version
 	Sox v. > 13 changes -w to -2 and -e to -n (thanks Ludovic)
@@ -2098,11 +2099,11 @@ else
 	echo "[dvd-menu] The dvd filesystem is $dvd_dir"
 	echo "[dvd-menu] "
 	echo "[dvd-menu] You can play this video using one of the following commands:"
+	echo "[dvd-menu] totem $dvd_dir"
+	echo "[dvd-menu] vlc dvd://$dvd_dir"
 	echo "[dvd-menu] gxine -S dvd:\"$dvd_dir\""
 	echo "[dvd-menu] xine -g -u 0 dvd:\"$dvd_dir\""
 	echo "[dvd-menu] "
-	echo "[dvd-menu] or, if you just want to watch the videos without the menus:"
-	echo "[dvd-menu] mplayer -sid 0 dvd:// -dvd-device $dvd_dir"
 fi
 myecho "[dvd-menu] Done!"
 echo

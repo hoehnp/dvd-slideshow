@@ -170,7 +170,7 @@ help ()
 {
 echo "`basename $0` Version $version "
 echo 'http://dvd-slideshow.sourceforge.net'
-echo 'Copyright 2003-2006 Scott Dylewski <scott at dylewski.com>'
+echo 'Copyright 2003-2011 Scott Dylewski <scott at dylewski.com>'
 echo 	 
 echo 'Description: 
 	Creates a dvd-compatible mpeg2 video from a bunch of images.
@@ -246,7 +246,6 @@ Options:
 
  [-w]   Alpha! 
  	Render widescreen output (16:9) instead of standard (4:3) 
-	Please send bug reports to scott at dylewski dot com
 
  [-smp]
  	Enable more processes to run at the same time for multiprocessor
@@ -7616,21 +7615,33 @@ myecho "[dvd-slideshow] Done!"
 myecho ""
 myecho "[dvd-slideshow] use one of the following comands to view your output:"
 if [ "$output_format" == 'mpg' ] ; then
+	myecho "[dvd-slideshow] totem \"$outdir/$slideshow_name.mpg\""
+	myecho "[dvd-slideshow] vlc \"$outdir/$slideshow_name.mpg\""
 	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.mpg\""
 	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.mpg\""
 elif [ "$output_format" == 'flv' ] ; then
+	myecho "[dvd-slideshow] totem \"$outdir/$slideshow_name.flv\""
+	myecho "[dvd-slideshow] vlc \"$outdir/$slideshow_name.flv\""
 	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.flv\""
 	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.flv\""
 elif [ "$output_format" == 'swf' ] ; then
+	myecho "[dvd-slideshow] totem \"$outdir/$slideshow_name.swf\""
+	myecho "[dvd-slideshow] vlc \"$outdir/$slideshow_name.swf\""
 	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.swf\""
 	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.swf\""
 elif [ "$output_format" == 'mp4' ] ; then
+	myecho "[dvd-slideshow] totem \"$outdir/$slideshow_name.mp4\""
+	myecho "[dvd-slideshow] vlc \"$outdir/$slideshow_name.mp4\""
 	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.mp4\""
 	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.mp4\""
 elif [ "$output_format" == 'ogv' ] ; then
+	myecho "[dvd-slideshow] totem \"$outdir/$slideshow_name.ogv\""
+	myecho "[dvd-slideshow] vlc \"$outdir/$slideshow_name.ogv\""
 	myecho "[dvd-slideshow] xine -g \"$outdir/$slideshow_name.ogv\""
 	myecho "[dvd-slideshow] mplayer \"$outdir/$slideshow_name.ogv\""
 else
+	myecho "[dvd-slideshow] totem \"$outdir/$slideshow_name.vob\""
+	myecho "[dvd-slideshow] vlc \"$outdir/$slideshow_name.vob\""
 	myecho "[dvd-slideshow] xine -g -u 0 \"$outdir/$slideshow_name.vob\""
 	myecho "[dvd-slideshow] mplayer -sid 0 \"$outdir/$slideshow_name.vob\""
 fi

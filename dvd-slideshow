@@ -9,7 +9,7 @@
 #
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
@@ -34,7 +34,7 @@ echo "[dvd-slideshow]            "
 ####################
 # continuous subtitles don't work across non-image/transition lines
 # convert image.jpg -bordercolor black -border 0 "$tmpdir/fade_$dj.ppm" works for transparent .png images
-# in ImageMagick > 6.0.6, but not in 6.0.6 for some reason.  (black output).  
+# in ImageMagick > 6.0.6, but not in 6.0.6 for some reason. (black output). 
 
 # sometimes we'll get errors:  xargs: cat: terminated by signal 13
 # Signal 13 means, "Write on a pipe with no one to read it" so this means
@@ -81,8 +81,8 @@ echo 'Changes:
 	Error check code BEFORE running full script.
 	Added -logo <logofile> option to add a logo to each slide. (does not work with transitions yet)
 	Added -mpg output for creating alternate-sized mpeg output that does not conform to dvd standards (very alpha)
-	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y.  Default x location is 0.
-	Better handling of very long subtitles.  (up to 3 lines and reduced font size)
+	Better control over subtitles with new variables subtitle_location_x and subtitle_location_y. Default x location is 0.
+	Better handling of very long subtitles. (up to 3 lines and reduced font size)
 	No subtitles are rendered during fades.
 	Log file now uses the slideshow name instead of dvd-slideshow.log
     Bug fixes:
@@ -95,7 +95,7 @@ echo 'Changes:
 	Fixed hms2seconds with leading zeros (thanks Arnd Baecker)
 	Better (larger) resizing for kenburns in high-quality mode.
 	Smoother scroll effect in normal mode (fixed rounding error)
-	Font search follows links.  Thanks Jim Potter!
+	Font search follows links. Thanks Jim Potter!
 	Change LANG=C to LANG=POSIX to try to fix radix problems with printf
 	Added some code to only process one crossfade in the background at a time.
 	Fixed problem with subtitles- last one was not being displayed.
@@ -107,7 +107,7 @@ echo 'Changes:
 	Fix audio when passing an .avi file.
 	Fixed chapter keyword timing.
 	Increased mplex bitrate to 9500 from 9000 to fix some possible encoding bugs.
-	Fix bug with hms handling times longer than 1 hour.  Thanks Michael Crider
+	Fix bug with hms handling times longer than 1 hour. Thanks Michael Crider
 
 0.8.0	
     New features & Changes:	
@@ -129,7 +129,7 @@ echo 'Changes:
 	pre7:
 	Kenburns has smooth start and end now, but worse for very deep zooms.
 	Add option to sharpen images (-sharpen) with ImageMagicks unsharp mask.
-	*Now using ffmpeg to encode video.  Seems over 2x faster than mpeg2enc.
+	*Now using ffmpeg to encode video. Seems over 2x faster than mpeg2enc.
 	.flv output [alpha] use -flv for now, but his might change
 	Specify output size other than default with -s 320x240 (alpha)
 	*Added -border option to add space between image and edge of screen.
@@ -139,7 +139,7 @@ echo 'Changes:
 	*Fadein/Fadeout/Crossfade to/from kenburns/scroll effects works now:
 	( fades happen during movement of effect )
 	 ***NOTE: The slideshow timings of fades will change with this version! 
-	Adding .avi video inline is possible.  See docs.  [alpha]
+	Adding .avi video inline is possible. See docs. [alpha]
 	Initial theme support [beta]
 	Widescreen (16:9) support using -w [alpha] Not tested yet.
 	Improved font variables.
@@ -159,7 +159,7 @@ echo 'Changes:
 	Manual chapter markers fixed.
 	Fixed reading of $HOME/.dvd-slideshow/dvd-slideshowrc settings.
 	Single or double quotes allowed in variable settings.
-	Got rid of lsof debugging lines.  No longer needed.
+	Got rid of lsof debugging lines. No longer needed.
 	Fixed bug in seconds2ms that mishandled durations of 0.080 ms (thanks Eric)
 	Remove wc --chars calls for compatibility with FreeBSD
 	Remove seq calls for compatibility with FreeBSD
@@ -175,12 +175,17 @@ echo
 echo 'Description: 
 	Creates a dvd-compatible mpeg2 video from a bunch of images.
 	You can add music if you want also. Supports several effects
-	like fadein/fadeout/crossfade/crop/kenburns.  
+	like fadein/fadeout/crossfade/crop/kenburns. 
 
 Usage:
- dvd-slideshow [-n <slideshow_name>] [-o <output_directory>] [-b <background_jpeg>] 
-  [-a <audio_file1> -a <audio_file2> ... -a <audio_fileN>] 
-  [-p] [-L | -H] [-mp2] [-r] [-smp] [-border <bordersize>] [-theme <themefile>] -f input_file.txt
+ dvd-slideshow [-n <slideshow_name>] [-o <output_directory>] 
+  [-a <audio_file1> -a <audio_file2> ... -a <audio_fileN>] [-theme <themefile>] 
+  [other options] [-f] input_file.txt
+
+ The preferred method of running a slideshow is to create an input_file.txt
+ that includes all the settings, audio, and images, and then run dvd-slideshow with
+ that file as an input file. See below for details on how to construct such 
+ a file.
 	
 Options: 
  [-n slideshow_name]
@@ -188,80 +193,71 @@ Options:
 	  string as the filename base for the output files
 	  so you can distinguish it from other slideshows
 	  that you can send to the same output directory.
-
  [-o <outupt directory>]
 	  Directory where the final .vob and dvdauthor .xml files
-	  will be written.  Default is to write in the directory
+	  will be written. Default is to write in the directory
 	  where dvd-slideshow was run.
- 		
  [-b <background jpeg>]
 	  Image to use for the background of the slideshow.
 	  All of the pictures will be
 	  overlaid on top of this background image. If no file 
 	  is specified, black will be used for the slideshow
 	  and a blue gradient for the title slide.
-	  
  [-a <audio file>]
           Audio file to play in background during the slideshow.
-          It will be faded out at the end.  Supports mp3, ogg, 
+          It will be faded out at the end. Supports mp3, ogg, 
 	  aac, mp4, or wav formats at this point.
 	  Multiple files will be joined.
 	  See also the more flexible text file input method.
 	  To pass multiple files, use the -a switch again.
-
  [-p]
 	Use PAL output video format instead of NTSC
-
+ [-mpeg2enc]
+	Force use mpeg2enc with mp2 audio even though ffmpeg is installed 
  [-mp2]
 	Use MP2 audio instead of AC3.
 	Default audio format is now AC3 because it seems to be more
 	compatible with the DVD hardware players.
-
+ [-s WidthxHeight]	
+	Use output size other than the standard DVD
+	output size (720x480 for NTSC). Usually used with other
+	output formats like .flv or .mp4
+ [-flv]
+	Render a flash video file instead of .vob. 
+ [-mp4]
+	Render a mp4 video file instead of .vob.
+ [-mpg]
+	Render a .mpg video file instead of .vob. Allows for alternate
+	sizing with -s
  [-L]
 	Render a low-quality video suitable for debugging.
 	This sets the resolution to 1/2 of full resolution and
 	decreases the quality of fades/transitions.
-
  [-H]
-	(Beta) Render a higher-quality video.  
+	(Beta) Render a higher-quality video. 
 	This uses the default dvd resolution and keeps all other output
 	parameters the same, but enables some pixel-sampling methods
 	that make the scroll effect look better at very slow velocities.
 	This will make dvd-slideshow take up to 4x longer to process the
 	scroll effect. Only applied when needed; the output will explain. 
-
  [-theme <themefile>]
  	Use the given theme when setting variables/colors/etc.
 	Themes are installed in /opt/dvd-slideshow/themes or
 	in a local directory ~/.dvd-slideshow/themes
-
  [-border N]
- 	Make a border of N pixels around each image.  
-
+ 	Make a border of N pixels around each image. 
  [-sharpen]
  	Sharpen images
-
  [-r]
  	Autocrop horizontal images to fill the full size of the screen.
-
- [-w]   Alpha! 
- 	Render widescreen output (16:9) instead of standard (4:3) 
-
- [-smp]
- 	Enable more processes to run at the same time for multiprocessor
-	machines.  Basically, this just renders each frame of a transition
-	in the background at the same time, and then waits for them to be finished.
-	Use this at your own risk on slower machines! If you do not have enough
-	memory to hold all the frames for one "crossfade" or "kenburns" effect,
-	then linux starts swapping to disk, and your machine may seem to lock
-	up for a while.  USE THIS AT YOUR OWN RISK!
-
+ [-nosmp]
+	Disable multiple threads in some processes when possible. If you
+	have a low memory or slow machine, this may help if you experience
+	problems with disk memory caching.
  [-nocleanup]
- 	Leave temporary files in the temporary directory.  Useful for debugging.
-
+ 	Leave temporary files in the temporary directory. Useful for debugging.
  -h or -help 
    Prints this help. 
-
  -v or -version 
    Prints dvd-slideshow version number. 
 
@@ -270,7 +266,7 @@ Options:
           for bigger slideshows. It uses the ':' character as a 
 	  separator for the fields:
           [image.jpg|keyword]:duration:subtitle:effect:effect_params
-          with each line being separate.  File options
+          with each line being separate. File options
           will override the ones passed on the command line.
 
 	  NOTE: the effect parameters are separated by a semicolon ;
@@ -285,7 +281,7 @@ Options:
             title:duration:Title_text
                 makes a title slide. Text is centered on the screen.
             titlebar:duration:Upper_Title:Lower_Title
-                makes a title slide.  Upper and lower titles are
+                makes a title slide. Upper and lower titles are
                 optional; if one is missing, only the other will
                 be displayed. White bands are underlayed behind
                 the text.
@@ -305,17 +301,22 @@ Options:
 		name to display a black or white background.
 		You can also use a hex RGB code as the background color.
 
-	    fadein:duration:subtitle
-	    	fades in to the next slide
-	    fadeout:duration:subtitle
-	    	fades out to the background
-	    crossfade:duration:subtitle
-	    	fades from one picture to the next.
-	    wipe:duration:subtitle:[up|down|left|right]
-	    	wipes from one picture to the next.  Defaults to left.
+	    Transitions:
+	      fadein:duration:subtitle
+	      	fades in to the next slide
+	      fadeout:duration:subtitle
+	      	fades out to the background
+	      crossfade:duration:subtitle
+	      	fades from one picture to the next.
+	      wipe:duration:subtitle:[up|down|left|right]
+	    	wipes from one picture to the next. Defaults to left.
+	    Transitions do not add time to the overall slideshow, they
+	    Just get overlaid on top of of the adjacent images. Because
+	    of this, the transition duration can not be greater than half
+	    of the adjacent image duration.  
 
 	    chapter
-	  	Force manual chapter marker timing.  Chapter markers will
+	  	Force manual chapter marker timing. Chapter markers will
 	  	only be created where the "chapter" keyword occurs.
 		The default is to add chapter markers at every slide.
 	    include:includefile.txt
@@ -387,7 +388,7 @@ Options:
 		where the crop coordinates are the same as the start & end
 		of the kenburns, you can use a duration like 1,5,1 for one
 		second of crop, followed by a 5 second kenburns, followed by
-		another one second of crop (times are adjustable).  (alpha)
+		another one second of crop (times are adjustable). (alpha)
 	    scroll:
 	    	image.jpg:dur:sub:scroll:[left|right|up|down]
 		This is most useful for displaying panorama-style
@@ -401,20 +402,20 @@ Options:
 	    effects after the subtitle field, be sure to include 
 	    all the colons :: in order for the parser to get the
 	    correct info.
-	    Two subtitle tracks are possible (alpha).  Separate them
+	    Two subtitle tracks are possible (alpha). Separate them
 	    using a semicolon ;. 
 
 	    When passing a picture, you can optionally use the
 	    keyword "audio" instead of the integer duration in 
-	    seconds.  What this does is force the duration of
+	    seconds. What this does is force the duration of
 	    that image to be the length of the previous audio 
-	    track.  This is useful for making a music video dvd.
+	    track. This is useful for making a music video dvd.
 
 	  Audio:
-	    Audio tracks can be inter-mixed with the video.  If 
+	    Audio tracks can be inter-mixed with the video. If 
 	    an audio track is placed between two different images,
 	    that audio track will begin playing at the start of the
-	    second image.  When placing audio, use the syntax:
+	    second image. When placing audio, use the syntax:
 
             audiofile:track:effect1:effect1_params:effect2:effect2_params
 
@@ -422,11 +423,11 @@ Options:
 	    Track is the resulting dvd audio track.
 	    Effects are audio effects where
 	    you can specify things like fadein/fadeout
-	    for the audio.  Example:
+	    for the audio. Example:
             audiofile.ogg:1:fadein:3:fadeout:2
 
 	    If you want to concatenate two audio files, just place them
-	    one right after another.  
+	    one right after another. 
 
 	  Video: [alpha]
 	    You can add video (.avi only) files and either use 
@@ -443,7 +444,7 @@ Options:
 	Configuration file and variables:
 	  You can configure some of the variables and settings
 	  that control dvd-slideshow through keywords in the input
-	  .txt file or through a ~/.dvd-slideshow/dvd-slideshowrc file.  The heirarchy
+	  .txt file or through a ~/.dvd-slideshow/dvd-slideshowrc file. The heirarchy
 	  is as follows: 
 	  program defaults --> ~/.dvd-slideshow/dvd-slideshowrc --> theme settings --> command-line --> input file variables
 	  So the input file will over-ride your personal settings, etc.
@@ -502,7 +503,20 @@ Options:
 		
 	  # logo:
 	  logo=path/to/logofile.png  # will be overlaid on top of all frames
-	  logo_gravity=gravity # North | South | East | West | NorthEast | NorthWest | SouthEast | SouthWest  ( this option not implemented yet! )
+	  logo_gravity=gravity # North | South | East | West | NorthEast | NorthWest | SouthEast | SouthWest
+
+ ***** Alpha/Beta commandline options *****
+	These have not been tested as well, so you can try them and see how it works for you
+ [-C]	Make backup copy of all images passed. Useful if you want to include a directory
+	of originals in the final dvd file structure.
+ [-logo <logofile.png>] Overlay a logo on top of the video. Only works for most effects. 
+	You must resize the logo yourself. Position can be controlled within the .txt file
+	by using the logo_gravity variable. Default location is SouthEast.
+ [-w]   Alpha! 
+ 	Render widescreen output (16:9) instead of standard (4:3) 
+ [-gm]	Use GraphicsMagick instead of ImageMagick when possible. This usually speeds
+	up some of the rendering.
+ [-writechaps]	Write out chapter times to slideshow_name.chap for use elsewhere
 '
 	echo '  '
 }
@@ -568,7 +582,7 @@ bottomtitle_bar_height=55  # 0 for no 50% white behind text
 bottomtitle_text_location_x=0
 bottomtitle_text_location_y=155
 
-themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant.  see: http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
+themedir='/opt/dvd-slideshow/themes'  # LSB/FHS compliant. see: http://www.pathname.com/fhs/pub/fhs-2.3.html#OPTADDONAPPLICATIONSOFTWAREPACKAGES
 local_themedir=~/.dvd-slideshow/themes  # local theme directory
 
 logo=""
@@ -607,8 +621,8 @@ kenburns_acceleration=2 # in seconds
 
 #image_postprocess='shadow'
 image_postprocess='none'
-mpeg_encoder='ffmpeg' # or mpeg2enc.  I find ffmpeg 2x faster than mpeg2enc
-output_format='mpeg2' # or flv, mpg, mp4, mp4_ipod.  mpeg2 is default
+mpeg_encoder='ffmpeg' # or mpeg2enc. I find ffmpeg 2x faster than mpeg2enc
+output_format='mpeg2' # or flv, mpg, mp4, mp4_ipod. mpeg2 is default
 #output_format='flv' # or flv, mpg, mp4, mp4_ipod
 ignore_seq_end='-M'
 
@@ -631,7 +645,7 @@ do
 	-r) shift; commandline_autocrop=1 ;;  # autocrop landscape-oriented images
 	-C) shift; commandline_copy=1 ;;  # make backup copy of all pictures passed. 
 	-mp2) shift; commandline_ac3=0 ;;  # use mp2 audio
-	-ac3) shift; commandline_ac3=1 ;;  # use ac3 audio
+	-ac3) shift; commandline_ac3=1 ;;  # use ac3 audio [default]
 	-V) shift; commandline_debug="$1"; shift ;;
 	## non-config variables:
 	-i) shift; image[$n]="$1"; let n=$n+1; shift;;
@@ -649,14 +663,14 @@ do
                 fi ;;
 	-border) shift; commandline_border="$1" ; shift ;;  # add border around image [in pixels]
 	-sharpen) commandline_sharpen="1" ; shift ;;  # Sharpen image
-	-s) shift; commandline_output_size="$1" ; shift ;;  # output size (over-rides defaults).  use something like 320x240
+	-s) shift; commandline_output_size="$1" ; shift ;;  # output size (over-rides defaults). use something like 320x240
 	-F) shift; commandline_output_framerate="$1" ; shift ;;  # output framerate (over-rides defaults). use 15 or 10 or 20 (integers only now)  # DO NOT USE
 	-writechaps) shift; write_chaps=1 ;;  # Write out chapter times to $slideshow_name.chap
 #	-c) shift; chapmenu=1 ; submenu=1 ;;  # create a chapter select sub-menu (implies submenu)
 #	-B) shift; browsable=1 ; submenu=1 ;;  # create a browsable slideshow (not working)
 	-vcd) shift; vcd=1 ;;  # use vcd resolution and mp1 audio
 	-svcd) shift; svcd=1 ;;  # use svcd resolution and mp1 audio
-	-mpeg2enc) shift; commandline_mpeg_encoder='mpeg2enc' ;; # force using mpeg2enc instead of ffmpeg
+	-mpeg2enc) shift; commandline_mpeg_encoder='mpeg2enc'; commandline_ac3=0 ;; # force using mpeg2enc/mp2 instead of ffmpeg/ac3
 	-flv) shift; output_format='flv' ;; # flv output
 	-swf) shift; output_format='swf' ;; # swf output
 	-mp4) shift; output_format='mp4' ;; # mp4 output
@@ -667,8 +681,8 @@ do
 	-gm) shift; commandline_gm=1 ;;  # use graphicsMagick instead of ImageMagick (alpha)
 	-L) shift; low_quality=1 ;;  # use low-quality mode
 	-M) shift; commandline_high_quality=0 ; low_quality=0 ;;  # use medium-quality mode (this is the default)
-	-H) shift; commandline_high_quality=1 ;;  # ALPHA.  use high-quality mode (This might take much longer to process in the future)
-	-smp) shift; smp=1 ;;  # use multi-threaded mode (might crash on low-memory machines?)
+	-H) shift; commandline_high_quality=1 ;;  # ALPHA. use high-quality mode (This might take much longer to process in the future)
+	-smp) shift; smp=1 ;;  # use multi-threaded mode 
 	-nosmp) shift; smp=0 ;;  # Force no smp on smp machines.
 	-nocleanup) shift; nocleanup=1 ;;  # leave all temp files
 	-a) shift; 
@@ -873,7 +887,7 @@ hms2seconds ()
 			duration_ms="$fraction"
 		else
 			echo "[dvd-slideshow] ERROR: Duration string $1 is bad."
-			echo "[dvd-slideshow] 	Probably too many decimal places.  "
+			echo "[dvd-slideshow] 	Probably too many decimal places. "
 			echo '[dvd-slideshow]   There is no point specifying 0.0001 seconds."'
 			# try rounding to only 3 decimal places?	
 			function_error=1
@@ -1090,7 +1104,7 @@ previousTransitionIncrement ()
 			previousimage="$increment"
 			break
 		else 
-			## previous line is not an image.  Check for crossfade:
+			## previous line is not an image. Check for crossfade:
 			increment=$(( $increment + 1 ))	
 		fi
 	done
@@ -1116,7 +1130,7 @@ nextTransitionIncrement ()
 			nextimage="$increment"
 			break
 		else 
-			## next line is not an image.  Check for crossfade:
+			## next line is not an image. Check for crossfade:
 			increment=$(( $increment + 1 ))	
 		fi
 	done
@@ -1403,7 +1417,7 @@ titleslide ()
 		convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill $title_font_color \
 		-pointsize $f_title_font_size -gravity Center -font "$title_font" -annotate 0 "$title1\n$title2\n$title3\n$title4" -type TrueColorMatte -depth 8 miff:- | \
 		composite -compose src-over -type TrueColorMatte -depth 8 - "$bg" "$output_file"
-	else	# no forced line wraps.  Eventually Check for long lines
+	else	# no forced line wraps. Eventually Check for long lines
 		convert -size "$dvd_width"x"$dvd_height" xc:transparent -fill $title_font_color \
 		-pointsize $f_title_font_size -gravity Center -font "$title_font" -draw "text 0,0 \"${title}\"" -type TrueColorMatte -depth 8 miff:- | \
 		composite -compose src-over -type TrueColorMatte -depth 8 - "$bg" "$output_file"
@@ -1593,7 +1607,7 @@ parse_window ()  # PARSE_WINDOW
 	#	
 	# ( angles not implemented yet! )
 	# and the optional startangle,endangle parameters will allow for rotation of the image during
-	# the kenburns effect.  Startangle is optional, and if omitted, will default to zero.
+	# the kenburns effect. Startangle is optional, and if omitted, will default to zero.
 	# Positive numbers denote clockwise rotation, and negative numbers denote counter-clockwise rotation.
 	# 
 
@@ -1941,7 +1955,7 @@ crop_parameters () # CROP_PARAMETERS image_width image_height frame_width frame_
 		# image height greater than output height at same scale 
 		resized_height=$(( 1000 * $frame_height ))
 		resized_width=$(( 1000 * $c_width * $frame_height / $c_height ))
-	else # crop_ratio = out_ratio.  good.
+	else # crop_ratio = out_ratio. good.
 		resized_height=$(( 1000 * $frame_height ))
 		resized_width=$(( 1000 * $frame_width ))
 	fi
@@ -1956,7 +1970,7 @@ crop_parameters () # CROP_PARAMETERS image_width image_height frame_width frame_
 	xc0_whole=$(( $xc0 / 1000 )); yc0_whole=$(( $yc0 / 1000 ))
 #	xc0=`div1000 $xc0` ; yc0=`div1000 $yc0`  # rounding was causing problems... need to round down.
 	xc0=$(( $xc0 / 1000 )) ; yc0=$(( $yc0 / 1000 ))
-	xci=`div1000 $xci` ; yci=`div1000 $yci`  # rounding might cause problems.  watch this.
+	xci=`div1000 $xci` ; yci=`div1000 $yci`  # rounding might cause problems. watch this.
 	## make sure xci + predicted_resized_width < dvd_width 
 	## and yci + predicted_resized_height < dvd_height
 	if [ $(( $yci + $predicted_resized_height )) -gt $frame_height ] ; then
@@ -2096,7 +2110,7 @@ kenburns ()  # KENBURNS
 			myecho "[dvd-slideshow:kenburns] Use crop and it will be MUCH faster!"
 		fi
 
-		#### now we have the parameters set up.  The coordinate system is relative to the 
+		#### now we have the parameters set up. The coordinate system is relative to the 
 		#### ORIGINAL image size, buffered out to the full DVD frame:
 		# xi,yi   xw,yh  xs0,ys0  xs1,ys1  xe0,ye0  xe1,ye1
 
@@ -2128,7 +2142,7 @@ kenburns ()  # KENBURNS
 			multiple=4 
 		fi
 
-		# check original image width and height.  if too large,
+		# check original image width and height. if too large,
 		# then make it smaller!  if too small, make it bigger!
 		factorx=$(( 1000 * $image_width / $dvd_width ))
 		factory=$(( 1000 * $image_height / $dvd_height ))
@@ -2177,7 +2191,7 @@ kenburns ()  # KENBURNS
 			image_width=$resized_x
 			image_height=$resized_y
 		elif [ "$factorx" -lt "$factorlimit_x" ] && [ "$factory" -lt "$factorlimit_y" ] && [ "$enable_kenburns_resize" == 1 ] ; then
-			# resolution is too low to have nice smooth output.  Increase resolution before cropping.
+			# resolution is too low to have nice smooth output. Increase resolution before cropping.
 			if [ "$minfactor" == "$factorx" ] ; then	
 				newsize=$(( $multiple * $dvd_width ))
 				resize='-resize '$newsize'x'
@@ -3190,10 +3204,10 @@ if [ -n "$theme" ] ; then
 	fi
 	if [ "$theme_designed_for" == 'pal' ] && [ "$pal" == 0 ] ; then
 		# shift coordinates down by 96?
-		myecho "[dvd-slideshow] Theme designed for PAL.  Shifting coordinates to NTSC"
+		myecho "[dvd-slideshow] Theme designed for PAL. Shifting coordinates to NTSC"
 	elif [ "$theme_designed_for" == 'ntsc' ] && [ "$pal" == 1 ] ; then
 		# shift coordinates down by 96?
-		myecho "[dvd-slideshow] Theme designed for NTSC.  Shifting coordinates to PAL"
+		myecho "[dvd-slideshow] Theme designed for NTSC. Shifting coordinates to PAL"
                 #toptitle_bar_height=
                 #toptitle_text_location_y
                 # bottom title
@@ -3215,7 +3229,7 @@ add_logo () # LOGO
 	local logo_gravity="$3"
 	if [ -n "$logo" ] ; then # only do this if the logo has been specified!
 		if [ -z "$logo_gravity" ] ; then
-			logo_gravity="southeast"
+			logo_gravity="SouthEast"
 		fi	
 		if [ -f "$logo" ] ; then
 			composite -compose src-over -gravity $logo_gravity -type TrueColorMatte -depth 8 "$logo" "$tmpdir"/"$filename" "$tmpdir"/tmp_"$filename"
@@ -3267,7 +3281,7 @@ subtitle ()  # SUBTITLE
 		[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line1=$subtitle_line1"
 		[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line2=$subtitle_line2"
 		[ $debug -ge 1 ] && myecho "[dvd-slideshow]  Line3=$subtitle_line3"
-	else	# no forced line wraps.  Check for long lines:	
+	else	# no forced line wraps. Check for long lines:	
 		## make the subtitle break up into up to 4 different lines?
 		font_width=$(( $f_subtitle_font_size * 2 / 3 - 1 ))
 		line_width=$(( $font_width * $characters ))
@@ -3507,7 +3521,7 @@ if [ -n "$findutils_version" ] ; then
 		find_L=''  # use old syntax
 		find_follow='-follow'
 		logecho "[dvd-slideshow] WARNING: Found findutils version $v1.$v2.$v3"
-		logecho "[dvd-slideshow]	This version may work, but isn't tested well.  Consider upgrading to a newer version of findutils."
+		logecho "[dvd-slideshow]	This version may work, but isn't tested well. Consider upgrading to a newer version of findutils."
 	fi
 fi
 
@@ -3618,32 +3632,33 @@ else
 	logecho "[dvd-slideshow] Found dvdauthor version $progver"
 fi
 
-
-# ffmpeg
-it=`which ffmpeg 2> /dev/null`
-if [ -z "$it" ] ; then
-        # no ffmpeg!  use mp2 audio instead:
-        myecho "[dvd-slideshow] Warning: no ffmpeg found for AC3 audio encoding."
-        myecho "[dvd-slideshow]         Using MP2 audio instead."
-        myecho "[dvd-slideshow]         MP2 audio is less compatible with DVD player hardware."
-        myecho "[dvd-slideshow]         TIP: Install ffmpeg for faster video encoding also!"
-	myecho "[dvd-slideshow]		http://ffmpeg.sourceforge.net"
-	myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install ffmpeg"
-        ac3=0
-	mpeg_encoder='mpeg2enc'
-else
-	# found ffmpeg
-	logecho "[dvd-slideshow]	`ffmpeg -version 2>&1 | head -n 1 `"
-	## check to see if we have mpeg2video output option:
-	it=`ffmpeg -f mpeg2video 2>&1 | grep 'Unknown input or output format: mpeg2video'`
+if [ "$mpeg_encoder" == 'ffmpeg' ] ; then
+	# ffmpeg
+	it=`which ffmpeg 2> /dev/null`
 	if [ -z "$it" ] ; then
-		# mpeg2video should be ok
-		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='ffmpeg' 
-	else
-		[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='mpeg2enc' 
-		myecho "[dvd-slideshow] Warning:  ffmpeg is not compiled with the mpeg2video option"
-		myecho "[dvd-slideshow] 	  required for making dvds!  Using mpeg2enc instead."
+	        # no ffmpeg!  use mp2 audio instead:
+	        myecho "[dvd-slideshow] Warning: no ffmpeg found for AC3 audio encoding."
+	        myecho "[dvd-slideshow]         Using MP2 audio instead."
+	        myecho "[dvd-slideshow]         MP2 audio is less compatible with DVD player hardware."
+	        myecho "[dvd-slideshow]         TIP: Install ffmpeg for faster video encoding also!"
+		myecho "[dvd-slideshow]		http://ffmpeg.sourceforge.net"
+		myecho "[dvd-slideshow]         Debian/Ubuntu: sudo apt-get install ffmpeg"
+	        ac3=0
 		mpeg_encoder='mpeg2enc'
+	else
+		# found ffmpeg
+		logecho "[dvd-slideshow]	`ffmpeg -version 2>&1 | head -n 1 `"
+		## check to see if we have mpeg2video output option:
+		it=`ffmpeg -f mpeg2video 2>&1 | grep 'Unknown input or output format: mpeg2video'`
+		if [ -z "$it" ] ; then
+			# mpeg2video should be ok
+			[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='ffmpeg' 
+		else
+			[ "$mpeg_encoder" == 'ffmpeg' ] && mpeg_encoder='mpeg2enc' 
+			myecho "[dvd-slideshow] Warning:  ffmpeg is not compiled with the mpeg2video option"
+			myecho "[dvd-slideshow] 	  required for making dvds!  Using mpeg2enc instead."
+			mpeg_encoder='mpeg2enc'
+		fi
 	fi
 fi
 if [ "$program_needed" -eq 1 ] ; then
@@ -3652,7 +3667,7 @@ fi
 ################################################## done finding programs
 
 if [ -f "$tmpdir/slide_1.ppm" ] || [ -f "$tmpdir/slideshow_background.ppm" ] || [ -f "$tmpdir/fade_0001.ppm" ] ; then
-	myecho "[dvd-slideshow] Found old files in output directory.  Removing them..."
+	myecho "[dvd-slideshow] Found old files in output directory. Removing them..."
 	cleanup
 fi
 
@@ -4135,7 +4150,7 @@ elif [ -f "$default_font4" ] ; then
 	default_font="$default_font4"
 else
 	default_font="Helvetica-Bold"
-	myecho "[dvd-slideshow] Cannot find default fonts.  Using default ImageMagick font."
+	myecho "[dvd-slideshow] Cannot find default fonts. Using default ImageMagick font."
 fi
 
 if [ -n "$title_font" ] ; then   # title font passed
@@ -4759,7 +4774,7 @@ for file in "${image[@]}"; do
 				sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1
 			fi
 		else
-			myecho "[dvd-slideshow] ERROR:  Unknown audio file format.  Must be mp3, ogg, mp4/aac, wav, or silence"
+			myecho "[dvd-slideshow] ERROR:  Unknown audio file format. Must be mp3, ogg, mp4/aac, wav, or silence"
 		fi
 #		echo "created $tmpdir/audio$track"_"$audio_index_padded.wav"
 #	else  
@@ -4807,7 +4822,7 @@ if [ -n "${passed_audio[0]}" ] && [ $audio_inside_txtfile -eq 0 ] ; then  ## onl
 			myecho "[dvd-slideshow] Processing wav audio $file"
 			cp "$file" "$tmpdir/audio$track"_"$audio_index_padded.wav"
 		else
-			myecho "[dvd-slideshow] ERROR:  Unknown audio file format.  Must be mp3, ogg, aac/mp4 or wav"
+			myecho "[dvd-slideshow] ERROR:  Unknown audio file format. Must be mp3, ogg, aac/mp4 or wav"
 		fi	
 		waitforfile "$tmpdir/audio$track"_"$audio_index_padded.wav"
 		length=`wavlength "$tmpdir/audio$track"_"$audio_index_padded.wav"`
@@ -4851,11 +4866,11 @@ if [ "$low_quality" -eq 1 ] ; then
 	myecho "[dvd-slideshow]   output resolution is $dvd_width"x"$dvd_height"
 	myecho "[dvd-slideshow]   Ignore [mpeg2enc] warnings (usually)"
 elif [ "$high_quality" -eq 1 ] ; then
-	myecho "[dvd-slideshow] Using high-quality mode.  "
+	myecho "[dvd-slideshow] Using high-quality mode. "
 elif [ "$svcd" -eq 1 ] ; then
-	myecho "[dvd-slideshow] Using svcd mode.  "
+	myecho "[dvd-slideshow] Using svcd mode. "
 elif [ "$vcd" -eq 1 ] ; then
-	myecho "[dvd-slideshow] Using vcd mode.  "
+	myecho "[dvd-slideshow] Using vcd mode. "
 fi
 has_subtitles=0
 has_subtitles2=0
@@ -5197,7 +5212,7 @@ for file in "${image[@]}"; do
 		[ $debug -ge 1 ] &&  myecho "[dvd-slideshow] end_frame_number=$slide_end_frame end_time=$slide_end_hms"
                 myecho "[dvd-slideshow]############################################################"
         elif [ "${avi_file[$i]}" -eq 1 ] ; then  ##########  AVI 
-		## use ffmpeg to encode video.  No audio.  
+		## use ffmpeg to encode video. No audio. 
 		myecho "[dvd-slideshow] AVI file passed."
 		[ "$manual_chapter_markers" -eq 0 ] && write_chap=1
 		# check for bad syntax:
@@ -6006,7 +6021,7 @@ for file in "${image[@]}"; do
 			both=1
 		fi
 		set_end_frame_time ${duration[$i]}
-## now, all previous and next frames are created if they need to.  Prepare for loop/composite:
+## now, all previous and next frames are created if they need to. Prepare for loop/composite:
 		direction="$( echo "${effect1[$i]}" | tr -d \[:blank:\] )"
 		[ -z "$direction" ] && direction='left'
 		if [ "$direction" == 'right' ] ; then
@@ -6162,7 +6177,7 @@ for file in "${image[@]}"; do
 				else
 				composite -compose src-over -geometry "$x1""$y1" -type TrueColorMatte -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColorMatte -depth 8 "$tmpdir/kb_next_$dj.png" - "$tmpdir"/fade_$dj.ppm ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames
 				fi
-			else  # flat files.  Optionally do interp
+			else  # flat files. Optionally do interp
 				if [ "$smp" -eq 1 ] ; then
 					(composite -compose src-over -geometry "$x1""$y1" -type TrueColorMatte -depth 8 "$last_outfile" "$normal_bg" - | composite -compose src-over -geometry "$x2""$y2" -type TrueColorMatte -depth 8 "$next_outfile" - "$tmpdir"/fade_$dj.ppm ; add_logo "$logo" fade_$dj.ppm "$logo_gravity" ; extracopies $fr $frames ) &
 				else
@@ -6445,8 +6460,8 @@ for file in "${image[@]}"; do
 		interp=0
 	elif [ "$file" == 'black' ] ; then  ###############################################
 		## use plain black background with no picture
-		## phase out "black" tag.  Use background:::black instead
-		myecho "[dvd-slideshow] ERROR: use of black is depreciated.  Use the syntax:"
+		## phase out "black" tag. Use background:::black instead
+		myecho "[dvd-slideshow] ERROR: use of black is depreciated. Use the syntax:"
 		myecho "[dvd-slideshow]        background:duration:subtitle:black   instead of:"
 		myecho "[dvd-slideshow]        black:duration:subtitle            <depreciated>"
 		cleanup; exit 1
@@ -6511,7 +6526,7 @@ for file in "${image[@]}"; do
 			else  # no previous fade
 				chapter_time=$slide_end_time	
 			fi
-		else  # no previous transition.  no need to adjust timing: 
+		else  # no previous transition. no need to adjust timing: 
 			chapter_time=$slide_end_time	
 		fi
 		subtitle[$i]=''  # set subtitle to nothing so we don't get a subtitle
@@ -6592,7 +6607,7 @@ for file in "${image[@]}"; do
 					sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero -t wav -c 2 -r $audio_sample_rate "$tmpdir/audio$track"_"$audio_index_padded.wav" trim 0 1
 				fi
 			else
-				myecho "[dvd-slideshow] ERROR:  Unknown audio file format.  Must be mp3, ogg, mp4/aac, wav, or silence"
+				myecho "[dvd-slideshow] ERROR:  Unknown audio file format. Must be mp3, ogg, mp4/aac, wav, or silence"
 			fi
 		fi
 		## now set the starting and ending point of this audio track:
@@ -6611,7 +6626,7 @@ for file in "${image[@]}"; do
 			else  # no previous fade
 				audio_time=$slide_end_time	
 			fi
-		else  # no previous transition.  no need to adjust timing: 
+		else  # no previous transition. no need to adjust timing: 
 			audio_time=$slide_end_time	
 		fi
 #		myecho "slide_end_time=$slide_end_time audio_time=$audio_time"
@@ -6702,10 +6717,10 @@ for file in "${image[@]}"; do
 	subtitle_end=`hms "$slide_end_time"`
 	[ $debug -gt 1 ] && myecho "[dvd-slideshow] subtitle_start=$subtitle_start subtitle_end=$subtitle_end"
 
-        ### Fix by AW.  Check to see if last subtitle was the same as this one!
+        ### Fix by AW. Check to see if last subtitle was the same as this one!
 	## if so, then display it continuously:
 	if [ "$i" -eq 0 ] ; then
-		# first line.  check for subtitle?
+		# first line. check for subtitle?
 	        if [ -n "${subtitle1[$i]}" ] ; then
 			write_last_subtitle=1
 			continuous_subtitle_start="$subtitle_start"
@@ -6724,7 +6739,7 @@ for file in "${image[@]}"; do
 			write_last_subtitle=1
 			continuous_subtitle_start="$subtitle_start"
 		elif [ -z "${subtitle1[$i]}" -a -z "${subtitle1[$(($i-1))]}" ] ; then
-			# no subtitles.  don't do anything.
+			# no subtitles. don't do anything.
 			write_last_subtitle=0
 			continuous_subtitle_start="$subtitle_start"
 		elif [ -z "${subtitle1[$i]}" -a -n "${subtitle1[$(($i-1))]}" ] ; then
@@ -6746,7 +6761,7 @@ for file in "${image[@]}"; do
 			# set new subtitle starting point:
 			continuous_subtitle_start="$subtitle_start"
 		else
-			# subtitles are the same.  Don't write it out yet!
+			# subtitles are the same. Don't write it out yet!
 			# save the continuous_subtitle_end variable until done...
 			if [ -n "${subtitle1[$i]}" ] ; then
 				write_last_subtitle=1
@@ -6762,7 +6777,7 @@ for file in "${image[@]}"; do
 			write_last_subtitle2=1
 			continuous_subtitle_start2="$subtitle_start"
 		elif [ -z "${subtitle2[$i]}" -a -z "${subtitle2[$(($i-1))]}" ] ; then
-			# no subtitles.  don't do anything.
+			# no subtitles. don't do anything.
 			write_last_subtitle2=0
 			continuous_subtitle_start2="$subtitle_start"
 		elif [ -z "${subtitle2[$i]}" -a -n "${subtitle2[$(($i-1))]}" ] ; then
@@ -6784,7 +6799,7 @@ for file in "${image[@]}"; do
 			# set new subtitle starting point:
 			continuous_subtitle_start2="$subtitle_start"
 		else
-			# subtitles are the same.  Don't write it out yet!
+			# subtitles are the same. Don't write it out yet!
 			# save the continuous_subtitle_end2 variable until done...
 			if [ -n "${subtitle2[$i]}" ] ; then
 				write_last_subtitle2=1
@@ -6814,7 +6829,7 @@ if [ -f "$tmpdir/$slideshow_name".spumux ] && [ "$subtitle_type" != 'render' ] ;
 #	echo '000000' > "$outdir"/palette.rgb
 #	mycolor=$( echo $subtitle_color | awk -F'#' '{print $2}' )
 #	if [ "${#mycolor}" -ne 6 ] ; then
-#		# not a hex triple.  Use default white
+#		# not a hex triple. Use default white
 #		echo "[dvd-slideshow] Using white subtitle color..."
 #		echo "ffffff" >> "$outdir"/palette.rgb
 #	else
@@ -6859,7 +6874,7 @@ myecho "[dvd-slideshow]#####################################"
 
 # check that video worked, otherwise audio will hang for time=0:
 if [ "$slide_end_time" -eq 0 ] ; then
-	myecho "[dvd-slideshow] ERROR: audio duration = 0.  Exiting..."	
+	myecho "[dvd-slideshow] ERROR: audio duration = 0. Exiting..."	
 	exit
 fi
 
@@ -6894,7 +6909,7 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 	i_padded=`addzeros $i`
 	## check to make sure the audio spans the video time:
 	if [ "$total_audio_length" -lt "$end_time" ] ; then
-		# video is longer than audio.  need to add silence to end.
+		# video is longer than audio. need to add silence to end.
 		thetime_hms=`hms $(( $end_time - $total_audio_length + 1000 ))` #plus 10 so sox actually crops.
 		myecho "[dvd-slideshow] Buffering end of audio file with silence for $thetime_hms"
 		sox -t raw -s $sox_word -c 2 -r $audio_sample_rate /dev/zero $sox_word -s -c 2 -r $audio_sample_rate "$tmpdir/audio1_$i_padded.raw" trim 0 "$thetime_hms"
@@ -6943,9 +6958,9 @@ if [ -n "${passed_audio[0]}" ] ; then  ## command-line passed audio
 fi  # end processing command-line passed audio
 
 if [ -z "${audio_1[0]}" ] && [ -z "${audio_2[0]}" ] && [ "$commandline_audio" -eq 0 ] ; then
-	## no audio file passed on command line or txtfile.  use silence:
+	## no audio file passed on command line or txtfile. use silence:
 	audio_1[0]='silence'  # no duration needed
-	myecho "[dvd-slideshow] No audio files passed.  Using $end_hms silence."
+	myecho "[dvd-slideshow] No audio files passed. Using $end_hms silence."
 	audio1_start=0 
 	audio1_end="$end_time"
 fi
@@ -6975,7 +6990,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 		
 		if [ "${audio1_end[$i]:-0}" -eq 0 ] || [ -z "$audio1_end[$i]}" ] ; then
 #		if [ -z "$audio1_end[$i]}" ] || [ $audio1_end[$i] ] ; then
-			## must be last audio track.  assume run til end
+			## must be last audio track. assume run til end
 			audio1_end[$i]="$end_time"	
 		fi
 
@@ -7040,15 +7055,15 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			if [ -n "${audio1_start[$(($i+1))]}" ] && [ "${audio1_start[$i]}" -ge "${audio1_start[$(($i+1))]}" ] ; then
 #				myecho " [dvd-slideshow] Multiple files found right after one another!"
 				## User might add 10 audio files when only 2 are needed
-				## to span the video...  check for this:
-				## 1.  find next real audio start marker
+				## to span the video... check for this:
+				## 1. find next real audio start marker
 				## 2. compare length of songs up to that point.
 				myindex=$i
 				while [ -n "${audio1_start[$(($myindex+1))]}" ] && [ "${audio1_start[$myindex]}" -ge "${audio1_start[$(($myindex+1))]}" ] ; do
 					# grab last starting time:
 					next_real_audio_start="${audio1_start[$(($myindex+2))]}"
 					if [ -z "$next_real_audio_start" ] ; then
-						## must be last audio track.  assume run til end
+						## must be last audio track. assume run til end
 						next_real_audio_start="$end_time"	
 					fi
 #					myecho " [dvd-slideshow] next audio start=$next_real_audio_start myindex=$myindex"
@@ -7084,7 +7099,7 @@ if [ -n "${audio_1[0]}" ] ; then   ## audio track 1 files specified in .txt file
 			
 			if [ "$song_length_ms" -lt "$song_end_ms" ] ; then
 				myecho "[dvd-slideshow] Audio length < song_end   `hms $song_length_ms` < `hms $song_end_ms`"
-				# video is longer than audio.  need to add silence to end.
+				# video is longer than audio. need to add silence to end.
 				# fade only to the end of song length now, because we may have to add silence:
 				# We should probably eventually add the silence first, and then chop the song?
 				if [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then
@@ -7216,7 +7231,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 		myecho "[dvd-slideshow] $file"
 		
 		if [ "${audio2_end[$i]:-0}" -eq 0 ] || [ -z "$audio2_end[$i]}" ] ; then
-			## must be last audio track.  assume run til end
+			## must be last audio track. assume run til end
 			audio2_end[$i]="$end_time"	
 		fi
 	
@@ -7277,15 +7292,15 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 			if [ -n "${audio2_start[$(($i+1))]}" ] && [ "${audio2_start[$i]}" -ge "${audio2_start[$(($i+1))]}" ] ; then
 #				myecho " [dvd-slideshow] Multiple files found right after one another!"
 				## User might add 10 audio files when only 2 are needed
-				## to span the video...  check for this:
-				## 1.  find next real audio start marker
+				## to span the video... check for this:
+				## 1. find next real audio start marker
 				## 2. compare length of songs up to that point.
 				myindex=$i
 				while [ -n "${audio2_start[$(($myindex+1))]}" ] && [ "${audio2_start[$myindex]}" -ge "${audio2_start[$(($myindex+1))]}" ] ; do
 					# grab last starting time:
 					next_real_audio_start="${audio2_start[$(($myindex+2))]}"
 					if [ -z "$next_real_audio_start" ] ; then
-						## must be last audio track.  assume run til end
+						## must be last audio track. assume run til end
 						next_real_audio_start="$end_time"	
 					fi
 #					myecho " [dvd-slideshow] next audio start=$next_real_audio_start myindex=$myindex"
@@ -7321,7 +7336,7 @@ if [ -n "${audio_2[0]}" ] ; then   ## audio track 2 files specified in .txt file
 
 			if [ "$song_length_ms" -lt "$song_end_ms" ] ; then
 				myecho "[dvd-slideshow] Audio length < song_end   `hms $song_length_ms` < `hms $song_end_ms`"
-				# video is longer than audio.  need to add silence to end.
+				# video is longer than audio. need to add silence to end.
 				# fade only to the end of song length now, because we may have to add silence:
 				# We should probably eventually add the silence first, and then chop the song?
 				if [ "$fade_in_time" -eq 0 ] && [ "$fade_out_time" -eq 0 ] ; then

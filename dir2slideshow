@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #    dir2slideshow
 #    Copyright 2004-2008 Scott Dylewski  <scott at dylewski.com>
 #
@@ -17,12 +17,16 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.3-svn'
+version='0.8.4-1'
+# TODO:  use exiftool instead of jhead!
 
 changes () 
 {
 echo 'Changes:
+0.8.4	New version!
+
 0.8.3
+	Fixes for file counts and uppercase extensions (thanks Eric Baplue)
 	Allow reading of dvd-slideshowrc file to set variables (thanks Johan Kunnen)
 	Reads .avi files for dvd-slideshow (thanks Guy Albertelli)
 	Add -q (quiet mode) for less output on screen when calling from another script
@@ -202,6 +206,10 @@ set_variables ()
 		subtitle2) subtitle2="$config2" ; [ "$noecho" -eq 0 ] && echo "subtitle2=$subtitle2" ;;
 		slideshow_end) slideshow_end[$end]="$config2" ; [ "$noecho" -eq 0 ] && echo "slideshow_end[$end]=${slideshow_end[$end]}"; end=$(($end+1)) ;;
 		audiobook) audiobook="$config2" ; [ "$noecho" -eq 0 ] && echo "audiobook=$audiobook" ;;
+               picture_files) picture_files="$config2" ; [ "$noecho" -eq 0 ] && echo "picture_files=$picture_files" ;;
+               audio_files) audio_files="$config2" ; [ "$noecho" -eq 0 ] && echo "audio_files=$audio_files" ;;
+               video_files) video_files="$config2" ; [ "$noecho" -eq 0 ] && echo "video_files=$video_files" ;;
+               text_files) text_files="$config2" ; [ "$noecho" -eq 0 ] && echo "text_files=$text_files" ;;
 	esac
 }
 
@@ -228,6 +236,10 @@ fi
 
 
 ## setup initial variables:
+picture_files="-name *.JPG -o -name *.jpg -o -name *.png -o -name *.PNG -o -name *.jpeg -o -name *.JPEG"
+audio_files="-name *.mp3 -o -name *.MP3 -o -name *.ogg -o -name *.OGG"
+video_files="-name *.avi -o -name *.AVI"
+text_files="-name *.txt -o -name *.TXT"
 LANG=POSIX
 debug=0  # 1 or 0
 quiet=0
@@ -601,7 +613,13 @@ if [ "$quiet" == 0 ] ; then
 	echo [dir2slideshow] audio_list="$audio_list"
 fi
 
-## get the total number of pictures:
+## cleanup the workfiles
+check_rm "$output_dir"/imagelist.txt
+check_rm "$output_dir"/audiolist.txt
+check_rm "$output_dir"/videolist.txt
+# check_rm "$output_dir"/txtlist.txt
+
+## find all files:
 if [ "$recursive_single" == 1 ] ; then
 	# need to list all images under this directory.  
 	# put them all in one slideshow
@@ -609,61 +627,46 @@ if [ "$recursive_single" == 1 ] ; then
 
 	# first, get list of directories:
 	find "$input_dir" -type d | grep --invert-match -e '\.' | grep --invert-match -e '\/tn$' | sort > "$output_dir"/directory_list.txt
-	check_rm "$output_dir"/imagelist.txt
-	check_rm "$output_dir"/audiolist.txt
-	check_rm "$output_dir"/videolist.txt
-#	check_rm "$output_dir"/txtlist.txt
+
 	while read directory
 	do
-		find "$directory" -maxdepth 1 -type f -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg -o -name \*.JPEG \) | sort >> "$output_dir"/imagelist.txt
-		find "$directory" -maxdepth 1 -type f -prune \( -name \*.mp3 -o -name \*.MP3 -o -name \*.ogg -o -name \*.OGG \) | sort >> "$output_dir"/audiolist.txt
-		find "$directory" -maxdepth 1 -type f -prune \( -name \*.avi -o -name \*.AVI \) | sort >> "$output_dir"/videolist.txt
-#		find "$directory" -maxdepth 1 -type f \( -name \*.txt \) -exec ls -1 {} \; | sort >> "$output_dir"/txtlist.txt
+               find "$directory" -maxdepth 1 -type f -prune \( $picture_files \) | sort >> "$output_dir"/imagelist.txt
+               find "$directory" -maxdepth 1 -type f -prune \( $audio_files \) | sort >> "$output_dir"/audiolist.txt
+               find "$directory" -maxdepth 1 -type f -prune \( $video_files \) | sort >> "$output_dir"/videolist.txt
+#              find "$directory" -maxdepth 1 -type f \( $text_files \) -exec ls -1 {} \; | sort >> "$output_dir"/txtlist.txt
 	done < "$output_dir"/directory_list.txt	
-
-	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
-	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
-	videofiles=`wc -l "$output_dir"/videolist.txt | awk '{print $1}'`
-#	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
-	myecho "[dir2slideshow] Total pictures found = $pictures"
-	myecho "[dir2slideshow] Total audio files found = $audiofiles"
-	myecho "[dir2slideshow] Total video files found = $videofiles"
-#	echo "[dir2slideshow] Total text files found = $txtfiles"
-	## now, join the audio files and images:
 
 elif [ "$recursive_multiple" == 1 ] ; then
 	echo "[dir2slideshow] -R not supported yet"; exit 1
 	# do find, then check each file if it is a directory:
 else  # default case
 	# ok, we need to follow links, but don't do recursive directory searching
-	check_rm "$output_dir"/imagelist.txt
-	check_rm "$output_dir"/audiolist.txt
-	check_rm "$output_dir"/videolist.txt
-#	check_rm "$output_dir"/txtlist.txt
-	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg -o -name \*.JPEG \) | sort > "$output_dir"/imagelist.txt
-	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.mp3 -o -name \*.MP3 -o -name \*.ogg -o -name \*.OGG \) | sort > "$output_dir"/audiolist.txt
-	find "$input_dir" -maxdepth 1 -type f -prune \( -name \*.avi -o -name \*.AVI \) | sort > "$output_dir"/videolist.txt
-#	find "$input_dir" -maxdepth 1 -type f \( -name \*.txt \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+       find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( $picture_files \) | sort > "$output_dir"/imagelist.txt
+       find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( $audio_files \) | sort > "$output_dir"/audiolist.txt
+       find "$input_dir" -maxdepth 1 -type f -prune \( $video_files \) | sort > "$output_dir"/videolist.txt
+#      find "$input_dir" -maxdepth 1 -type f \( $text_files \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+fi
 
-	pictures=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
-	audiofiles=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
-	videofiles=`wc -l "$output_dir"/videolist.txt | awk '{print $1}'`
-#	txtfiles=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
-	myecho "[dir2slideshow] Total pictures found = $pictures"
-	myecho "[dir2slideshow] Total audio files found = $audiofiles"
-	myecho "[dir2slideshow] Total video files found = $videofiles"
-#	echo "[dir2slideshow] Total text files found = $txtfiles"
-	## now, join the audio files and images:
-	if [ "$audiobook" == 1 ] ; then
-		cat "$output_dir"/imagelist.txt "$output_dir"/audiolist.txt | sort > "$output_dir"/filelist.txt
-		mv "$output_dir"/filelist.txt "$output_dir"/imagelist.txt
-		sortmethod=''
-	fi
+# count the different media
+picture_count=`wc -l "$output_dir"/imagelist.txt | awk '{print $1}'`
+audio_count=`wc -l "$output_dir"/audiolist.txt | awk '{print $1}'`
+video_count=`wc -l "$output_dir"/videolist.txt | awk '{print $1}'`
+# text_count=`wc -l "$output_dir"/txtlist.txt | awk '{print $1}'`
+image_count=$( echo "$picture_count + $video_count" | bc ) 
+echo "[dir2slideshow] Total pictures found = $picture_count"
+echo "[dir2slideshow] Total audio files found = $audio_count"
+echo "[dir2slideshow] Total video files found = $video_count"
+#      echo "[dir2slideshow] Total text files found = $text_count"
+## now, join the audio files and images:
+if [ "$audiobook" == 1 ] ; then
+       cat "$output_dir"/imagelist.txt "$output_dir"/audiolist.txt | sort > "$output_dir"/filelist.txt
+       mv "$output_dir"/filelist.txt "$output_dir"/imagelist.txt
+       sortmethod=''
 fi
 
 # make sure we found some images:
-if [ "$pictures" -eq 0 ] ; then
-	echo "[dir2slideshow] ERROR: No pictures found.  Check your settings and try again."
+if [ "$image_count" -eq 0 ] ; then
+	echo "[dir2slideshow] ERROR: No pictures or videos found.  Check your settings and try again."
 	exit 1
 fi
 
@@ -674,7 +677,7 @@ if [ "$sortmethod" == 'taken_date' ] ; then
 	## sort by taken date:
 	checkforprog jhead
 	check_rm "$output_dir"/filelist_date.txt
-	for (( i=1 ; i<=pictures ; i++ )) ; do
+	for (( i=1 ; i<=picture_count ; i++ )) ; do
 		file=`sed -n "$i"p "$output_dir"/imagelist.txt`
 		taken=`jhead "$file" | grep 'Date/Time' | awk -F': ' '{print $2}'`
 		modified=`jhead "$file" | grep 'File date' | awk -F': ' '{print $2}'`
@@ -686,7 +689,7 @@ if [ "$sortmethod" == 'taken_date' ] ; then
 			echo "$file: $modified" >> "$output_dir"/filelist_date.txt
 		fi
 	done	
-	for (( i=1 ; i<=videofiles ; i++ )) ; do
+	for (( i=1 ; i<=video_count ; i++ )) ; do
 		file=`sed -n "$i"p "$output_dir"/videolist.txt`
 		modified=`basename $file|awk -F_ '{printf "%s %s", $1, $2}'|sed s/-/:/g`
 		echo "$file: $modified" >> "$output_dir"/filelist_date.txt
@@ -697,7 +700,7 @@ if [ "$sortmethod" == 'taken_date' ] ; then
 elif [ "$sortmethod" == 'modified_date' ] ; then
 	## sort by modified date
 	check_rm "$output_dir"/filelist_date.txt
-	for (( i=1 ; i<=pictures ; i++ )) ; do
+	for (( i=1 ; i<=picture_count ; i++ )) ; do
 		file=`sed -n "$i"p "$output_dir"/imagelist.txt`
 		modified_day=`ls -l --full-time "$file" | awk '{print $6}'`
 		modified_time=`ls -l --full-time "$file" | awk '{print $7}'`
@@ -705,7 +708,7 @@ elif [ "$sortmethod" == 'modified_date' ] ; then
 #		echo "modified_time=$modified_time"
 		echo "$file: $modified_day $modified_time" >> "$output_dir"/filelist_date.txt
 	done	
-	for (( i=1 ; i<=videofiles ; i++ )) ; do
+	for (( i=1 ; i<=video_count ; i++ )) ; do
 		file=`sed -n "$i"p "$output_dir"/videolist.txt`
 		modified=`basename $file|awk -F_ '{printf "%s %s", $1, $2}'|sed s/-/:/g`
 		echo "$file: $modified" >> "$output_dir"/filelist_date.txt
@@ -991,9 +994,9 @@ for (( i=1 ; i<=total_lines ; i++ )) ; do
 		else
 			fileecho "$file:$slide_duration"
 		fi
-		if [ "$crossfade" != "0" ] && [ "$i" -lt "$pictures" ] ; then
+		if [ "$crossfade" != "0" ] && [ "$i" -lt "$image_count" ] ; then
 			fileecho "crossfade:$crossfade"
-		elif [ "$wipe" != "0" ] && [ "$i" -lt "$pictures" ] ; then
+		elif [ "$wipe" != "0" ] && [ "$i" -lt "$image_count" ] ; then
 			fileecho "wipe:$wipe"
 		fi
 		let j=$j+1

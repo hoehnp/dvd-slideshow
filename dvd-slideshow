@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #    dvd-slideshow
-#    Copyright 2003-2008 Scott Dylewski  <scott at dylewski.com>
+#    Copyright 2003-2011 Scott Dylewski  <scott at dylewski.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -47,8 +47,8 @@ LANG="POSIX"
 changes ()
 {
 echo 'Changes:
-0.8.4
-	New release!
+0.8.4   New release!
+
 0.8.3  (svn only release)
     New features:
 	Improved encoding speed significantly. (thanks Gary Hunt!)
@@ -57,6 +57,7 @@ echo 'Changes:
 	Added -threads $cores to ffmepg calls for speed improvement?
 	Added .ogg mode ( use -ogv ) (not working yet)
 	Added ipod output ( use -ipod ) (not working yet)
+	Add quiet output mode -q to reduce output
     Bug fixes:
 	Use soxi to determine length of .wav audio instead of sox (better compatibility?)
 	Fixed chroma subsampling bug when using -mpeg2enc option (cat terminated by signal 13)
@@ -107,63 +108,7 @@ echo 'Changes:
 	Fix audio when passing an .avi file.
 	Fixed chapter keyword timing.
 	Increased mplex bitrate to 9500 from 9000 to fix some possible encoding bugs.
-	Fix bug with hms handling times longer than 1 hour. Thanks Michael Crider
-
-0.8.0	
-    New features & Changes:	
-	pre10:
-	Default ffmpeg to no b frames.
-	Added -size to resize calls for potential speedup.
-	Crossfade skips every other frame in normal mode for speedup.
-	Fixed kenburns coordinates when passing numbered coordinates.
-	Add title and button information to .xml file automatically for dvd-menu use.
-	pre9:
-	Allow multiple \n in titles (up to 4)
-	Added variables subtitle_color, subtitle_outline_color, and subtitle_location
-	Remove option for srt subtitles since we can force render them now.
-	pre8:
-	Use variable subtitle_type=render to force subtitles to be rendered in frames.
-	Updated audio timing to be more accurate for long slideshows
-	Added kenburns syntax for crop,kb,crop duration
-	Wipe up/down works in addition to left/right now.
-	pre7:
-	Kenburns has smooth start and end now, but worse for very deep zooms.
-	Add option to sharpen images (-sharpen) with ImageMagicks unsharp mask.
-	*Now using ffmpeg to encode video. Seems over 2x faster than mpeg2enc.
-	.flv output [alpha] use -flv for now, but his might change
-	Specify output size other than default with -s 320x240 (alpha)
-	*Added -border option to add space between image and edge of screen.
-	*Added "wipe" transition between frames:
-	wipe:duration:subtitle:[right|left]  (soon up|down also)
-	mp4/aac audio is possible with faad
-	*Fadein/Fadeout/Crossfade to/from kenburns/scroll effects works now:
-	( fades happen during movement of effect )
-	 ***NOTE: The slideshow timings of fades will change with this version! 
-	Adding .avi video inline is possible. See docs. [alpha]
-	Initial theme support [beta]
-	Widescreen (16:9) support using -w [alpha] Not tested yet.
-	Improved font variables.
-	kenburns effect is much smoother for slow effects in high-quality mode. (slower)
-	Changed imagewidth and imageheight functions to only use:
-	 imagewidth -format %w or -format %h for slight speed improvement.
-    	Added -vcd and -svcd output options [beta] (lightly tested)
-	Reformated progress indicators and output during fades.
-	Inline audio processed as background job when specifiying -smp	
-	General code cleanup including more function calls
-	Audio fadein and fadeout times can be specified in decimals like 0.250
-	Automatically sets smp option if the current kernel has "smp" in the name.
-	Removed internal option for yuvcat
-    Bug fixes: 	
-	Escape brackets in [:blank:] (thanks Christian Molière)
-	Fixed mismatch in kenburns coordinates due to non-square pixels. (thanks Tony Sauri)
-	Manual chapter markers fixed.
-	Fixed reading of $HOME/.dvd-slideshow/dvd-slideshowrc settings.
-	Single or double quotes allowed in variable settings.
-	Got rid of lsof debugging lines. No longer needed.
-	Fixed bug in seconds2ms that mishandled durations of 0.080 ms (thanks Eric)
-	Remove wc --chars calls for compatibility with FreeBSD
-	Remove seq calls for compatibility with FreeBSD
-	Add FreeBSD font path so fonts are found. '
+	Fix bug with hms handling times longer than 1 hour. Thanks Michael Crider'
 }
 
 help ()
@@ -173,13 +118,14 @@ echo 'http://dvd-slideshow.sourceforge.net'
 echo 'Copyright 2003-2011 Scott Dylewski <scott at dylewski.com>'
 echo 	 
 echo 'Description: 
-	Creates a dvd-compatible mpeg2 video from a bunch of images.
+	Creates a video video from a bunch of images. This can be used
+	to make a mpeg2-compatible DVD or to make .flv slideshows for the web.
 	You can add music if you want also. Supports several effects
 	like fadein/fadeout/crossfade/crop/kenburns. 
 
 Usage:
  dvd-slideshow [-n <slideshow_name>] [-o <output_directory>] 
-  [-a <audio_file1> -a <audio_file2> ... -a <audio_fileN>] [-theme <themefile>] 
+  [-flv] [-mp4] [-s WxH] [-theme <themefile>] 
   [other options] [-f] input_file.txt
 
  The preferred method of running a slideshow is to create an input_file.txt
@@ -252,10 +198,14 @@ Options:
  	Autocrop horizontal images to fill the full size of the screen.
  [-nosmp]
 	Disable multiple threads in some processes when possible. If you
-	have a low memory or slow machine, this may help if you experience
+	have little memory or a slow machine, this may help if you experience
 	problems with disk memory caching.
  [-nocleanup]
  	Leave temporary files in the temporary directory. Useful for debugging.
+ [-q]	Quiet output mode.  Reduce amount of information on screen, but keep
+	a progressbar indicator.
+ [-V 1 or 2] Add more verbose debug output.  1 adds more than the default, and 2
+	Adds a lot.
  -h or -help 
    Prints this help. 
  -v or -version 
@@ -263,7 +213,7 @@ Options:
 
  [-f] input_file.txt  (-f is optional if the file is the last argument)
           File to specify all the parameters and order easily
-          for bigger slideshows. It uses the ':' character as a 
+          for bigger slideshows. It uses the : character as a 
 	  separator for the fields:
           [image.jpg|keyword]:duration:subtitle:effect:effect_params
           with each line being separate. File options
@@ -461,7 +411,7 @@ Options:
 	  widescreen=0	# set output to widescreen mode (16:9) instead of 4:3 (alpha)
 
 #	  font_dir="/usr/share/fonts"
-#	  font_name='n019004l.pfb' # helvetica bold URW font is default
+#	  font_name="n019004l.pfb" # helvetica bold URW font is default
 	  font=/usr/share/fonts/default/Type1/n019004l.pfb # Helvetical bold URW font
 #	  font=/usr/share/fonts/default/Type1/n0190241.pfb # Helvetical bold oblique
 #	  font=/usr/share/fonts/default/Type1/a0100151.pfb # AvantGarde DemiBold
@@ -470,7 +420,7 @@ Options:
 	  ## Subtitle:
 	  subtitle_type="dvd"  # use "render" to force rendering of text.
 	  subtitle_font_size=24
-	  subtitle_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+	  subtitle_font="/usr/share/fonts/default/Type1/n019004l.pfb" # Helvetical bold URW font
 	  subtitle_color="white"
 	  subtitle_outline_color="black"
 	  subtitle_location="bottom"
@@ -480,7 +430,7 @@ Options:
 	  ## Title:
 	  title_font_size=48
 	  title_font_color="black"  # or use hex "#RRGGBB"
-	  title_font='/usr/share/fonts/default/Type1/n019004l.pfb' # Helvetical bold URW font
+	  title_font="/usr/share/fonts/default/Type1/n019004l.pfb" # Helvetical bold URW font
 
 	  ## top title:
 	  toptitle_font_size=48
@@ -1005,14 +955,17 @@ waitforfile ()
 	## wait for the file to exist...
 	while [ ! -f "$1" ] 
 	do
-		sleep 0.01s
+		sleep 0.05s
 	done
 	# now, make sure it's not increasing in size, just to be sure:
 	initial_size=$( du -b "$1" | awk '{print $1}' )
+	sleep 0.05s
 	new_size=$( du -b "$1" | awk '{print $1}' )
 	while [ $initial_size -ne $new_size ]
 	do
-		if [ -f "$1" ]; then   # needed in case we kill the program during the while loop
+		sleep 0.05s
+		if [ -f "$1" ]; then   # needed in case we kill the program
+#			# tha creates the file during the while loop
 			initial_size=$new_size
 			new_size=$( du -b "$1" | awk '{print $1}' )
 		else	
@@ -4552,28 +4505,7 @@ for file in "${image[@]}"; do
 	fi
         frames=`div1000 $(( $frames_per_ms * ${duration[$i]} / 1000 ))` # both duration and fps are in ms
 
-        if [ "$file" == 'title' -o "$file" == 'Title' ] ; then # TITLE  #####
-                if [ -z "${subtitle[$i]}" ] && [ -z "${effect1[$i]}" ] ; then
-			myecho "[dvd-slideshow] ERROR line ${line[$i]}. no title text found in line:"
-			myecho "[dvd-slideshow] ${thisline}"
-			cleanup; exit 1
-		fi
-	elif [ "$file" == 'titlebar' ] ; then  # TITLEBAR
-		nothing="nothing"
-	elif [ "$file" == 'musictitle' ] ; then  # MUSICTITLE
-		nothing="nothing"
-	elif [ "${avi_file[$i]}" == 1 ] ; then  # AVI
-		previous_transition_increment="`previousTransitionIncrement`"
-		next_transition_increment="`nextTransitionIncrement`"
-		if [ "${image[$i-$previous_transition_increment]}" == 'fadein' ] || [ "${image[$i-$previous_transition_increment]}" == 'crossfade' ] || [ "${image[$i-$previous_transition_increment]}" == 'wipe' ] ; then 
-			myecho "[dvd-slideshow] WARNING line ${line[$i]}. Cannot fadein or crossfade to a .avi file (yet)"
-#			exit 1
-		fi
-		if [ "${image[$i+$next_transition_increment]}" == 'fadeout' ] || [ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'wipe' ]; then
-			myecho "[dvd-slideshow] WARNING line ${line[$i]}. Cannot fadeout or crossfade from a .avi file (yet)"
-#			exit 1
-		fi
-	elif [ "${image_file[$i]}" == 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG
+	if [ "${image_file[$i]}" == 1 ] && [ -z "${effect1[$i]}" ] ; then  # JPG
 		nothing="nothing"
 		if [ -z "${frames_extended[$i]}" ] ; then  # not set yet
 			frames_extended[$i]=$frames
@@ -4631,10 +4563,6 @@ for file in "${image[@]}"; do
 		fi
 		# add half of the crossfade time to the next image
 		frames_extended[$i+$next_increment]=$(( $next_frames + $frames / 2 ))
-#		echo "frames_extended[$i+$next_increment]=$(( $next_frames + $frames / 2 ))"
-#		echo "frames=$frames previous_frames_extended=${frames_extended[$i-$previous_increment]}"
-#		echo "frames=$frames next_frames_extended=${frames_extended[$i+$next_increment]}"
-
 
 	elif [ "$file" == 'wipe' ] ; then  # WIPE
 		nextslide=`nextslidename`
@@ -4677,9 +4605,6 @@ for file in "${image[@]}"; do
 		fi
 		# add half of the wipe time to the next image
 		frames_extended[$i+$next_increment]=$(( $next_frames + $frames / 2 ))
-#		echo "frames_extended[$i+$next_increment]=$(( $next_frames + $frames / 2 ))"
-#		echo "frames=$frames previous_frames_extended=${frames_extended[$i-$previous_increment]}"
-#		echo "frames=$frames next_frames_extended=${frames_extended[$i+$next_increment]}"
 	elif [ "$file" == 'fadeout' ] ; then  # FADEOUT
 		previous_increment="`previousslideincrement`"
 		if [ -z "$previous_increment" ] ; then 
@@ -4715,6 +4640,27 @@ for file in "${image[@]}"; do
 		fi
 #		next_transition_increment="`nextTransitionIncrement`"
 #		next_slide="${image[$i+$next_transition_increment]}"
+        elif [ "$file" == 'title' -o "$file" == 'Title' ] ; then # TITLE  #####
+                if [ -z "${subtitle[$i]}" ] && [ -z "${effect1[$i]}" ] ; then
+			myecho "[dvd-slideshow] ERROR line ${line[$i]}. no title text found in line:"
+			myecho "[dvd-slideshow] ${thisline}"
+			cleanup; exit 1
+		fi
+	elif [ "$file" == 'titlebar' ] ; then  # TITLEBAR
+		nothing="nothing"
+	elif [ "$file" == 'musictitle' ] ; then  # MUSICTITLE
+		nothing="nothing"
+	elif [ "${avi_file[$i]}" == 1 ] ; then  # AVI
+		previous_transition_increment="`previousTransitionIncrement`"
+		next_transition_increment="`nextTransitionIncrement`"
+		if [ "${image[$i-$previous_transition_increment]}" == 'fadein' ] || [ "${image[$i-$previous_transition_increment]}" == 'crossfade' ] || [ "${image[$i-$previous_transition_increment]}" == 'wipe' ] ; then 
+			myecho "[dvd-slideshow] WARNING line ${line[$i]}. Cannot fadein or crossfade to a .avi file (yet)"
+#			exit 1
+		fi
+		if [ "${image[$i+$next_transition_increment]}" == 'fadeout' ] || [ "${image[$i+$next_transition_increment]}" == 'crossfade' ] || [ "${image[$i+$next_transition_increment]}" == 'wipe' ]; then
+			myecho "[dvd-slideshow] WARNING line ${line[$i]}. Cannot fadeout or crossfade from a .avi file (yet)"
+#			exit 1
+		fi
 	elif [ "${audio_file[$i]}" -eq 1 ] ; then  # AUDIO FILE CHECK
 		progressbar_indicator='a'
 		[ "$debug" -ge 2 ] && myecho "[dvd-slideshow] Decoding audiofile $( truncate_filename "$file") "
@@ -4776,7 +4722,6 @@ for file in "${image[@]}"; do
 		else
 			myecho "[dvd-slideshow] ERROR:  Unknown audio file format. Must be mp3, ogg, mp4/aac, wav, or silence"
 		fi
-#		echo "created $tmpdir/audio$track"_"$audio_index_padded.wav"
 #	else  
 #		myecho "[dvd-slideshow] Unrecognized or malformed line in your input file:"
 #		myecho "[dvd-slideshow] $file. effect=${effect1[$i]} effect_params=${effect1_params[$i]}"
@@ -5556,8 +5501,6 @@ for file in "${image[@]}"; do
 			continue
 		fi
 		[ -n "${subtitle[$i]}" ] && myecho "[dvd-slideshow] Crossfade Subtitle= ${subtitle[$i]}"
-#		rm -f "$tmpdir/slide_$(($i+$increment)).ppm"  # make sure it doesn't already exist!
-#		rm -f "$tmpdir/slide_$(($i+1)).cache"  # make sure it doesn't already exist!
 #		myecho "[dvd-slideshow] next slide=$nextslide. increment=$increment."
 
 		## need to break this up for new version:

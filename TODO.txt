@@ -1,18 +1,14 @@
 Things to work on:
 
-0.8.2 for release:
+0.8.4 for release:
 Update changelog for release of dvd-slideshow.
-Update man pages?
-Fix examples to have non-copyrighted audio.
-Use stock web photos in public domain for example images.
-Update themes to use freely distributable fonts!
+Update themes to use freely distributable fonts?
 
 dvd-slideshow:
 fuzzy edges effect?
 old-picture effect?
 sepiatone effect?
 B&W effect?  (or should we have these effects done before?)
-add image overlay function to overlay same image (logo or text?) on each image (alpha)
 developer notes summarizing the crop/zoom kenburns effect stuff
 different background types? (gradient, etc)
 bi-linear interpolation for kenburns effect.

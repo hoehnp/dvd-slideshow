@@ -1,5 +1,7 @@
 # dvd-slideshow-examples changelog:
 
+0.8.4:
+	General code cleanup.  No big changes.
 0.7.5:
 	Updated code to not specify slideshow names.  Default is used instead.
 	Updated 0.7.5 example with new features.

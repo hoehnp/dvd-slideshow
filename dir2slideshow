@@ -17,15 +17,15 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-version='0.8.4-1'
+version='0.8.4-2'
 # TODO:  use exiftool instead of jhead!
 
 changes () 
 {
 echo 'Changes:
-0.8.4	New version!
-
-0.8.3
+0.8.4-2
+	There was a problem finding images...  Should be fixed now.
+0.8.4	
 	Fixes for file counts and uppercase extensions (thanks Eric Baplue)
 	Allow reading of dvd-slideshowrc file to set variables (thanks Johan Kunnen)
 	Reads .avi files for dvd-slideshow (thanks Guy Albertelli)
@@ -236,10 +236,10 @@ fi
 
 
 ## setup initial variables:
-picture_files="-name *.JPG -o -name *.jpg -o -name *.png -o -name *.PNG -o -name *.jpeg -o -name *.JPEG"
-audio_files="-name *.mp3 -o -name *.MP3 -o -name *.ogg -o -name *.OGG"
-video_files="-name *.avi -o -name *.AVI"
-text_files="-name *.txt -o -name *.TXT"
+#picture_files="-name *.JPG -o -name *.jpg -o -name *.png -o -name *.PNG -o -name *.jpeg -o -name *.JPEG"
+#audio_files="-name *.mp3 -o -name *.MP3 -o -name *.ogg -o -name *.OGG"
+#video_files="-name *.avi -o -name *.AVI"
+#text_files="-name *.txt -o -name *.TXT"
 LANG=POSIX
 debug=0  # 1 or 0
 quiet=0
@@ -630,10 +630,13 @@ if [ "$recursive_single" == 1 ] ; then
 
 	while read directory
 	do
-               find "$directory" -maxdepth 1 -type f -prune \( $picture_files \) | sort >> "$output_dir"/imagelist.txt
-               find "$directory" -maxdepth 1 -type f -prune \( $audio_files \) | sort >> "$output_dir"/audiolist.txt
-               find "$directory" -maxdepth 1 -type f -prune \( $video_files \) | sort >> "$output_dir"/videolist.txt
+#               find "$directory" -maxdepth 1 -type f -prune \( $picture_files \) | sort >> "$output_dir"/imagelist.txt
+#               find "$directory" -maxdepth 1 -type f -prune \( $audio_files \) | sort >> "$output_dir"/audiolist.txt
+#               find "$directory" -maxdepth 1 -type f -prune \( $video_files \) | sort >> "$output_dir"/videolist.txt
 #              find "$directory" -maxdepth 1 -type f \( $text_files \) -exec ls -1 {} \; | sort >> "$output_dir"/txtlist.txt
+		find "$directory" -maxdepth 1 -type f -prune \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg -o -name \*.JPEG \) | sort >> "$output_dir"/imagelist.txt
+                find "$directory" -maxdepth 1 -type f -prune \( -name \*.mp3 -o -name \*.MP3 -o -name \*.ogg -o -name \*.OGG \) | sort >> "$output_dir"/audiolist.txt
+                find "$directory" -maxdepth 1 -type f -prune \( -name \*.avi -o -name \*.AVI \) | sort >> "$output_dir"/videolist.txt
 	done < "$output_dir"/directory_list.txt	
 
 elif [ "$recursive_multiple" == 1 ] ; then
@@ -641,10 +644,13 @@ elif [ "$recursive_multiple" == 1 ] ; then
 	# do find, then check each file if it is a directory:
 else  # default case
 	# ok, we need to follow links, but don't do recursive directory searching
-       find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( $picture_files \) | sort > "$output_dir"/imagelist.txt
-       find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( $audio_files \) | sort > "$output_dir"/audiolist.txt
-       find "$input_dir" -maxdepth 1 -type f -prune \( $video_files \) | sort > "$output_dir"/videolist.txt
+#       find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( $picture_files \) | sort > "$output_dir"/imagelist.txt
+#       find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( $audio_files \) | sort > "$output_dir"/audiolist.txt
+#       find "$input_dir" -maxdepth 1 -type f -prune \( $video_files \) | sort > "$output_dir"/videolist.txt
 #      find "$input_dir" -maxdepth 1 -type f \( $text_files \) -exec ls -1 {} \; | sort > "$output_dir"/txtlist.txt
+	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.JPG -o -name \*.jpg -o -name \*.png -o -name \*.PNG -o -name \*.jpeg -o -name \*.JPEG \) | sort > "$output_dir"/imagelist.txt
+	find "$input_dir" -maxdepth 1 \( -type f -o -type l \) \( -name \*.mp3 -o -name \*.MP3 -o -name \*.ogg -o -name \*.OGG \) | sort > "$output_dir"/audiolist.txt
+	find "$input_dir" -maxdepth 1 -type f -prune \( -name \*.avi -o -name \*.AVI \) | sort > "$output_dir"/videolist.txt
 fi
 
 # count the different media

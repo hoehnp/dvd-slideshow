@@ -4,7 +4,7 @@ Content-type: text/html
 <HTML><HEAD><TITLE>Man page of dvd-slideshow</TITLE>
 </HEAD><BODY>
 <H1>dvd-slideshow</H1>
-Section: dvd-slideshow (1)<BR>Updated: 0.8.2<BR><A HREF="#index">Index</A>
+Section: dvd-slideshow (1)<BR>Updated: 0.8.4<BR><A HREF="#index">Index</A>
 <A HREF="/cgi-bin/man/man2html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -22,13 +22,13 @@ dvd-slideshow [<I>-n</I> &lt;<I>slideshow name</I>&gt;]
 [<I>-o</I> &lt;<I>output directory</I>&gt;]
 [<I>-b</I> &lt;<I>background jpeg</I>&gt;]
 [<I>-a</I> &lt;<I>audiofile1</I>&gt; <I>-a</I> &lt;<I>audiofile2</I>&gt; <I>-a</I> &lt;<I>audiofileN</I>&gt;]
-[<I>-p</I>] [<I>-L</I>] [<I>-H</I>] [<I>-mp2</I>] [<I>-r</I>] [<I>-smp</I>] [<I>-border &lt;bordersize&gt;</I>] [<I>-theme &lt;themename&gt;</I>] [<I>-f</I>] &lt;<I>input text file</I>&gt;
+[<I>-p</I>] [<I>-flv</I>] [<I>-mp4</I>] [<I>-s WxH</I>] [<I>-L</I>] [<I>-H</I>] [<I>-mp2</I>] [<I>-r</I>] [<I>-nosmp</I>] [<I>-border &lt;bordersize&gt;</I>] [<I>-theme &lt;themename&gt;</I>] [<I>-f</I>] &lt;<I>input text file</I>&gt;
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 <P>
 
-Creates a dvd-compatible mpeg2 video from a bunch of images. You can add music on the command line or in the text input file. Supports several effects like fadein, fadeout, crossfade, crop, and kenburns.  dvd-slideshow is designed to work with dvd-menu to create a dvd navigation menu that you can then burn onto a dvd. There are also some helper scripts to convert a directory of pictures or your favorite online photo album to a dvd.
+Creates a video from a bunch of images. The default video format is designed to produce DVDs, but other formats can be created for the web also (.flv).  You can add music on the command line or in the text input file. Supports several effects like fadein, fadeout, crossfade, crop, and kenburns.  dvd-slideshow is designed to work with dvd-menu to create a dvd navigation menu that you can then burn onto a dvd. There are also some helper scripts to convert a directory of pictures or your favorite online photo album to a dvd.
 <A NAME="lbAE">&nbsp;</A>
 <H2>OPTIONS</H2>
 
@@ -37,6 +37,9 @@ Creates a dvd-compatible mpeg2 video from a bunch of images. You can add music o
 <DL COMPACT>
 <DT>[<B>-n &lt;Slideshow name&gt;</B>]<DD>
 The program uses this string as the filename base for the output files so you can distinguish it from other slideshows that you can send to the same output directory. If not specified, the default value is the name of the input file.
+<P>
+<DT><B>[-f] &lt;Input text file&gt;</B><DD>
+See the INPUT FILE section.
 <P>
 <DT>[<B>-o &lt;Output directory&gt;</B>]<DD>
 Directory where the final .vob and dvdauthor .xml files will be written. Defaults to the current working directory.
@@ -50,8 +53,29 @@ Audio file to play in background during the slideshow. It will be faded out at t
 <DT>[<B>-p</B>]<DD>
 Use PAL output video format instead of NTSC.
 <P>
+<DT>[<B>-mpeg2enc</B>]<DD>
+Force use of mpeg2enc with mp2 audio even if ffmpeg is installed.  Use this if you have problems with ffmpeg.  Usually ffmpeg is much faster at encoding video.  
+<P>
 <DT>[<B>-mp2</B>]<DD>
 Use mp2 audio by default.  AC3 audio seems to be more stable when playing in dvd hardware players, but requires ffmpeg.  This will over-ride the AC3 default and use the mp2 audio encoder.
+<P>
+<DT>[<B>-s WidthxHeight</B>]<DD>
+Use output size other than the standard DVD output size (720x480 for NTSC).  Used when specifying alternate output formats with -flv or -mp4
+<P>
+<DT>[<B>-flv</B>]<DD>
+Render a flash video instead of a mpeg2 .vob.  Default output size is 320x240.
+<P>
+<DT>[<B>-mp4</B>]<DD>
+Render a mp4 video instead of a mpeg2 .vob. 
+<P>
+<DT>[<B>-mpg</B>]<DD>
+Render a .mpg video instead of a mpeg2 .vob.  Allows for alternate (non DVD compatible) sizing with -s 
+<P>
+<DT>[<B>-vcd</B>]<DD>
+(alpha) Renders video in vcd-compatible output.  
+<P>
+<DT>[<B>-svcd</B>]<DD>
+(alpha) Renders video in svcd-compatible output.  
 <P>
 <DT>[<B>-L</B>]<DD>
 Render a low-quality video suitable for debugging. This sets the resolution to 1/2 of full resolution and decreases the quality of fades/transitions.  It should speed up the encoding process by at least a factor of 4.
@@ -74,27 +98,17 @@ Autocrop images near the DVD output aspect ratio to fill the whole window.
 <DT>[<B>-w</B>]<DD>
 [alpha] Render widescreen (16:9) output instead of standard (4:3). 
 <P>
-<DT>[<B>-smp</B>]<DD>
-Enable more processes to run at the same time for multiprocessor machines.  Basically, this just renders each frame of a transition in the background at the same time, and then waits for them to be finished. 
-WARNING: If you do not have enough memory to hold all the frames for one &quot;crossfade&quot; or &quot;kenburns&quot; effect,then linux starts swapping to disk, and your machine may seem to lock up for a while.  I have crashed my old machine using this.
-Use at your own risk!
+<DT>[<B>-nosmp</B>]<DD>
+Disable multiple threads in some processes when possible.  If you have little memory or a slow machine, this may help if you experience problems with disk memory caching.
 <P>
-<DT>[<B>-mpeg2enc</B>]<DD>
-The default mpeg encoder has changed to ffmpeg, so if you are having problems, you can force dvd-slideshow to use mpeg2enc instead.
+<DT>[<B>-nocleanup</B>]<DD>
+Leave temporary files in the temporary directory.  Useful for debugging. 
 <P>
-<DT>[<B>-vcd</B>]<DD>
-(alpha) Renders video in vcd-compatible output.  
-<DT>[<B>-svcd</B>]<DD>
-(alpha) Renders video in svcd-compatible output.  
+<DT>[<B>-q</B>]<DD>
+Quiet output mode.  Reduce amount of information on screen, but keep a progressbar indicator.
 <P>
-<DT>[<B>-flv</B>]<DD>
-(alpha) Renders a Flash video output.  
-<P>
-<DT>[<B>-s WxH</B>]<DD>
-(alpha) Force output size to have width W and height H.   
-<P>
-<DT><B>[-f] &lt;Input text file&gt;</B><DD>
-See the INPUT FILE section.
+<DT>[<B>-V 1|2</B>]<DD>
+Increase verbose debug output.  1 adds more than the default, and 2 adds a lot.
 <P>
 <DT><B>-h</B><DD>
 Prints help file (basically this manpage).
@@ -105,6 +119,8 @@ Prints help file (basically this manpage).
 <P>
 
 <DL COMPACT>
+<DT>Note: The -f is optional if the input filename is the last argument on the comand-line. <DD>
+<P>
 <DT>The input file is a text file that acts like a timeline or storyboard for your slideshow.  In the most simple form, it is just a list of images.  See EXAMPLES for some simple examples of these text files. The input file also allows for many more special effects that are not available on the command line. Each line contains one image or effect. It uses the : character as a separator for the fields. Here is the syntax:<DD>
 <P>
 <DT>[image.jpg|keyword]:duration:subtitle:effect:effect_params<DD>
@@ -150,6 +166,13 @@ Makes a slide with the current background image (or black if no image is passed)
 <BR>
 
 &quot;black&quot; or &quot;white&quot; can be used instead of an image name to display a black or white background.
+<P>
+<B>Transitions</B>:
+<BR>
+
+Transitions do not add time to the overall slideshow, they just get overlaid on top of the adjacent images.  Because of this, the transition duration can not be greater than half of the adjacent image duration.  
+<BR>
+
 <P>
 <B>fadein</B>:duration:subtitle
 <BR>
@@ -342,7 +365,7 @@ audiofile:1:fadein:3:fadeout:2
 <BR>
 
 <P>
-(*NEW in 0.7.3) If you want to concatenate two audio files, just place them one right after another in the .txt file.
+If you want to concatenate two audio files, just place them one right after another in the .txt file.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFIGURATION</H2>
@@ -373,6 +396,9 @@ ac3=1<TT>&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</
 <BR>
 
 copy=0<TT>&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT># add copies of original images to the output directory<BR>
+<BR>
+
+high_quality=0<TT>&nbsp;</TT># use high-quality mode (set to 1)<BR>
 <BR>
 
 autocrop=1<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT># autocrop images to fill full screen<BR>
@@ -410,6 +436,12 @@ subtitle_outline_color=&quot;black&quot;
 <BR>
 
 subtitle_location=&quot;bottom&quot;
+<BR>
+
+subtitle_location_x=0
+<BR>
+
+subtitle_location_y=105
 <P>
 ## Title:
 <BR>
@@ -466,13 +498,21 @@ bottomtitle_text_location_y=155
 # kenburns:
 <BR>
 
-kenburns_acceleration=2  # seconds of slow acceleration for kenburns
+kenburns_acceleration=1  # seconds of slow acceleration for kenburns
 <BR>
 
 # use 0 for no acceleration, or, use a percent of the effect time:
 <BR>
 
 # kenburns_acceleration=25%  # will accelerate for the first 25% of the effect.
+<P>
+# logo:
+<BR>
+
+logo=path/to/logofile.png  # will be overlaid on top of all frames.  Must be pre-sized manually.
+<BR>
+
+logo_gravity=SouthEast<TT>&nbsp;</TT># Position of logo overlay. North | South | East | West | NorthEast | NorthWest | SouthEast | SouthWest<BR>
 <P>
 <DT><B>Input text file:</B><DD>
 <BR>
@@ -553,6 +593,6 @@ Scott Dylewski &lt;scott at dylewski dot com&gt;
 This document was created by
 <A HREF="/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 08:09:56 GMT, December 05, 2008
+Time: 17:14:23 GMT, August 21, 2011
 </BODY>
 </HTML>

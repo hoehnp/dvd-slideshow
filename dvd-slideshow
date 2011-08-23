@@ -32,6 +32,8 @@ echo "[dvd-slideshow]            "
 
 ## known bugs:
 ####################
+# 8/2011:  using -L with -flv or -s doesn't work
+#
 # continuous subtitles don't work across non-image/transition lines
 # convert image.jpg -bordercolor black -border 0 "$tmpdir/fade_$dj.ppm" works for transparent .png images
 # in ImageMagick > 6.0.6, but not in 6.0.6 for some reason. (black output). 
@@ -47,9 +49,7 @@ LANG="POSIX"
 changes ()
 {
 echo 'Changes:
-0.8.4   New release!
-
-0.8.3  (svn only release)
+0.8.4
     New features:
 	Improved encoding speed significantly. (thanks Gary Hunt!)
 	Use qscale VBR option in ffmpeg for flv and mp4 output instead of fixed bitrate.

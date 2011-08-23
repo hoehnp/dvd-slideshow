@@ -3,25 +3,124 @@
 <HEAD>
 	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
 	<TITLE></TITLE>
-	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.4  (Unix)">
+	<META NAME="GENERATOR" CONTENT="LibreOffice 3.3  (Unix)">
 	<META NAME="CREATED" CONTENT="20031218;23173200">
 	<META NAME="CHANGEDBY" CONTENT="Scott Dylewski">
-	<META NAME="CHANGED" CONTENT="20081204;23513200">
+	<META NAME="CHANGED" CONTENT="20110819;22222000">
+	<META NAME="CHANGEDBY" CONTENT="Scott Dylewski">
 	<META NAME="CHANGEDBY" CONTENT="Scott Dylewski">
 	<META NAME="CHANGEDBY" CONTENT="Scott Dylewski">
 	<STYLE TYPE="text/css">
 	<!--
-		@page { size: 8.5in 11in }
-		P { margin-left: 0.5in; margin-bottom: 0in; font-weight: medium }
+		P { margin-left: 0.5in; margin-bottom: 0in; font-weight: normal }
 		DT { margin-left: 0.39in; font-weight: bold }
 	-->
 	</STYLE>
 </HEAD>
 <BODY LANG="en-US" DIR="LTR">
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>DVD Slideshow package
 changelog:</FONT></FONT></P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
+<FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.8.4</FONT></FONT></P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>New Features:</B></I></P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+	Improved encoding speed significantly. (thanks Gary Hunt!)</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+	Use qscale VBR option in ffmpeg for flv and mp4 output instead of
+fixed bitrate.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Logo (-logo) works as general overlay (beta).</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Added -threads $cores to ffmepg calls for speed improvement?</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Added .ogg mode ( use -ogv ) (not working yet)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Added ipod output ( use -ipod ) (not working yet)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Add quiet output mode -q to reduce output</P>
+<P STYLE="margin-bottom: 0.2in"><I><B>Bug Fixes:</B></I></P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Use soxi to determine length of .wav audio instead of sox (better
+compatibility?)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Fixed chroma subsampling bug when using -mpeg2enc option (cat
+terminated by signal 13)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+New dvdauthor/spumux &gt; 0.7.0 require explicit NTSC/PAL
+declaration</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+No audio added to .flv files when none is passed by default.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Changed default dvd audio bitrate from 192kbps to 256kbps</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Enable subtitle_location_x (was not being passed before)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Fix audio duration for .avi files (untested) (thanks Guy Albertelli)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Fix hms2seconds to allow 0:08:05:345 (seconds and minutes like &quot;08&quot;)
+(thanks Guy Albertelli)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Redirect wait errors to log file to reduce errors in long slideshows</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Improved kenburns jitter.</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Added unset CDPATH to full_path function call (thanks Bob!)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Fixed bug with old version of findutils &lt; 4.2.5</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Use du -b so it is independend of env variables (thanks kikoun)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Change sleep 1s to sleep 0.01s for faster machines</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Add better help for missing applications and graphicsmagick</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Allow escaped # in musictitle slides (use \# to print #)</P>
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Added fixes for .avi files (thanks Guy Albertelli)</P>
+<P STYLE="margin-bottom: 0.2in"><BR><BR>
+</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dvd-menu</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>Changes:</B></I></P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Fix sox arguments to work with both old and new versions of sox.</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Added &quot;unset CDPATH to full_path function.  (Thanks Bob!)</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Add explicit PAL or NTSC in .xml files for dvdauthor 0.7.0</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">Add
+totem and VLC playback examples</SPAN></SPAN></P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in"><BR><BR>
+</P>
+<DL>
+	<DL>
+		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
+</DL>
+<P STYLE="margin-bottom: 0.2in">
+<I><B>Changes:</B></I></P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Fixes for file counts and uppercase extensions (thanks Eric Baplue)</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Allow reading of dvd-slideshowrc file to set variables (thanks Johan
+Kunnen)</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Reads .avi files for dvd-slideshow (thanks Guy Albertelli)</P>
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
+Add -q (quiet mode) for less output on screen when calling from
+another script</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
+<BR><BR>
+</P>
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.8.2</FONT></FONT></P>
 <DL>
 	<DL>
@@ -29,76 +128,76 @@ changelog:</FONT></FONT></P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>New Features:</B></I></P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Error check code BEFORE running full script.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added -logo &lt;logofile&gt; option to add a logo to each slide.
 (does not work with transitions yet)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added -mpg output for creating alternate-sized mpeg output that does
 not conform to dvd standards (very alpha)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Better control over subtitles with new variables subtitle_location_x
 and subtitle_location_y. Default x location is 0.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Better handling of very long subtitles. (up to 3 lines and reduced
 font size)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 No subtitles are rendered during fades.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Log file now uses the slideshow name instead of dvd-slideshow.log</P>
 <P STYLE="margin-bottom: 0.2in"><I><B>Bug Fixes:</B></I></P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow spaces in output files (spaces used to be forced to
 underscores).</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Removed old &quot;smoothing=0&quot; option in kenburns</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Change imagemagick calls with -type TrueColor to -type TrueColorMatte
 for latest version</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Sox v. &gt; 13 changes -w to -2 and -e to -n (thanks Ludovic)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow &quot;widescreen=1&quot; in input file.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Changed &quot;sleep 0.1s&quot; to &quot;sleep 1s&quot; for better
 compatibility.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed hms2seconds with leading zeros (thanks Arnd Baecker)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Better (larger) resizing for kenburns in high-quality mode.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Smoother scroll effect in normal mode (fixed rounding error)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Font search follows links. Thanks Jim Potter!</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Change LANG=C to LANG=POSIX to try to fix radix problems with printf</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added some code to only process one crossfade in the background at a
 time.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed problem with subtitles- last one was not being displayed.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added &quot;k&quot; to audio bitrate arguments to ffmpeg (thanks
 Tony!)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug where subtitles would not show in crop and kenburns
 effects.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug with audio timing when using scroll &amp; kenburns.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 removed -size option from crop function because large images were
 improperly cropped.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 added -M option to mplex calls (for some reason it was removed)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fix audio when passing an .avi file.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed chapter keyword timing.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Increased mplex bitrate to 9500 from 9000 to fix some possible
 encoding bugs.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fix bug with hms handling times longer than 1 hour. Thanks Michael
 Crider</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
@@ -109,27 +208,27 @@ Crider</P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>Changes:</B></I></P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Change imagemagick calls with -type TrueColor to -type TrueColorMatte
 for latest version</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Sox v. &gt; 13 changes -w to -2 and -e to -n (thanks Ludovic)</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Font path follows links. Thanks Jim Potter!</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 AC3 audio created with ffmpeg needs k added to bitrate</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Changed -depth 16 to -depth 8 in background gradient creation.</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fix embedded image help text.</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Default layout will switch to two columns of buttons (no embedded
 image) if the button</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 list is long.</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Change LANG=C to LANG=POSIX to try to fix radix problems with printf</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add menu fix so &quot;dvd menu&quot; button works on dvd players
 (thanks will guaraldi)</P>
 <P STYLE="margin-left: 0in; margin-bottom: 0.2in"><BR><BR>
@@ -140,26 +239,26 @@ Add menu fix so &quot;dvd menu&quot; button works on dvd players
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>Changes:</B></I></P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Write out pal option to output file if selected in dir2slideshow</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Recursive finds follow symbolic links and ignores hidden directories.</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Bug fix for spaces in filenames (thanks Ken Zutter)</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug where .mp3 files were being treated as images (crossfade
 error)</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug where other file formats would be included in the listing
 (thanks Mridul)</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug where audio files were not included in output.</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow spaces in output files if spaces is used as filename</P>
 <P STYLE="margin-left: 0in; margin-bottom: 0.2in; page-break-after: avoid">
 <BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.8.0</FONT></FONT></P>
 <DL>
 	<DL>
@@ -167,100 +266,100 @@ Allow spaces in output files if spaces is used as filename</P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>New Features:</B></I></P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 ***NOTE: The slideshow timings of fades will change with this
 version!</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 *Fadein/Fadeout/Crossfade to/from kenburns/scroll effects works now:</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 ( fades happen during movement of effect )Default ffmpeg to no b
 frames.</P>
-<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.49in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 *Now using ffmpeg to encode video. Seems over 2x faster than
 mpeg2enc.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add title and button information to .xml file automatically for
 dvd-menu use.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow multiple \n in titles (up to 4)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added variables subtitle_color, subtitle_outline_color, and
 subtitle_location</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Use variable subtitle_type=render to force subtitles to be rendered
 in frames.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Remove option for srt subtitles since we can force render them now.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Updated audio timing to be more accurate for long slideshows</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added kenburns syntax for crop,kb,crop duration</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Kenburns has smooth start and end now.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add option to sharpen images (-sharpen) with ImageMagicks unsharp
 mask.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 .flv output [alpha] use -flv for now, but his might change</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Specify output size other than default with -s 320x240 (alpha)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 *Added -border option to add space between image and edge of screen.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 *Added &quot;wipe&quot; transition between frames:</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 wipe:duration:subtitle:[right|left] (soon up|down also)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 mp4/aac audio is possible with faad</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 *Fadein/Fadeout/Crossfade to/from kenburns/scroll effects works now:</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 ( fades happen during movement of effect )</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 *Adding .avi video inline is possible. See docs. [alpha]</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 *Initial theme support [beta]</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Widescreen (16:9) support using -w [alpha] Not tested yet.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Improved font variables.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 kenburns effect is much smoother for slow effects in high-quality
 mode. (slower)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added -vcd and -svcd output options [beta] (lightly tested)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Inline audio processed as background job when specifiying -smp</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Audio fadein and fadeout times can be specified in decimals like
 0.250</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Automatically sets smp option if the current kernel has &quot;smp&quot;
 in the name.</P>
 <P STYLE="margin-bottom: 0.2in"><I><B>Bug Fixes:</B></I></P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed kenburns coordinates when passing numbered coordinates.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Escape brackets in [:blank:] (thanks Christian Molière)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed mismatch in kenburns coordinates due to non-square pixels.
 (thanks Tony Sauri)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Manual chapter markers fixed.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed reading of $HOME/.dvd-slideshow/dvd-slideshowrc settings.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Single or double quotes allowed in variable settings.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Got rid of lsof debugging lines. No longer needed.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug in seconds2ms that mishandled durations of 0.080 ms (thanks
 Eric)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Remove wc --chars calls for compatibility with FreeBSD</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Remove seq calls for compatibility with FreeBSD</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add FreeBSD font path so fonts are found.</P>
 <DL>
 	<DL>
@@ -268,34 +367,34 @@ Add FreeBSD font path so fonts are found.</P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>Changes:</B></I></P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added 6image layout option. It can also read the title and icon from</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 the .xml file output from dvd-slideshow. more testing is needed.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added many more variables to control the layout of the menu also.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added -vcd and -svcd modes. Works! tested -vcd a little.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Audio automatically fades in/out for 2 seconds</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Reads variables correctly from ~/.dvd-slideshow/dvd-slideshowrc</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Updated variables. See dvd-slideshowrc example file</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Better control of fonts and variables.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Deletes temp directory when finished.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 -nocleanup works</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Reads -theme files</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added -fadein and -fadeout for menus.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Remove seq calls for compatibility with FreeBSD (Thanks David
 Mulcahy)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Remove wc --chars calls for compatibility with FreeBSD</P>
 <DL>
 	<DL>
@@ -303,31 +402,31 @@ Remove wc --chars calls for compatibility with FreeBSD</P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>Changes:</B></I></P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add audiobook option- looks for audio files and images &amp; adds
 titles</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow wipe effect as default between images -w duration</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow decimals in crossfade duration.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow two different subtitles -s or -s2</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add random kenburns effect (-k)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Output file is copied to screen while running</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Full paths are specified to images in output .txt file.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Start of themes being implemented. See theme documentation.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add subtitle options to add path and/or filename. (Thanks Kenneth
 Weinert)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add recursive directory search. -R and -r (Thanks Kenneth Weinert)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Removed seq calls for compatibility with FreeBSD</P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.5</FONT></FONT></P>
 <DL>
 	<DL>
@@ -335,59 +434,59 @@ Removed seq calls for compatibility with FreeBSD</P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>New Features:</B></I></P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Use &quot;\n&quot; to force line breaks up to two lines in title text
 (not titlebar yet).</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed code to rotate images. (not that public yet)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Use image.jpg:duration:subtitle:[effect1:effect1_params:]rotate:angle</P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Configuration variables will be read in sequence now. So you can
 configure fontcolors and sizes throughout the input file.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow comments in all lines. Everything after &lt;space&gt;# will be
 ignored.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Scroll effect is MUCH smoother for slow scrolls in high-quality mode!
 (takes 3x longer)</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Slideshow name -n is optional now. Defaults to the base name of the
 input file.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 * Changed old &quot;title&quot; keyword to
 &quot;titlebar:duration:toptitle:bottomtitle&quot;</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 * Added &quot;title:duration:title_text&quot; function where a single
 title is rendered in the middle of the screen.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add check for missing subtitle syntax in crop/scroll/kenburns.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Longer progress bar.</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Reads ~/.dvd-slideshowrc in a loop for better debugging and security.</P>
 <P STYLE="margin-bottom: 0.2in"><I><B>Bug fixes:</B></I></P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Added &quot;+repage&quot; in convert lines after cropping when using
 internal .mpc image format.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 ( Fixes Kenburns and crop errors with ImageMagick &gt; 6.2.2 )</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed kenburns problems with black backgrounds.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed &quot;geometry does not contain image&quot; problem with
 kenburns effect.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Works for slide or transition duration &gt; 35 seconds now.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Add quotes around yuv fifo to allow for spaces in output directory.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed &quot;squishing&quot; when fading out or crossfading to a
 scroll effect.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed problem where audio &quot;fadein&quot; was being rendered as a
 subtitle.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Traps bad duration=0 for images and effects.</P>
 <DL>
 	<DL>
@@ -401,9 +500,9 @@ for XML file existing.</P>
 	<DL>
 		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">dir2slideshow</DT></DL>
 </DL>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Allow spaces in filenames</P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.4</FONT></FONT></P>
 <DL>
 	<DL>
@@ -411,32 +510,32 @@ Allow spaces in filenames</P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 <I><B>Bug fixes:</B></I></P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Changed mpeg2enc process file descriptor from 55 to 3 for
 compatibility with bash &gt;= 3.1 (fixes hang at wait for mpeg2enc to
 finish)</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Echos details to logfile about mpeg2enc process for future debugging.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Output directory gets created if it does not exist.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug in kenburns positioning with black background.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Better error messages when no oggdec or lame found.</P>
-<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-left: 0.47in; margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed error where kenburns intermediate files were not being deleted.</P>
 <DL>
 	<DL>
 		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in">gallery1-to-slideshow</DT></DL>
 </DL>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug where no pictures were found with new version of gallery
 1.5</P>
-<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: medium">
+<P STYLE="margin-bottom: 0.2in; font-style: normal; font-weight: normal">
 Fixed bug near line 279 with a missing &quot;fi&quot; statement.</P>
 <P STYLE="margin-left: 0in; margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.3</FONT></FONT></P>
 <DL>
 	<DL>
@@ -553,7 +652,7 @@ variables to help with spaces in filenames.</P>
 		<DT STYLE="margin-left: 0in; margin-bottom: 0.2in"><BR><BR>
 		</DT></DL>
 </DL>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.2</FONT></FONT></P>
 <DL>
 	<DL>
@@ -616,7 +715,7 @@ correctly get translated into \n characters.</P>
 </P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.1</FONT></FONT></P>
 <DL>
 	<DL>
@@ -655,7 +754,7 @@ Now reads the following file extensions in the specified directory:
 <P STYLE="margin-bottom: 0.2in">.jpg .JPG .jpeg .png .PNG</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.7.0</FONT></FONT></P>
 <DL>
 	<DL>
@@ -726,7 +825,7 @@ fractional seconds.</P>
 path</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.6.0</FONT></FONT></P>
 <DL>
 	<DL>
@@ -768,7 +867,7 @@ labeled with the .vob extension.</P>
 Crumley)</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.5.4</FONT></FONT></P>
 <DL>
 	<DL>
@@ -794,7 +893,7 @@ pictures.</P>
 gallery2slideshow, and jigl2slideshow.</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.5.2</FONT></FONT></P>
 <DL>
 	<DL>
@@ -834,7 +933,7 @@ if available.</P>
 man pages along with dvd-slideshow and dvd-menu.</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.5.0</FONT></FONT></P>
 <DL>
 	<DL>
@@ -892,7 +991,7 @@ between every picture.</P>
 slide.</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4.8</FONT></FONT></P>
 <DL>
 	<DL>
@@ -911,7 +1010,7 @@ fast when burned on dvd.</P>
 before processing.</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4.6</FONT></FONT></P>
 <DL>
 	<DL>
@@ -934,7 +1033,7 @@ command for better support for old versions.</P>
 better compatibility with old versions.</P>
 <P STYLE="margin-bottom: 0.2in"><BR><BR>
 </P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4.4</FONT></FONT></P>
 <DL>
 	<DL>
@@ -971,7 +1070,7 @@ subtitles (thanks Jim Crumley)</P>
 </DL>
 <P STYLE="margin-bottom: 0.2in">
 0.3 Added default fade in at beginning and out at end</P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4.2</FONT></FONT></P>
 <DL>
 	<DL>
@@ -1001,7 +1100,7 @@ PAL option should work better.</P>
 to fix ppmtoy4m errors.</P>
 <P STYLE="margin-bottom: 0.2in">Upgraded main menu background when no
 background is passed.</P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.4</FONT></FONT></P>
 <DL>
 	<DL>
@@ -1036,7 +1135,7 @@ specified.</P>
 tested, but should work.</P>
 <P STYLE="margin-bottom: 0.2in">White background behind buttons is
 now 50% transparency so it looks better.</P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.3</FONT></FONT></P>
 <DL>
 	<DL>
@@ -1064,7 +1163,7 @@ skippy.net&gt; Thanks!!!</P>
 output directory</P>
 <P STYLE="margin-bottom: 0.2in">0.1 Initial release (contributed by
 Scott Merrill &lt;skippy at skippy.net&gt; )</P>
-<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: medium; page-break-after: avoid">
+<P STYLE="margin-left: 0in; margin-bottom: 0.2in; font-weight: normal; page-break-after: avoid">
 <FONT FACE="Albany, sans-serif"><FONT SIZE=4>0.2</FONT></FONT></P>
 <DL>
 	<DL>

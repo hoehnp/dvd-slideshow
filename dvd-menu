@@ -37,9 +37,7 @@ LANG="POSIX"
 changes () 
 {
 echo 'Changes:
-0.8.4	New release!
-
-0.8.3
+0.8.4	
 	Fix sox arguments to work with both old and new versions of sox.
 	Added "unset CDPATH to full_path function.  (Thanks Bob!)
 	Add explicit PAL or NTSC in .xml files for dvdauthor 0.7.0

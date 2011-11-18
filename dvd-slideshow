@@ -18,7 +18,7 @@
 #
 
 name='dvd-slideshow'
-version='0.8.4-1'
+version='0.8.5-svn1'
 
 echo "[dvd-slideshow]            dvd-slideshow $version"
 echo "[dvd-slideshow]            Licensed under the GNU GPL"
@@ -49,6 +49,9 @@ LANG="POSIX"
 changes ()
 {
 echo 'Changes:
+0.8.5-svn
+	Bug fixes:
+	Input .ogg audio method bug.  fixed.  Thanks Werner.
 0.8.4
     New features:
 	Improved encoding speed significantly. (thanks Gary Hunt!)
@@ -638,7 +641,7 @@ do
 	-a) shift; 
                 # make sure the file exists and is the correct type!
                 suffix=`echo "$1" | awk -F. '{print tolower($NF)}'`
-                if [ "$suffix" == 'ogv' ] || [ "$suffix" == 'mp3' ] || [ "$suffix" == 'wav' ] || [ "$suffix" == 'm4a' ] || [ "$suffix" == 'aac' ] ; then
+                if [ "$suffix" == 'ogg' ] || [ "$suffix" == 'mp3' ] || [ "$suffix" == 'wav' ] || [ "$suffix" == 'm4a' ] || [ "$suffix" == 'aac' ] ; then
                 	if [ ! -f "$1" ] ; then
                        	 echo "[dvd-slideshow] ERROR: File $1 does not exist"
                          exit 1
